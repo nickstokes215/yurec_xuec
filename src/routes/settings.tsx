@@ -685,6 +685,12 @@ function SettingsPage() {
         href={UPDATE_URL}
         action="Проверить обновления"
       />
+      <Link
+        to="/apk"
+        className="mt-3 flex h-12 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
+      >
+        Поставить на iPhone и Android
+      </Link>
 
       <div className="mt-8 flex items-center gap-3" role="separator">
         <span className="h-px flex-1 bg-border" />

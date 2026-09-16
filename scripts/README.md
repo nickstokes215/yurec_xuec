@@ -5,6 +5,7 @@
 | Папка / файл | Зачем |
 |---|---|
 | `build-apk.sh` | Собрать signed APK: копирует `public/` + `src/data` в Android assets |
+| `../.github/workflows/release-apk.yml` | Кладёт APK в GitHub Release по тегу или кнопке Actions |
 | `fetch-yt-thumbs.py` | Докачать обложки YouTube в `public/thumbs/` |
 | `copy-pglite.mjs`, `migrate.mjs` | База PGLite |
 | `grok-pwa-*.mjs` | PWA, OG-карточка, тесты |

@@ -5,7 +5,7 @@ export const Route = createFileRoute("/ideas")({ component: IdeasPage });
 
 const IDEAS = [
   "Публикация приложения в Google Play Market или RuStore (для Android);",
-  "Порт приложения на iOS (для iPhone);",
+  "Нативный IPA в App Store (Mac и 99$ в год). Пока iPhone ставит сборник с Safari на экран «Домой»;",
   "Новые уровни «Юрцовского квеста» и «Кроссворды»;",
   "Третий визит к Юрцу (ещё больше треш-контента).",
 ];

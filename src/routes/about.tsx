@@ -176,6 +176,14 @@ function AboutPage() {
           <span className="inline-block size-4 justify-self-end" aria-hidden />
         </Link>
         <Link
+          to="/apk"
+          className="grid h-12 w-full grid-cols-[1fr_auto_1fr] items-center rounded-xl bg-elevated px-4 text-sm font-medium"
+        >
+          <span />
+          <span className="whitespace-nowrap text-center leading-none">Поставить на iPhone и Android</span>
+          <span className="inline-block size-4 justify-self-end" aria-hidden />
+        </Link>
+        <Link
           to="/changelog"
           className="grid h-12 w-full grid-cols-[1fr_auto_1fr] items-center rounded-xl bg-log px-4 text-sm font-medium text-log-fg"
         >

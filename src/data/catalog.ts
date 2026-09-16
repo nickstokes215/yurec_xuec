@@ -107,6 +107,9 @@ export const TELEGRAM_URL = "https://t.me/yurec_xuec";
 export const YOUTUBE_URL = "https://www.youtube.com/@yurec_xuec/videos";
 export const YOUTUBE_SHORTS = "https://www.youtube.com/@yurec_xuec/shorts";
 export const YOUTUBE_CHANNEL = "https://www.youtube.com/@yurec_xuec";
+export const GITHUB_URL = "https://github.com/nickstokes215/yurec_xuec";
+export const GITHUB_RELEASES_URL = "https://github.com/nickstokes215/yurec_xuec/releases";
+export const GITHUB_APK_URL = "https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.apk";
 
 export const DONATION_AMOUNT = "1000 ₽";
 export const DONATION_COMMENT = "Жизнь Юрца";

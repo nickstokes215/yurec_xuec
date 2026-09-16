@@ -1,0 +1,57 @@
+# Кладёт public/yurec_xuec.apk в GitHub Release.
+# Наспех: Actions → «Релиз APK» → Run workflow.
+# Правильно: git tag 1.63 && git push origin 1.63
+name: Релиз APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            public/yurec_xuec.apk
+            src/data/changelog.json
+          sparse-checkout-cone: false
+
+      - id: ver
+        run: |
+          python3 - <<'PY'
+          import json, os
+          ver = json.load(open("src/data/changelog.json"))["version"]
+          ref_type = os.environ.get("GITHUB_REF_TYPE", "")
+          ref_name = os.environ.get("GITHUB_REF_NAME", ver)
+          tag = ref_name[1:] if ref_type == "tag" and ref_name.startswith("v") else (ref_name if ref_type == "tag" else ver)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"version={ver}\n")
+              f.write(f"tag={tag}\n")
+          PY
+
+      - name: Проверка APK
+        run: |
+          test -f public/yurec_xuec.apk
+          ls -lh public/yurec_xuec.apk
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: Жизнь Юрца ${{ steps.ver.outputs.version }}
+          body: |
+            Сборник «Жизнь Юрца» ${{ steps.ver.outputs.version }}.
+
+            **Android:** скачай `yurec_xuec.apk` ниже и поставь. Пакет `ru.yurec.xuec`.
+
+            **iPhone:** открой веб-сборник в Safari → «Поделиться» → «На экран Домой». Нативного IPA в App Store нет — это PWA, тот же двор без Safari-рамки.
+          files: public/yurec_xuec.apk
+          fail_on_unmatched_files: true
+          make_latest: true
+          generate_release_notes: false

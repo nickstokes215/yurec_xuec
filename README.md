@@ -36,6 +36,20 @@ npm run dev
 
 Готовый файл: `public/yurec_xuec.apk`. Как устроена подпись — [`android/keystore/README.md`](android/keystore/README.md).
 
+## GitHub Releases
+
+APK в релизы кладёт workflow [`.github/workflows/release-apk.yml`](.github/workflows/release-apk.yml).
+
+Наспех: на GitHub → Actions → «Релиз APK» → Run workflow.
+
+Правильно: `git tag 1.63 && git push origin 1.63`.
+
+Скачать последнюю сборку: [releases/latest/download/yurec_xuec.apk](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.apk).
+
+## iPhone
+
+Нативного IPA в App Store нет. Веб-сборник ставится с Safari: «Поделиться» → «На экран Домой». Тот же двор, без рамки браузера. Шаги — экран `/apk`.
+
 ## Перед тем как выложить исходники
 
 Не публиковать:
