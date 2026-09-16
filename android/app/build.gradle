@@ -1,0 +1,75 @@
+plugins {
+    id 'com.android.application'
+}
+
+def ksProps = new Properties()
+def ksPropsFile = rootProject.file("keystore.properties")
+if (ksPropsFile.exists()) {
+    ksPropsFile.withInputStream { ksProps.load(it) }
+}
+def yurecStorePass = System.getenv("YUREC_STORE_PASS") ?: ksProps.getProperty("storePassword") ?: ""
+def yurecKeyPass = System.getenv("YUREC_KEY_PASS") ?: ksProps.getProperty("keyPassword") ?: yurecStorePass
+def yurecAlias = ksProps.getProperty("keyAlias") ?: "nickstokes215"
+def yurecStoreFile = rootProject.file("keystore/nickstokes215.jks")
+
+android {
+    namespace 'ru.yurec.xuec'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "ru.yurec.xuec"
+        minSdk 21
+        targetSdk 34
+        versionCode 151
+        versionName "1.62.1"
+    }
+
+    signingConfigs {
+        release {
+            storeFile yurecStoreFile
+            storePassword yurecStorePass
+            keyAlias yurecAlias
+            keyPassword yurecKeyPass
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+        resources {
+            excludes += ["META-INF/*.kotlin_module"]
+        }
+    }
+
+    androidResources {
+        noCompress += ["js", "css"]
+    }
+}
+
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "org.jetbrains.kotlin") {
+            details.useVersion "1.9.24"
+            details.because "единый kotlin-stdlib, без дублей jdk7/jdk8"
+        }
+    }
+}
+
+dependencies {
+    implementation "androidx.webkit:webkit:1.12.1"
+    implementation "androidx.core:core:1.13.1"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"
+}

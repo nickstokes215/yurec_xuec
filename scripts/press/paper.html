@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>Вечерний Шотман №47</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,700;1,7..72,400&family=Oswald:wght@500;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #3a342c; }
+  .page {
+    width: 900px; height: 1272px; overflow: hidden;
+    background: #e7dcc4;
+    color: #1c1610;
+    font-family: "PT Serif", Literata, Georgia, serif;
+    position: relative;
+    padding: 28px 32px 36px;
+  }
+  .paper-noise {
+    pointer-events: none; position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(80,50,20,.035) 0 1px, transparent 1px 3px);
+    mix-blend-mode: multiply;
+  }
+  .mast {
+    text-align: center; border-top: 4px solid #1c1610; border-bottom: 3px solid #1c1610;
+    padding: 6px 0 8px; position: relative; z-index: 1;
+  }
+  .mast .city { font-family: Oswald, sans-serif; letter-spacing: .28em; font-size: 13px; text-transform: uppercase; }
+  .mast h1 {
+    font-family: Oswald, sans-serif; font-weight: 700; font-size: 72px; line-height: .9;
+    letter-spacing: .02em; margin: 4px 0 2px;
+  }
+  .mast .meta { display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px; font-family: Oswald, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .rule { height: 2px; background: #1c1610; margin: 10px 0; }
+  .rule-thin { height: 1px; background: #1c1610; margin: 8px 0; }
+  h2 { font-family: Oswald, sans-serif; font-weight: 700; font-size: 38px; line-height: 1.05; margin: 0 0 8px; text-transform: uppercase; }
+  h3 { font-family: Oswald, sans-serif; font-weight: 700; font-size: 24px; line-height: 1.15; margin: 0 0 8px; text-transform: uppercase; }
+  p { margin: 0 0 .45em; font-size: 18px; line-height: 1.28; }
+  .lead { font-size: 20px; font-weight: 700; }
+  .cap { font-family: Oswald, sans-serif; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin: 4px 0 10px; }
+  img.pic { width: 100%; display: block; object-fit: cover; filter: grayscale(.35) contrast(1.05); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .box { border: 2px solid #1c1610; padding: 10px 12px; background: #efe4cc; }
+  .ad {
+    border: 3px double #1c1610; padding: 10px 12px; text-align: center; background: #f3e7cd;
+  }
+  .ad b { font-family: Oswald, sans-serif; display: block; font-size: 22px; letter-spacing: .04em; }
+  .job { border-bottom: 1px solid #1c1610; padding: 8px 0; }
+  .job b { font-family: Oswald, sans-serif; font-size: 18px; display: block; }
+  .foot { position: absolute; left: 32px; right: 32px; bottom: 14px; display: flex; justify-content: space-between;
+    font-family: Oswald, sans-serif; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+  .kicker { font-family: Oswald, sans-serif; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 4px; }
+  .xgrid { display: grid; grid-template-columns: repeat(11, 28px); gap: 2px; justify-content: start; }
+  .xcell { width: 28px; height: 28px; border: 1px solid #1c1610; background: #f6ecda; font: 700 12px Oswald, sans-serif; display:grid; place-items:center; }
+  .xcell.b { background: #1c1610; }
+  .xcell n { position:absolute; font-size: 9px; margin: -10px 0 0 -10px; }
+</style>
+</head>
+<body>
+
+<section class="page" id="p1">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Невский район · Санкт-Петербург · Орган дворовой правды</div>
+    <h1>ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 47</span><span>Пятница, 19 ноября 2021</span><span>Цена 8 р. 50 к.</span></div>
+  </header>
+  <h2 style="font-size:46px;margin-top:12px">Шаверма взорвала район. Император жив</h2>
+  <p class="lead">На улице Шотмана ночью пахло лавашем и порохом. Жители третьего подъезда клянутся: «это Юрец». Юрец клянётся: «это история».</p>
+  <img class="pic" src="street.jpg" alt="" style="height:340px;margin:8px 0 4px" />
+  <p class="cap">Улица Шотмана, ноябрь. Снимок нашего внештатного фотографа, который вышел за кефиром и не вернулся до обеда.</p>
+  <div class="cols">
+    <div>
+      <p>На 23:40 из окна третьего этажа донёсся крик: «Я — император, а лаваш мне должен!» Через минуту во дворе нашли обёртку «шаверма классик», в которой, по словам очевидцев, «что-то металлическое стучало, как сердце района».</p>
+      <p>Участковый Сергей Петрович уточнил: «Снаряд времён ВОВ. Учебный. Наверное. Мы его забрали чайком запить».</p>
+    </div>
+    <div>
+      <p>Сам Юрец, 31 год, трешка, кнопочный Fly, на вопрос редакции ответил с балкона: «Это не граната. Это скипетр. Шаверма — дань. Вы все — холопы без капусты».</p>
+      <p>Тираж этого номера увеличен на 40 экземпляров. Киоск у 18-го дома закрылся раньше: продавец ушёл проверять, не звенит ли его собственный лаваш.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 1</span></div>
+</section>
+
+<section class="page" id="p2">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Происшествия · склад · мнение подъезда</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 47</span><span>19.11.2021</span><span>стр. 2</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Склад Жукова в трешке. Соседи уже пишут заявления</h2>
+  <div class="cols" style="margin-top:8px">
+    <div>
+      <img class="pic" src="grenade.jpg" alt="" style="height:260px" />
+      <p class="cap">Сервант жителя. Редакция просит не повторять сервировку дома.</p>
+      <p>По версии Юрца, гранаты, тушёнка и дисковый телефон — «стратегический запас императора на случай буржуев». По версии Зинаиды с пятого, это «чтобы НЛО не село на крышу зря».</p>
+    </div>
+    <div>
+      <img class="pic" src="storage.jpg" alt="" style="height:210px" />
+      <p class="cap">Подвал 18-го дома. Линолеум знает больше, чем участковый.</p>
+      <h3>Голоса двора</h3>
+      <p>«Он орёт в три ночи, что шаверма должна. Шаверма молчит. Значит, должна», — Валера, 2-й этаж.</p>
+      <p>«Склад? У нас в подвале тоже склад. Там банки 1984 года. Юрец просто честнее», — тётя Галя.</p>
+      <p>«Пусть орёт. Лишь бы лифт ездил. Лифт не ездит», — аноним из 7-го.</p>
+    </div>
+  </div>
+  <div class="box" style="margin-top:12px">
+    <p class="kicker">Сводка</p>
+    <p>За неделю: 14 криков «я легенда», 3 вызова в ларёк, 1 учебный снаряд, 0 интернета. Район держится.</p>
+  </div>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 2</span></div>
+</section>
+
+<section class="page" id="p3">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Интервью · органы · чай</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 47</span><span>19.11.2021</span><span>стр. 3</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Менты: «Мы не герои. Мы просто не хотим, чтобы лаваш стрелял»</h2>
+  <img class="pic" src="cops.jpg" alt="" style="height:300px;margin:8px 0 4px" />
+  <p class="cap">Слева направо: ст. лейтенант Безруков и младший, который держит чай. Чай казённый. Нервы — свои.</p>
+  <p class="lead">Эксклюзивное интервью у «Жигулей». Диктофон сел на второй минуте. Дальше писали ручкой.</p>
+  <p>— Юрец опасен? — «Он орёт. Орёж не статья. Статья будет, если граната окажется не учебной. Пока она учебная. Мы проверили языком. В смысле — инструкцией».</p>
+  <p>— Шаверма? — «Ели. Нормальная. Капуста есть. Взрывчатки в соусе не нашли. Соус подозрительный, но это уже Роспотребнадзор».</p>
+  <p>— Интернет у него есть? — «Зачем? Он и без интернета знает, что он император. Мы завидуем. Тихо».</p>
+  <p>На прощание младший попросил не писать фамилию. Мы и не знали.</p>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 3</span></div>
+</section>
+
+<section class="page" id="p4">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Реклама · киоск · магазин на диване</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 47</span><span>19.11.2021</span><span>стр. 4</span></div>
+  </header>
+  <div class="rule"></div>
+  <div class="cols">
+    <div>
+      <img class="pic" src="kiosk.jpg" alt="" style="height:220px" />
+      <div class="ad" style="margin-top:10px">
+        <b>ШАВЕРМА «ИМПЕРИЯ»</b>
+        <p>Лаваш. Капуста. Легенда. Без гранат — с 8 утра. С гранатами — по записи.</p>
+        <p><b>90 ₽</b> · двор, киоск, не моргнуть</p>
+      </div>
+      <div class="ad" style="margin-top:10px">
+        <b>ТУШЁНКА «СОВЕТСКАЯ»</b>
+        <p>Срок годности — понятие буржуазное. Открывается ложкой или характером.</p>
+      </div>
+    </div>
+    <div>
+      <img class="pic" src="tvshop.jpg" alt="" style="height:220px" />
+      <div class="ad" style="margin-top:10px">
+        <b>МАГАЗИН НА ДИВАНЕ</b>
+        <p>Только сегодня! Дисковый телефон «Царь-трубка» и рулон линолеума «Дуб кремлёвский». Звоните, пока сосед не занял линию.</p>
+        <p>Три платежа. Первый — тушёнкой. Второй — криком. Третий — забудьте.</p>
+      </div>
+      <div class="ad" style="margin-top:10px">
+        <b>ЛАРЁК 24</b>
+        <p>Водка, сигареты, советы. Советы дороже.</p>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:12px;font-size:16px">Редакция не несёт ответственности, если яхта из линолеума не всплывёт. Яхта и не должна.</p>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 4</span></div>
+</section>
+
+<section class="page" id="p5">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Вакансии · кадры · экзотика двора</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 47</span><span>19.11.2021</span><span>стр. 5</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Требуются. Особенно если вы уже орали в этом дворе</h2>
+  <img class="pic" src="ads.jpg" alt="" style="height:200px;margin:8px 0" />
+  <div class="job"><b>Охранник киоска</b> 18 000 ₽. Ночной. Спать нельзя. Юрец уже звонил вчерашним номером. Форма — жилетка «Олимпик», если найдёте.</div>
+  <div class="job"><b>Уборщик подъезда №3</b> 12 400 ₽. Гранатам не мешать. Тушёнку с подоконников не есть. Крики считать звуковым фоном.</div>
+  <div class="job"><b>Разнорабочий</b> 22 000 ₽ + шаверма. Таскать линолеум, иногда судьбу. Опыт крика приветствуется.</div>
+  <div class="job"><b>Смотритель учебного склада</b> 9 900 ₽. Знать, где Жуков, а где сервант. Не путать. Испытательный срок — одна ночь без паники.</div>
+  <div class="job"><b>Дегустатор тушёнки</b> 15 000 ₽ продуктами. Медицинская книжка не нужна: желудок либо есть, либо нет.</div>
+  <div class="job"><b>Оператор дискового телефона</b> 7 000 ₽. Крутить диск за тех, у кого пальцы отморозились. Светлане трубку не давать — мираж.</div>
+  <div class="job"><b>Император на полставки</b> договорная. Требования: купола, ор, отсутствие Wi‑Fi. Резюме кричать с балкона.</div>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 5</span></div>
+</section>
+
+<section class="page" id="p6">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Советы · быт · фольга</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 47</span><span>19.11.2021</span><span>стр. 6</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Абсурдные советы из быта. Проверено подъездом</h2>
+  <div class="cols" style="margin-top:10px">
+    <div>
+      <img class="pic" src="yurec.jpg" alt="" style="height:280px" />
+      <p class="cap">Наш эксперт. Титул — самопровозглашённый. Стаж — с похмелья.</p>
+    </div>
+    <div>
+      <h3>1. Шаверма как дипломатия</h3>
+      <p>Если соседу должны — не ходите в суд. Купите ему лаваш без капусты. Капуста — уже ультиматум.</p>
+      <h3>2. Фольга на ночь</h3>
+      <p>Не от рептилоидов. От сквозняка. Рептилоиды и так знают, где вы.</p>
+      <h3>3. Телефон крутить по часовой</h3>
+      <p>Против часовой — Зинаида. По часовой — Светлана. Если никто не берёт — вы император, вам и не надо.</p>
+    </div>
+  </div>
+  <div class="box" style="margin-top:12px">
+    <h3>4. Как хранить учебный снаряд</h3>
+    <p>Под подушкой — нельзя. В лаваше — нельзя. В серванте рядом с тушёнкой — традиция района. Редакция против. Район — за.</p>
+  </div>
+  <p style="margin-top:10px">5. Интернет не проводить. Он портит «Радугу». «Радуга» и так шипит, как правда.</p>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 6</span></div>
+</section>
+
+<section class="page" id="p7">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Юмор · анекдоты · очередь в ларёк</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 47</span><span>19.11.2021</span><span>стр. 7</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Тупые анекдоты. Смеяться обязательно, иначе киоск закроют</h2>
+  <div class="cols" style="margin-top:12px">
+    <div class="box">
+      <p>Приходит Юрец в шаверму:</p>
+      <p>— Мне без капусты, с империей.</p>
+      <p>— Империи нет.</p>
+      <p>— Тогда с гранатой.</p>
+      <p>— Учебной?</p>
+      <p>— Я тоже учебный.</p>
+    </div>
+    <div class="box">
+      <p>Звонит Светлана. Юрец орёт в диск:</p>
+      <p>— Алло, богиня!</p>
+      <p>— Это справочная.</p>
+      <p>— Значит, богиня занята. Передайте: яхта из линолеума уже плывёт.</p>
+    </div>
+    <div class="box">
+      <p>Лысый хер говорит:</p>
+      <p>— Юра, ты уволен.</p>
+      <p>— Я не Юра. Я фараон.</p>
+      <p>— Тогда фараон уволен. Линолеум остаётся.</p>
+    </div>
+    <div class="box">
+      <p>Встречаются два участковых.</p>
+      <p>— Что сегодня?</p>
+      <p>— Опять Юрец.</p>
+      <p>— Статья?</p>
+      <p>— Пока жанр. Комедийная сага.</p>
+    </div>
+    <div class="box">
+      <p>Бабка Зинаида смотрит «Радугу»:</p>
+      <p>— Опять помехи.</p>
+      <p>Помехи отвечают:</p>
+      <p>— Это не помехи. Это план.</p>
+    </div>
+    <div class="box">
+      <p>Костя купил BMW. Юрец купил тушёнку.</p>
+      <p>Через год у Кости кредит, у Юрца империя. Считайте сами, кто выиграл. Редакция считает Юрца. Редакция тоже пила.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 7</span></div>
+</section>
+
+<section class="page" id="p8">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Кроссворд · погода · объявления</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 47</span><span>19.11.2021</span><span>стр. 8</span></div>
+  </header>
+  <div class="rule"></div>
+  <div class="cols">
+    <div>
+      <h3>Кроссворд «Двор»</h3>
+      <p style="font-size:16px">По горизонтали: 1. Император без Wi‑Fi. 3. Еда, которая должна. 5. Улица. 7. Телевизор.</p>
+      <p style="font-size:16px">По вертикали: 2. Учебный аргумент. 4. Богиня, которую никто не видел. 6. Строймаг. 8. То, что в банке.</p>
+      <div class="xgrid" style="margin-top:10px">
+        <div class="xcell">Ю</div><div class="xcell">Р</div><div class="xcell">Е</div><div class="xcell">Ц</div><div class="xcell b"></div><div class="xcell">Ш</div><div class="xcell">А</div><div class="xcell">В</div><div class="xcell">Е</div><div class="xcell">Р</div><div class="xcell">МА</div>
+        <div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell b"></div><div class="xcell">О</div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div>
+        <div class="xcell">Г</div><div class="xcell">Р</div><div class="xcell">А</div><div class="xcell">Н</div><div class="xcell">А</div><div class="xcell">Т</div><div class="xcell">А</div><div class="xcell b"></div><div class="xcell">С</div><div class="xcell">В</div><div class="xcell">Е</div>
+        <div class="xcell"></div><div class="xcell">А</div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell">М</div><div class="xcell"></div><div class="xcell b"></div><div class="xcell">В</div><div class="xcell"></div><div class="xcell">Т</div>
+        <div class="xcell">О</div><div class="xcell">Д</div><div class="xcell">У</div><div class="xcell">Г</div><div class="xcell">А</div><div class="xcell">А</div><div class="xcell b"></div><div class="xcell">Л</div><div class="xcell">А</div><div class="xcell">Р</div><div class="xcell">ЁК</div>
+        <div class="xcell">Л</div><div class="xcell">У</div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell">Н</div><div class="xcell b"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell">А</div>
+        <div class="xcell">И</div><div class="xcell">Г</div><div class="xcell">А</div><div class="xcell b"></div><div class="xcell">Т</div><div class="xcell">У</div><div class="xcell">Ш</div><div class="xcell">Ё</div><div class="xcell">Н</div><div class="xcell">К</div><div class="xcell">А</div>
+        <div class="xcell">М</div><div class="xcell">А</div><div class="xcell"></div><div class="xcell b"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div>
+        <div class="xcell">П</div><div class="xcell">И</div><div class="xcell">К</div><div class="xcell b"></div><div class="xcell">Ф</div><div class="xcell">Л</div><div class="xcell">А</div><div class="xcell">Й</div><div class="xcell b"></div><div class="xcell">Н</div><div class="xcell">О</div>
+      </div>
+      <p style="font-size:14px;margin-top:8px">Ответы в следующем номере. Следующий номер — когда Юрец перестанет орать. То есть никогда. Ответы: ЮРЕЦ, ШАВЕРМА, ГРАНАТА, СВЕТКА, ШОТМАН, РАДУГА, ОЛИМПИК, ТУШЁНКА, ЛАРЁК.</p>
+    </div>
+    <div>
+      <img class="pic" src="neighbor.jpg" alt="" style="height:220px" />
+      <p class="cap">Тётя из 18-го проверяет почтовый ящик. Газеты нет — значит, украли. Газета есть — значит, опять Юрец.</p>
+      <div class="box" style="margin-top:10px">
+        <h3>Погода двора</h3>
+        <p>Туман. Перегар. +2°. Ветер с помойки. Давление как у участкового после смены. Осадки: иногда лаваш.</p>
+      </div>
+      <div class="ad" style="margin-top:10px">
+        <b>ПРОПАЛ ИНТЕРНЕТ</b>
+        <p>Кто найдёт — не надо. Император просил не искать.</p>
+      </div>
+      <div class="ad" style="margin-top:10px">
+        <b>КУПЛЮ УЧЕБНУЮ ГРАНАТУ</b>
+        <p>Дорого. Без капусты. С историей.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Вечерний Шотман · конец номера · не выбрасывать, Зинаида читает</span><span>стр. 8</span></div>
+</section>
+</body>
+</html>

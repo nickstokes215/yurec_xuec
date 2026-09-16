@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>Вечерний Шотман №52</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,700;1,7..72,400&family=Oswald:wght@500;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #3a342c; }
+  .page {
+    width: 900px; height: 1272px; overflow: hidden;
+    background: #e7dcc4;
+    color: #1c1610;
+    font-family: "PT Serif", Literata, Georgia, serif;
+    position: relative;
+    padding: 28px 32px 36px;
+  }
+  .paper-noise {
+    pointer-events: none; position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(80,50,20,.035) 0 1px, transparent 1px 3px);
+    mix-blend-mode: multiply;
+  }
+  .mast {
+    text-align: center; border-top: 4px solid #1c1610; border-bottom: 3px solid #1c1610;
+    padding: 6px 0 8px; position: relative; z-index: 1;
+  }
+  .mast .city { font-family: Oswald, sans-serif; letter-spacing: .28em; font-size: 13px; text-transform: uppercase; }
+  .mast h1 {
+    font-family: Oswald, sans-serif; font-weight: 700; font-size: 72px; line-height: .9;
+    letter-spacing: .02em; margin: 4px 0 2px;
+  }
+  .mast .meta { display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px; font-family: Oswald, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  .rule { height: 2px; background: #1c1610; margin: 10px 0; }
+  h2 { font-family: Oswald, sans-serif; font-weight: 700; font-size: 38px; line-height: 1.05; margin: 0 0 8px; text-transform: uppercase; }
+  h3 { font-family: Oswald, sans-serif; font-weight: 700; font-size: 24px; line-height: 1.15; margin: 0 0 8px; text-transform: uppercase; }
+  p { margin: 0 0 .45em; font-size: 18px; line-height: 1.28; }
+  .lead { font-size: 20px; font-weight: 700; }
+  .cap { font-family: Oswald, sans-serif; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin: 4px 0 10px; }
+  img.pic { width: 100%; display: block; object-fit: cover; filter: grayscale(.35) contrast(1.05); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .box { border: 2px solid #1c1610; padding: 10px 12px; background: #efe4cc; }
+  .ad {
+    border: 3px double #1c1610; padding: 10px 12px; text-align: center; background: #f3e7cd;
+  }
+  .ad b { font-family: Oswald, sans-serif; display: block; font-size: 22px; letter-spacing: .04em; }
+  .job { border-bottom: 1px solid #1c1610; padding: 8px 0; }
+  .job b { font-family: Oswald, sans-serif; font-size: 18px; display: block; }
+  .foot { position: absolute; left: 32px; right: 32px; bottom: 14px; display: flex; justify-content: space-between;
+    font-family: Oswald, sans-serif; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+  .kicker { font-family: Oswald, sans-serif; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; margin-bottom: 4px; }
+  .xgrid { display: grid; grid-template-columns: repeat(11, 28px); gap: 2px; justify-content: start; }
+  .xcell { width: 28px; height: 28px; border: 1px solid #1c1610; background: #f6ecda; font: 700 12px Oswald, sans-serif; display:grid; place-items:center; }
+  .xcell.b { background: #1c1610; }
+  .garland { font-family: Oswald, sans-serif; letter-spacing: .2em; text-align: center; font-size: 13px; margin: 4px 0 8px; }
+</style>
+</head>
+<body>
+
+<section class="page" id="p1">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Невский район · Санкт-Петербург · Новогодний орган дворовой правды</div>
+    <h1>ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 52</span><span>Пятница, 31 декабря 2021</span><span>Цена 8 р. 50 к.</span></div>
+  </header>
+  <p class="garland">★ ЁЛКА · ОЛИВЬЕ · САЛЮТ · «ПУТИНКА» · ГОША ★</p>
+  <h2 style="font-size:42px;margin-top:4px">Ёлка с помойки. Император обещает снег из ваты</h2>
+  <p class="lead">На Шотмана встречают 2022-й так, как умеет только двор: гирлянда с одного подъезда, вата с другого, тост — со всех сразу.</p>
+  <img class="pic" src="street.jpg" alt="" style="height:310px;margin:8px 0 4px" />
+  <p class="cap">Улица Шотмана в канун. Снимок внештатного, который вышел за мандаринами и остался слушать тосты.</p>
+  <div class="cols">
+    <div>
+      <p>В 22:10 из третьего подъезда вынесли ёлку, которую днём видели у бака. На ветках — крышки от тушёнки, фантики и одна учебная «игрушка», которую участковый уже три раза называл неигрушкой.</p>
+      <p>Юрец, 31 год, трешка, кнопочный Fly, с балкона пообещал: «Снег будет. Я вату накупил. Кто не верит — холоп без оливье».</p>
+    </div>
+    <div>
+      <p>Зинаида с пятого запретила салют. Салют всё равно обещают. Гоша, ворон без хвоста, сидит на антенне и каркает ровно, как куранты для тех, у кого часы на кухне остановились в прошлом марте.</p>
+      <p>Редакция поздравляет район. Тираж увеличен. Киоск не закрывается: Толик сказал, что Новый год — это смена, а не праздник.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Вечерний Шотман · с новым, холодный двор</span><span>стр. 1</span></div>
+</section>
+
+<section class="page" id="p2">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Происшествия · салют · заявления Деду Морозу</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 52</span><span>31.12.2021</span><span>стр. 2</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Салют из серванта. Соседи пишут Деду, не участковому</h2>
+  <div class="cols" style="margin-top:8px">
+    <div>
+      <img class="pic" src="grenade.jpg" alt="" style="height:250px" />
+      <p class="cap">Новогодний стол императора. Мандарин рядом с учебным аргументом — традиция ещё не канон, но уже слух.</p>
+      <p>По версии Юрца, хлопушка и граната — «одна семья, только разный характер». По версии Зинаиды, это «чтобы 2022-й сразу понял, кто тут царь».</p>
+    </div>
+    <div>
+      <img class="pic" src="storage.jpg" alt="" style="height:200px" />
+      <p class="cap">Подвал 18-го. Банки 1984 года тоже хотят в оливье.</p>
+      <h3>Голоса двора</h3>
+      <p>«Пусть орёт “с новым”. Лишь бы не в три ночи про шаверму. Шаверма в новогоднюю закрыта — это уже политика», — Валера, 2-й этаж.</p>
+      <p>«Ёлка вонючая. Зато живая. Как район», — тётя Галя.</p>
+      <p>«Гоша каркает двенадцать. Я засекала. Ворон честнее Первого канала», — аноним из 7-го.</p>
+    </div>
+  </div>
+  <div class="box" style="margin-top:12px">
+    <p class="kicker">Сводка года</p>
+    <p>За 2021-й: 11 тостов «я легенда», 4 очереди за «Путинкой», 1 ёлка с помойки, 0 интернета, 0 шавермы во дворе в полночь. Район выдержал. Почти.</p>
+  </div>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 2</span></div>
+</section>
+
+<section class="page" id="p3">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Интервью · ларёк · канун</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 52</span><span>31.12.2021</span><span>стр. 3</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Толик: «Очередь длиннее, чем жизнь. Это нормально»</h2>
+  <img class="pic" src="kiosk.jpg" alt="" style="height:290px;margin:8px 0 4px" />
+  <p class="cap">Ларёк 31 декабря. Лампочка — единственная гирлянда, которая не врёт.</p>
+  <p class="lead">Эксклюзив у окошка. Диктофон замерз на первой минуте. Дальше — на фантике от «Коровки».</p>
+  <p>— Что берут? — «Путинку. Мандарины. Жвачку “для трезвости”. Трезвость потом, жвачка сразу».</p>
+  <p>— Юрец уже был? — «Три раза. Первый — за ватой. Второй — за ватой, потому что первую вату “съел Гоша”. Третий — поздравить империю. Империя поздравила его сухариками».</p>
+  <p>— Салют? — «У меня хлопушки. У него характер. Не путайте».</p>
+  <p>На прощание Толик сказал: «С новым, двор. И не забывайте сдачу. Сдача — тоже праздник».</p>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 3</span></div>
+</section>
+
+<section class="page" id="p4">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Реклама · оливье · магазин на диване</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 52</span><span>31.12.2021</span><span>стр. 4</span></div>
+  </header>
+  <div class="rule"></div>
+  <div class="cols">
+    <div>
+      <img class="pic" src="shawarma.jpg" alt="" style="height:210px" />
+      <div class="ad" style="margin-top:10px">
+        <b>ШАВЕРМА «ИМПЕРИЯ»</b>
+        <p>Новогодняя: оливье в лаваше. Без горошка — по записи. Без гранат — всегда. С 8 утра 1 января, если повар проснётся.</p>
+        <p><b>120 ₽</b> · праздник кусается</p>
+      </div>
+      <div class="ad" style="margin-top:10px">
+        <b>«ПУТИНКА» НОВОГОДНЯЯ</b>
+        <p>Та же, только этикетка верит в чудо. Чудо — это когда хватает на двенадцать ударов.</p>
+      </div>
+    </div>
+    <div>
+      <img class="pic" src="tvshop.jpg" alt="" style="height:210px" />
+      <div class="ad" style="margin-top:10px">
+        <b>МАГАЗИН НА ДИВАНЕ</b>
+        <p>Только до курантов! Гирлянда «Радуга», диск «Царь-трубка» и вата «Снег императора». Три платежа: мандарин, тост, обещание бросить.</p>
+      </div>
+      <div class="ad" style="margin-top:10px">
+        <b>ЛАРЁК 24</b>
+        <p>Водка, сигареты, вата, советы. В канун советы бесплатно. С 1 января — как обычно, дороже водки.</p>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:12px;font-size:16px">Редакция не несёт ответственности, если оливье в лаваше не взлетит. Оливье и не должно. Оно должно стоять.</p>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 4</span></div>
+</section>
+
+<section class="page" id="p5">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Вакансии · кадры · новогодняя смена</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 52</span><span>31.12.2021</span><span>стр. 5</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Требуются до курантов. После курантов — тоже</h2>
+  <img class="pic" src="ads.jpg" alt="" style="height:190px;margin:8px 0" />
+  <div class="job"><b>Дед Мороз двора</b> 3 000 ₽ + сухарики. Мешок свой. Борода — вата Юрца, если останется. Не пускать императора к ёлке без свидетелей.</div>
+  <div class="job"><b>Снегурочка без паспорта</b> 2 500 ₽. Кричать «с новым» в третий подъезд. Светлане трубку не давать — мираж, даже в канун.</div>
+  <div class="job"><b>Смотритель салюта</b> 1 900 ₽. Отличать хлопушку от учебного снаряда. Если не отличите — вы и есть вакансия.</div>
+  <div class="job"><b>Нарезчик оливье</b> 14 000 ₽ продуктами. Горошек не есть до боя курантов. Горошек всё равно съедят.</div>
+  <div class="job"><b>Каркающий метроном</b> договорная. Требования: быть Гошей. Резюме каркать с антенны.</div>
+  <div class="job"><b>Ёлочный вор наоборот</b> 800 ₽. Вернуть ёлку помойке 2 января. Помойка ждёт. Это традиция, мы проверяли.</div>
+  <div class="job"><b>Император на полставки</b> по-прежнему вакантно. Купола, ор, отсутствие Wi‑Fi. В канун — вата вместо снега.</div>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 5</span></div>
+</section>
+
+<section class="page" id="p6">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Советы · быт · встреча года</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 52</span><span>31.12.2021</span><span>стр. 6</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Как встретить год без интернета. Проверено трешкой</h2>
+  <div class="cols" style="margin-top:10px">
+    <div>
+      <img class="pic" src="yurec.jpg" alt="" style="height:280px" />
+      <p class="cap">Наш эксперт кануна. Титул — самопровозглашённый. Стаж — с ваты.</p>
+    </div>
+    <div>
+      <h3>1. Куранты — это Гоша</h3>
+      <p>Если ворон каркнул двенадцать — год наступил. Первый канал можно не включать. «Радуга» и так шипит, как правда.</p>
+      <h3>2. Оливье как дипломатия</h3>
+      <p>Соседу — с горошком. Зинаиде — без. Юрцу — в лаваше, иначе будет тост про империю.</p>
+      <h3>3. Вата не снег, но ближе, чем обещания</h3>
+      <p>Клеить на стекло. Не есть. Гоша не согласен, но Гоша — отдельная статья.</p>
+    </div>
+  </div>
+  <div class="box" style="margin-top:12px">
+    <h3>4. Учебный снаряд под ёлку не класть</h3>
+    <p>Под подушку — нельзя. В оливье — нельзя. В серванте рядом с мандаринами — слух района. Редакция против. Канун — за.</p>
+  </div>
+  <p style="margin-top:10px">5. Диск крутить по часовой: Светлана. Против: Зинаида. Если никто не берёт — с новым, император, вам и не надо.</p>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 6</span></div>
+</section>
+
+<section class="page" id="p7">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Юмор · анекдоты · очередь в ларёк</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 52</span><span>31.12.2021</span><span>стр. 7</span></div>
+  </header>
+  <div class="rule"></div>
+  <h2>Тупые новогодние. Смеяться обязательно, иначе куранты не пробьют</h2>
+  <div class="cols" style="margin-top:12px">
+    <div class="box">
+      <p>Приходит Юрец к Толику:</p>
+      <p>— Мне вату, как снег, и «Путинку», как судьбу.</p>
+      <p>— Судьбы нет.</p>
+      <p>— Тогда две «Путинки».</p>
+    </div>
+    <div class="box">
+      <p>Звонит Светлана. Юрец орёт в диск:</p>
+      <p>— С новым, богиня!</p>
+      <p>— Это справочная.</p>
+      <p>— Значит, богиня занята. Передайте: ёлка уже с помойки, яхта из линолеума — в следующем году.</p>
+    </div>
+    <div class="box">
+      <p>Лысый хер говорит:</p>
+      <p>— Юра, с новым. Ты всё ещё уволен.</p>
+      <p>— Я не Юра. Я фараон кануна.</p>
+      <p>— Тогда фараон уволен. Линолеум поздравляем отдельно.</p>
+    </div>
+    <div class="box">
+      <p>Встречаются два участковых.</p>
+      <p>— Что сегодня?</p>
+      <p>— Опять Юрец. Но с ватой.</p>
+      <p>— Статья?</p>
+      <p>— Пока жанр. Новогодний выпуск комедийной саги.</p>
+    </div>
+    <div class="box">
+      <p>Бабка Зинаида смотрит «Голубой огонёк» на «Радуге»:</p>
+      <p>— Опять помехи.</p>
+      <p>Помехи отвечают:</p>
+      <p>— С новым. Это план.</p>
+    </div>
+    <div class="box">
+      <p>Костя купил мандарины в сетке. Юрец купил вату.</p>
+      <p>В полночь у Кости цедра, у Юрца снег. Считайте сами, кто выиграл. Редакция считает Юрца. Редакция тоже подняла тост.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Вечерний Шотман</span><span>стр. 7</span></div>
+</section>
+
+<section class="page" id="p8">
+  <div class="paper-noise"></div>
+  <header class="mast">
+    <div class="city">Кроссворд · гороскоп · объявления</div>
+    <h1 style="font-size:52px">ВЕЧЕРНИЙ ШОТМАН</h1>
+    <div class="meta"><span>№ 52</span><span>31.12.2021</span><span>стр. 8</span></div>
+  </header>
+  <div class="rule"></div>
+  <div class="cols">
+    <div>
+      <h3>Кроссворд «Ёлка»</h3>
+      <p style="font-size:16px">По горизонтали: 1. То, что с помойки, но в почёте. 3. Салат кануна. 5. Ворон-метроном. 7. Вата императора.</p>
+      <p style="font-size:16px">По вертикали: 2. Бутылка очереди. 4. Запрещает салют. 6. Телевизор. 8. Улица.</p>
+      <div class="xgrid" style="margin-top:10px">
+        <div class="xcell">Ё</div><div class="xcell">Л</div><div class="xcell">К</div><div class="xcell">А</div><div class="xcell b"></div><div class="xcell">О</div><div class="xcell">Л</div><div class="xcell">И</div><div class="xcell">В</div><div class="xcell">Ь</div><div class="xcell">Е</div>
+        <div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell b"></div><div class="xcell">Г</div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div>
+        <div class="xcell">Г</div><div class="xcell">О</div><div class="xcell">Ш</div><div class="xcell">А</div><div class="xcell b"></div><div class="xcell">С</div><div class="xcell">Н</div><div class="xcell">Е</div><div class="xcell">Г</div><div class="xcell"></div><div class="xcell"></div>
+        <div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell b"></div><div class="xcell">О</div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div>
+        <div class="xcell">П</div><div class="xcell">У</div><div class="xcell">Т</div><div class="xcell">И</div><div class="xcell">Н</div><div class="xcell">К</div><div class="xcell">А</div><div class="xcell b"></div><div class="xcell">З</div><div class="xcell">И</div><div class="xcell">Н</div>
+        <div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell">А</div><div class="xcell"></div><div class="xcell b"></div><div class="xcell">И</div><div class="xcell"></div><div class="xcell"></div>
+        <div class="xcell">Р</div><div class="xcell">А</div><div class="xcell">Д</div><div class="xcell">У</div><div class="xcell">Г</div><div class="xcell">А</div><div class="xcell b"></div><div class="xcell">Ш</div><div class="xcell">О</div><div class="xcell">Т</div><div class="xcell">М</div>
+        <div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell b"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell"></div><div class="xcell">АН</div>
+      </div>
+      <p style="font-size:14px;margin-top:8px">Ответы в следующем номере. Следующий номер — когда вата станет снегом. То есть никогда. Ответы: ЁЛКА, ОЛИВЬЕ, ГОША, СНЕГ, ПУТИНКА, ЗИНА, РАДУГА, ШОТМАН.</p>
+    </div>
+    <div>
+      <img class="pic" src="neighbor.jpg" alt="" style="height:200px" />
+      <p class="cap">Тётя из 18-го проверяет ящик. Открытки нет — значит, украли. Открытка есть — значит, опять Юрец поздравил империю.</p>
+      <div class="box" style="margin-top:10px">
+        <h3>Гороскоп двора</h3>
+        <p>Рак — не пей с Юрцом. Козерог — пей, но вату не ешь. Ворон — ты и есть Гоша. Остальным: оливье, тост, и не звонить Светлане после двенадцати.</p>
+      </div>
+      <div class="ad" style="margin-top:10px">
+        <b>ПРОПАЛ СНЕГ</b>
+        <p>Кто найдёт — не надо. Император уже купил вату.</p>
+      </div>
+      <div class="ad" style="margin-top:10px">
+        <b>КУПЛЮ МАНДАРИН С ХВОСТОМ</b>
+        <p>Для Гоши. Без капусты. С историей.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Вечерний Шотман · конец года · не выбрасывать, Зинаида читает 1 января</span><span>стр. 8</span></div>
+</section>
+</body>
+</html>

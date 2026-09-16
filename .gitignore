@@ -1,0 +1,26 @@
+# зависимости и кэш
+node_modules/
+.tanstack/
+.vercel/
+
+# сборка Android — пересобирается scripts/build-apk.sh
+android/app/build/
+android/.gradle/
+android/local.properties
+
+# подпись APK — никогда не публиковать
+android/keystore.properties
+android/keystore/*.jks
+*.jks
+
+# черновики генерации, QA и разовые вложения чата
+artifacts/
+screenshots/
+attachments/
+/tmp/
+
+# системное
+.DS_Store
+*.log
+__pycache__/
+*.pyc

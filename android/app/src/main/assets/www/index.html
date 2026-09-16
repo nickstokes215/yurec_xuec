@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0b0c" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="yurec-version" content="1.62.1" />
+    <title>Жизнь Юрца</title>
+    <style>
+      html, body { margin: 0; background: #0b0b0c; color: #eceae4; min-height: 100%; }
+      #boot { padding: 48px 24px; text-align: center; font: 16px/1.4 sans-serif; }
+    </style>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("yurec-theme") || "dark";
+          if (t === "system") t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          if (t !== "light" && t !== "dark" && t !== "black") t = "dark";
+          document.documentElement.setAttribute("data-theme", t);
+          document.documentElement.style.colorScheme = t === "light" ? "light" : "dark";
+          var w = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+          document.documentElement.setAttribute("data-wide", w >= 560 ? "1" : "0");
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app"><p id="boot">Открываю сборник…</p></div>
+    <script src="data.js"></script>
+    <script src="game/secret-gate.js"></script>
+    <script src="game/av-game.js"></script>
+    <script src="game/ark-game.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

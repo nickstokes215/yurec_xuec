@@ -1,0 +1,399 @@
+[
+  {
+    "id": "4LBttP7gQX4",
+    "title": "Пилот 🤪",
+    "code": "s01e00",
+    "storySlug": "s01e00",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "11:27",
+    "thumb": "/thumbs/s01e00.jpg?v=1.53.8"
+  },
+  {
+    "id": "R7v-IACRaFA",
+    "title": "Граната в лаваше 💣",
+    "code": "s01e01",
+    "storySlug": "s01e01",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "17:22",
+    "thumb": "/thumbs/s01e01.jpg?v=1.53.8"
+  },
+  {
+    "id": "uXDa4f95i6s",
+    "title": "Лысый хер из Олимпика 🛠️",
+    "code": "s01e02",
+    "storySlug": "s01e02",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "22:01",
+    "thumb": "/thumbs/s01e02.jpg?v=1.53.8"
+  },
+  {
+    "id": "6LELd-FwqBk",
+    "title": "Царский линолеум Лысого хера 🟨",
+    "code": "s01e02b",
+    "storySlug": "s01e02b",
+    "kind": "episode",
+    "date": "2025-11-28",
+    "telegramId": 409,
+    "duration": "8:20",
+    "thumb": "/thumbs/s01e02b.jpg?v=1.53.8"
+  },
+  {
+    "id": "z93yUFkkLH8",
+    "title": "Царь без Интернета 🕸️",
+    "code": "s01e03",
+    "storySlug": "s01e03",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "11:32",
+    "thumb": "/thumbs/s01e03.jpg?v=1.53.8"
+  },
+  {
+    "id": "tt17-qciIik",
+    "title": "Мираж Светланы 💔",
+    "code": "s01e04",
+    "storySlug": "s01e04",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "8:16",
+    "thumb": "/thumbs/s01e04.jpg?v=1.53.8"
+  },
+  {
+    "id": "IL8k58yYJyk",
+    "title": "Пять косарей на балансе 📞",
+    "code": "s01e05",
+    "storySlug": "s01e05",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "12:41",
+    "thumb": "/thumbs/s01e05.jpg?v=1.53.8"
+  },
+  {
+    "id": "0WUFZ97ruRI",
+    "title": "Королевский ужин 🍽",
+    "code": "s01e06",
+    "storySlug": "s01e06",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "14:04",
+    "thumb": "/thumbs/s01e06.jpg?v=1.53.8"
+  },
+  {
+    "id": "Iw7w3O8XZ88",
+    "title": "Больничные зашквары 🏥 (тизер) 🎬",
+    "code": "s01e07",
+    "storySlug": "s01e07",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "thumb": "/thumbs/s01e07-teaser.jpg?v=1.53.8",
+    "duration": "2:37"
+  },
+  {
+    "id": "1Zl1Yix7lYM",
+    "title": "Больничные зашквары 🏥",
+    "code": "s01e07",
+    "storySlug": "s01e07",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "22:46",
+    "thumb": "/thumbs/s01e07.jpg?v=1.53.8"
+  },
+  {
+    "id": "ITbvJbYfcIA",
+    "title": "Юрец штурмует Олимпик 🔨",
+    "code": "s01e08",
+    "storySlug": "s01e08",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "14:28",
+    "thumb": "/thumbs/s01e08.jpg?v=1.53.8"
+  },
+  {
+    "id": "qBD5-ykljIY",
+    "title": "Пособие по безработице 🚌",
+    "code": "s01e09",
+    "storySlug": "s01e09",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "18:58",
+    "thumb": "/thumbs/s01e09.jpg?v=1.53.8"
+  },
+  {
+    "id": "ev4mVkLoR00",
+    "title": "Юрец против ГосУслуг 💻",
+    "code": "s01e10",
+    "storySlug": "s01e10",
+    "kind": "episode",
+    "date": "2025-07-23",
+    "duration": "17:40",
+    "thumb": "/thumbs/s01e10.jpg?v=1.53.8"
+  },
+  {
+    "id": "5inZVkcebok",
+    "title": "Аптечная любовь 💊",
+    "code": "s01e11",
+    "storySlug": "s01e11",
+    "kind": "episode",
+    "date": "2025-12-12",
+    "duration": "9:25",
+    "thumb": "/thumbs/s01e11.jpg?v=1.53.8"
+  },
+  {
+    "id": "WIvE4l4df_g",
+    "title": "Лебединая охота 🦢",
+    "code": "s01e12",
+    "storySlug": "s01e12",
+    "kind": "episode",
+    "date": "2025-07-25",
+    "duration": "16:17",
+    "thumb": "/thumbs/s01e12.jpg?v=1.53.8"
+  },
+  {
+    "id": "e62UBFKj_rY",
+    "title": "Лифтовая катастрофа 🛗",
+    "code": "s01e13",
+    "storySlug": "s01e13",
+    "kind": "episode",
+    "date": "2025-07-25",
+    "duration": "10:56",
+    "thumb": "/thumbs/s01e13.jpg?v=1.53.8"
+  },
+  {
+    "id": "ZRttHI9CF1Y",
+    "title": "Кошмар охранника 🕵️‍♂️",
+    "code": "s01e14",
+    "storySlug": "s01e14",
+    "kind": "episode",
+    "date": "2025-07-25",
+    "duration": "15:01",
+    "thumb": "/thumbs/s01e14.jpg?v=1.53.8"
+  },
+  {
+    "id": "0TPIFCpSE4A",
+    "title": "Героический дебош в \"Дикси\" 🛒",
+    "code": "s01e15",
+    "storySlug": "s01e15",
+    "kind": "episode",
+    "date": "2025-07-25",
+    "duration": "11:22",
+    "thumb": "/thumbs/s01e15.jpg?v=1.53.8"
+  },
+  {
+    "id": "Dbo6saFufGQ",
+    "title": "Деревенский кошмар 🐄",
+    "code": "s01e15b",
+    "storySlug": "s01e15b",
+    "kind": "episode",
+    "date": "2026-03-31",
+    "duration": "5:25",
+    "thumb": "/thumbs/s01e15b.jpg?v=1.53.8"
+  },
+  {
+    "id": "mK4F255HEyQ",
+    "title": "Стратосферный психоз 🌎",
+    "code": "s01e15c",
+    "storySlug": "s01e15c",
+    "kind": "episode",
+    "date": "2026-07-02",
+    "thumb": "/thumbs/s01e15c.jpg?v=1.53.8",
+    "duration": "2:59"
+  },
+  {
+    "id": "7uy2bk9wtqc",
+    "title": "Война с москитными сетками 🦟",
+    "code": "s01e16",
+    "storySlug": "s01e16",
+    "kind": "episode",
+    "date": "2025-07-25",
+    "duration": "6:10",
+    "thumb": "/thumbs/s01e16.jpg?v=1.53.8"
+  },
+  {
+    "id": "IH7qjvhrnRI",
+    "title": "Унитазный апокалипсис 🚽",
+    "code": "s01e17",
+    "storySlug": "s01e17",
+    "kind": "episode",
+    "date": "2025-07-25",
+    "duration": "6:27",
+    "thumb": "/thumbs/s01e17.jpg?v=1.53.8"
+  },
+  {
+    "id": "S9h14W0UFjQ",
+    "title": "Несостоявшаяся экспедиция 🍸",
+    "code": "s01e18",
+    "storySlug": "s01e18",
+    "kind": "episode",
+    "date": "2025-07-25",
+    "duration": "6:26",
+    "thumb": "/thumbs/s01e18.jpg?v=1.53.8"
+  },
+  {
+    "id": "a19JB__4GKQ",
+    "title": "Вербовка рептилоида 👽",
+    "code": "s01e18b",
+    "storySlug": "s01e18b",
+    "kind": "episode",
+    "date": "2026-08-17",
+    "duration": "6:50",
+    "thumb": "/thumbs/s01e18b.jpg?v=1.53.8"
+  },
+  {
+    "id": "KjTTfXdYyQw",
+    "title": "Пещерный поиск работы 🫥 (тизер)",
+    "code": "s01e29",
+    "storySlug": "s01e29",
+    "kind": "episode",
+    "date": "2025-07-25",
+    "thumb": "/thumbs/s01e29-teaser.jpg?v=1.53.8",
+    "duration": "2:18"
+  },
+  {
+    "id": "1MG3W6EqKis",
+    "title": "Король Олимпика",
+    "code": "Песня",
+    "storySlug": "song-korol-olimpika",
+    "kind": "song",
+    "date": "2026-03-31",
+    "duration": "0:31",
+    "thumb": "/thumbs/song-korol-olimpika.jpg?v=1.53.8"
+  },
+  {
+    "id": "qpMfBboT9qY",
+    "title": "Легенда Шотмана",
+    "code": "Песня",
+    "storySlug": "song-legenda-shotmana",
+    "kind": "song",
+    "date": "2026-03-31",
+    "duration": "0:31",
+    "thumb": "/thumbs/song-legenda-shotmana.jpg?v=1.53.8"
+  },
+  {
+    "id": "bfwgDHRN6yU",
+    "title": "Мечтаю вернуться",
+    "code": "Песня",
+    "storySlug": "song-mechtayu",
+    "kind": "song",
+    "date": "2026-03-31",
+    "duration": "0:31",
+    "thumb": "/thumbs/song-mechtayu.jpg?v=1.53.8"
+  },
+  {
+    "id": "1Scgt5eJV5w",
+    "title": "Линолеум",
+    "code": "Песня",
+    "storySlug": "song-linoleum",
+    "kind": "song",
+    "date": "2026-04-02",
+    "duration": "0:59",
+    "thumb": "/thumbs/song-linoleum.jpg?v=1.53.8"
+  },
+  {
+    "id": "UQqfbfJchlw",
+    "title": "Дешёвый наркоз",
+    "code": "Песня",
+    "storySlug": "song-narkoz",
+    "kind": "song",
+    "date": "2026-04-03",
+    "duration": "2:31",
+    "thumb": "/thumbs/song-narkoz.jpg?v=1.53.8"
+  },
+  {
+    "id": "Tlfmg1xEW5Q",
+    "title": "Бабка-ящер за экраном",
+    "code": "Песня",
+    "storySlug": "song-babka-yascher",
+    "kind": "song",
+    "date": "2026-05-17",
+    "duration": "2:49",
+    "thumb": "/thumbs/song-babka-yascher.jpg?v=1.53.8"
+  },
+  {
+    "id": "LzlIl79GhqU",
+    "title": "НЛО на балконе",
+    "code": "Песня",
+    "storySlug": "song-nlo",
+    "kind": "song",
+    "date": "2026-05-20",
+    "duration": "2:55",
+    "thumb": "/thumbs/song-nlo.jpg?v=1.53.8"
+  },
+  {
+    "id": "t2aQDxr_dno",
+    "title": "Чё вылупился? Узнал трофей?",
+    "code": "SHORT",
+    "storySlug": "s01e14",
+    "kind": "short",
+    "date": "2026-07-02",
+    "thumb": "/media/short-zinaida.jpg?v=1.53.8",
+    "duration": "0:28"
+  },
+  {
+    "id": "tg458",
+    "title": "Мираж Светланы",
+    "code": "ФОТО",
+    "storySlug": "",
+    "kind": "other",
+    "date": "2026-06-14",
+    "thumb": "/media/other-458-mirage-svetlany.jpg?v=1.53.8",
+    "telegramId": 458,
+    "mediaType": "image",
+    "caption": "Портрет Светланы в духе саги — мираж, на который Юрец молится у серванта."
+  },
+  {
+    "id": "tg459",
+    "title": "Скайнет и Зинаида",
+    "code": "ФОТО",
+    "storySlug": "",
+    "kind": "other",
+    "date": "2026-06-14",
+    "thumb": "/media/other-459-skynet-zinaida.jpg?v=1.53.8",
+    "telegramId": 459,
+    "mediaType": "image",
+    "caption": "Сегодня шёл домой и обомлел. На стене — свежая реклама интернета от «Скайнет». А на ней — зелёный рептилоид в капюшоне. Бабка Зинаида теперь официально продвигает связь 6–7. Юрец… ты, мать твою, был прав?!"
+  },
+  {
+    "id": "tg357",
+    "title": "Фантом Гоши",
+    "code": "ЗВОНОК",
+    "kind": "call",
+    "date": "2025-08-26",
+    "telegramId": 357,
+    "mediaType": "image",
+    "caption": "Юрец даёт послушать «Гошу» (воображаемого фантома), но слышно только тишину...",
+    "duration": "2:15"
+  },
+  {
+    "id": "tg399",
+    "title": "Дачный трип с Гошей",
+    "code": "ЗВОНОК",
+    "kind": "call",
+    "date": "2025-11-02",
+    "telegramId": 399,
+    "mediaType": "image",
+    "caption": "Юрец рассказывает дачную историю про подвиги ворона Гоши и мы даже, кажется, услышим, как он каркает...",
+    "duration": "6:29"
+  },
+  {
+    "id": "Ihu-JcFTr8A",
+    "title": "Знак в голове",
+    "code": "Песня",
+    "storySlug": "song-znak",
+    "kind": "song",
+    "date": "2026-08-15",
+    "telegramId": 474,
+    "thumb": "/media/song-znak-v-golove.jpg?v=1.53.8",
+    "duration": "2:37"
+  },
+  {
+    "id": "x73KkL3suHk",
+    "title": "Попурри",
+    "code": "SHORT",
+    "kind": "short",
+    "date": "2026-08-22",
+    "thumb": "/media/short-popurri.jpg?v=1.53.8",
+    "duration": "1:07"
+  }
+]
