@@ -12,3 +12,4 @@ WebView открывает `app/src/main/assets/www/`. Картинки и дв�
 | `keystore.properties.example` | Шаблон без пароля |
 
 Пакет: `ru.yurec.xuec`. Версия — `app/build.gradle` (`versionName` = номер из `changelog.json`).
+Сестра на iPhone — папка [`ios/`](../ios/README.md).

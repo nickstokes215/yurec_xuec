@@ -1,0 +1,99 @@
+# Собирает unsigned IPA (TrollStore / Sideloadly). Mac в Actions, не локально.
+name: Сборка IPA
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ios
+            android/app/src/main/assets/www
+            src/data/changelog.json
+            public/yurec-icon.jpg
+          sparse-checkout-cone: false
+
+      - name: Версия
+        id: ver
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          ver = json.load(open("src/data/changelog.json"))["version"]
+          pathlib.Path("ios/project.yml").write_text(
+              pathlib.Path("ios/project.yml").read_text().replace(
+                  'MARKETING_VERSION: "1.64"', f'MARKETING_VERSION: "{ver}"'
+              )
+          )
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"version={ver}\n")
+          PY
+
+      - name: www в оболочку
+        run: |
+          rm -rf ios/www
+          cp -a android/app/src/main/assets/www ios/www
+          test -f ios/www/index.html
+
+      - name: XcodeGen
+        run: brew install xcodegen
+
+      - name: Проект
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Сборка без подписи Apple
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -project Yurec.xcodeproj \
+            -scheme Yurec \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            build
+
+      - name: IPA
+        run: |
+          APP="ios/build/Build/Products/Release-iphoneos/Yurec.app"
+          test -d "$APP" || { echo "нет .app"; find ios/build -name '*.app' | head; exit 1; }
+          rm -rf Payload
+          mkdir Payload
+          cp -R "$APP" Payload/Yurec.app
+          zip -qry "yurec_xuec-${{ steps.ver.outputs.version }}.ipa" Payload
+          cp -f "yurec_xuec-${{ steps.ver.outputs.version }}.ipa" yurec_xuec.ipa
+          ls -lh yurec_xuec.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yurec_xuec-ipa
+          path: yurec_xuec.ipa
+          retention-days: 30
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.version }}
+          name: Жизнь Юрца ${{ steps.ver.outputs.version }}
+          files: |
+            yurec_xuec.ipa
+          fail_on_unmatched_files: true
+          make_latest: true
+          append_body: true
+          body: |
+            **iPhone (джейлбрейк):** `yurec_xuec.ipa` — TrollStore / Sideloadly.
+            **iPhone без джейлбрейка:** https://nickstokes215.github.io/yurec_xuec/ в Safari → «На экран Домой».

@@ -1,0 +1,47 @@
+# Веб-сборник на GitHub Pages: https://nickstokes215.github.io/yurec_xuec/
+name: Сайт
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "android/app/src/main/assets/www/**"
+      - ".github/workflows/pages.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: android/app/src/main/assets/www
+          sparse-checkout-cone: false
+
+      - name: Собрать сайт
+        run: |
+          mkdir -p _site
+          cp -a android/app/src/main/assets/www/. _site/
+          cp -f _site/index.html _site/404.html
+          touch _site/.nojekyll
+          test -f _site/index.html
+          test -f _site/app.js
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,6 +1,5 @@
 # Кладёт public/yurec_xuec.apk в GitHub Release.
-# Наспех: Actions → «Релиз APK» → Run workflow.
-# Правильно: git tag 1.63 && git push origin 1.63
+# Actions → «Релиз APK» → Run workflow. Или git tag 1.64 && git push origin 1.64
 name: Релиз APK
 
 on:
@@ -48,9 +47,11 @@ jobs:
           body: |
             Сборник «Жизнь Юрца» ${{ steps.ver.outputs.version }}.
 
-            **Android:** скачай `yurec_xuec.apk` ниже и поставь. Пакет `ru.yurec.xuec`.
+            **Сайт:** https://nickstokes215.github.io/yurec_xuec/
 
-            **iPhone:** открой веб-сборник в Safari → «Поделиться» → «На экран Домой». Нативного IPA в App Store нет — это PWA, тот же двор без Safari-рамки.
+            **Android:** `yurec_xuec.apk` — пакет `ru.yurec.xuec`.
+
+            **iPhone:** Safari → сайт → «Поделиться» → «На экран Домой». С джейлбрейком — `yurec_xuec.ipa` (TrollStore).
           files: public/yurec_xuec.apk
           fail_on_unmatched_files: true
           make_latest: true

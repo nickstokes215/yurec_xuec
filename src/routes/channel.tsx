@@ -51,7 +51,7 @@ function ChannelPage() {
           to="/apk"
           className="flex h-12 items-center justify-between rounded-xl bg-elevated px-4 text-sm font-medium"
         >
-          Поставить на телефон · iPhone и APK
+          Поставить: Android, iPhone, компьютер
         </Link>
       </div>
 

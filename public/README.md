@@ -18,7 +18,7 @@
 | `achievements/` | Зашквары двора: обложка, закрытая медаль, картинки ачивок |
 | `maps/` | Карта двора, Петербург, квартира |
 
-Корень `public/`: `og.jpg` (шапка «все»), `easter-horror.jpg`, `yurec-icon.jpg`, `favicon.svg`, `yurec_xuec.apk` (скачать сборку).
+Корень `public/`: `og.jpg` (шапка «все»), `easter-horror.jpg`, `yurec-icon.jpg`, `favicon.svg`, `yurec_xuec.apk` (Android), `yurec_xuec.ipa` (iPhone, появляется после сборки).
 
 `__grok/` — служебное для превью/PWA, руками не трогать.
 

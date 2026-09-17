@@ -22,5 +22,7 @@ attachments/
 # системное
 .DS_Store
 *.log
-__pycache__/
-*.pyc
+ios/*.xcodeproj
+ios/build/
+ios/www/
+ios/Payload/

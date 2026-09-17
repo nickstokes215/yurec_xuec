@@ -8,6 +8,7 @@ import {
   Columns3,
   Trophy,
   ArchiveRestore,
+  Github,
   Download,
   ExternalLink,
   Eye,
@@ -31,7 +32,7 @@ import {
   Vibrate,
   Youtube,
 } from "lucide-react";
-import { APP_VERSION } from "@/data/catalog";
+import { APP_VERSION, GITHUB_APK_URL } from "@/data/catalog";
 import { useTheme, type ThemeChoice } from "@/lib/use-theme";
 import {
   DEV_CHAT_URL,
@@ -676,21 +677,42 @@ function SettingsPage() {
         action="Сообщить о баге"
         onClick={() => setBugOpen(true)}
       />
-      <SettingsCard
-        tone="gold"
-        icon={<Download className="size-4" />}
-        title="Обновление"
-        titleIcon={<Download className="size-3.5" />}
-        text="Проверить, вышла ли новая сборка. Пока ведёт в пост канала, откуда ставится приложение."
-        href={UPDATE_URL}
-        action="Проверить обновления"
-      />
-      <Link
-        to="/apk"
-        className="mt-3 flex h-12 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
-      >
-        Поставить на iPhone и Android
-      </Link>
+      <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+        <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
+          <Download className="size-3.5" />
+          Скачать и поставить
+        </p>
+        <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
+          Новая сборка {APP_VERSION}: Android — APK, iPhone — сайт в Safari или IPA при джейлбрейке,
+          компьютер — веб. Два места, откуда брать файл.
+        </p>
+        <a
+          href={UPDATE_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-tg px-4 text-sm font-medium text-tg-fg"
+        >
+          <Download className="size-4" />
+          Скачать из Telegram
+          <ExternalLink className="size-4 opacity-80" />
+        </a>
+        <a
+          href={GITHUB_APK_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl bg-gold px-4 text-sm font-medium text-gold-fg"
+        >
+          <Github className="size-4" />
+          Скачать с GitHub
+          <ExternalLink className="size-4 opacity-80" />
+        </a>
+        <Link
+          to="/apk"
+          className="mt-2 flex h-11 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
+        >
+          Как поставить: Android, iPhone, компьютер
+        </Link>
+      </section>
 
       <div className="mt-8 flex items-center gap-3" role="separator">
         <span className="h-px flex-1 bg-border" />

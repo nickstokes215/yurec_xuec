@@ -10,7 +10,7 @@
 | `game*.tsx` | Игры: квест, кроссворды, Помойкобол, Алконоид |
 | `videos*.tsx`, `citats.tsx` | Медиа и цитатник |
 | `settings.tsx`, `about.tsx` | Настройки и Инфо |
-| `donate.tsx`, `offline.tsx`, `apk.tsx` | Донат, оффлайн, поставить на iPhone и Android |
+| `donate.tsx`, `offline.tsx`, `apk.tsx` | Донат, оффлайн, поставить (Android / iPhone / компьютер) |
 | `zashkvary.tsx`, `passport.tsx` | Зашквары и паспорт двора |
 | `chat.tsx` | Юрец AI |
 | `changelog.tsx` | История изменений |
