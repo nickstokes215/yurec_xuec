@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Жизнь Юрца</string>
     <string name="app_name_saga">Жизнь Юрца: Комедийная сага</string>
+    <string name="app_name_arthouse">Жизнь Юрца: Артхаусный хоррор</string>
     <string name="widget_quote_kicker">Цитата дня · Жизнь Юрца</string>
     <string name="widget_quote_desc">Цитата дня из Жизни Юрца</string>
     <string name="widget_quote_label">Цитата дня из Жизни Юрца</string>
