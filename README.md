@@ -56,7 +56,7 @@ npm run dev
 - APK: [yurec_xuec.apk](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.apk)
 - IPA: [yurec_xuec.ipa](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.ipa)
 
-Workflows: «Сайт», «Релиз APK», «Сборка IPA». Тег `1.64` кладёт оба файла в релиз.
+Workflows: «Сайт», «Релиз APK», «Сборка IPA». Тег `1.65` кладёт оба файла в релиз.
 
 ## iPhone
 

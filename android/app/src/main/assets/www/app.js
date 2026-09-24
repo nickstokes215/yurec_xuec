@@ -72,7 +72,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.64", buildAt: "17.09.2026, 02:45 МСК", history: [] };
+var APP = { version: "1.65", buildAt: "24.09.2026, 14:20 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
