@@ -34,7 +34,9 @@ final class WebViewController: UIViewController {
         wv.scrollView.contentInsetAdjustmentBehavior = .never
         wv.isOpaque = false
         wv.backgroundColor = UIColor(red: 11 / 255, green: 11 / 255, blue: 12 / 255, alpha: 1)
-        wv.underPageBackgroundColor = wv.backgroundColor
+        if #available(iOS 15.0, *) {
+            wv.underPageBackgroundColor = wv.backgroundColor
+        }
         webView = wv
 
         let root = UIView()

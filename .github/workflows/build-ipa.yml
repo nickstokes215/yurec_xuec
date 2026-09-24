@@ -28,13 +28,10 @@ jobs:
         id: ver
         run: |
           python3 - <<'PY'
-          import json, os, pathlib
+          import json, os, pathlib, re
           ver = json.load(open("src/data/changelog.json"))["version"]
-          pathlib.Path("ios/project.yml").write_text(
-              pathlib.Path("ios/project.yml").read_text().replace(
-                  'MARKETING_VERSION: "1.64"', f'MARKETING_VERSION: "{ver}"'
-              )
-          )
+          p = pathlib.Path("ios/project.yml")
+          p.write_text(re.sub(r'MARKETING_VERSION:\s*"[^"]+"', f'MARKETING_VERSION: "{ver}"', p.read_text()))
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"version={ver}\n")
           PY
