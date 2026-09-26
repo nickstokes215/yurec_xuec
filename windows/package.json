@@ -1,0 +1,34 @@
+{
+  "name": "yurec-xuec",
+  "productName": "Yurec",
+  "version": "1.65.0",
+  "description": "Жизнь Юрца",
+  "author": "Konstantin Smirnov",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --win portable --x64"
+  },
+  "devDependencies": {
+    "electron": "32.2.7",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "ru.yurec.xuec",
+    "productName": "Yurec",
+    "copyright": "Konstantin Smirnov",
+    "artifactName": "yurec_xuec.exe",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "preload.js", "www/**/*", "icon.png"],
+    "asar": true,
+    "win": {
+      "icon": "icon.png",
+      "executableName": "yurec_xuec",
+      "target": [{ "target": "portable", "arch": ["x64"] }]
+    },
+    "portable": {
+      "artifactName": "yurec_xuec.exe"
+    }
+  }
+}

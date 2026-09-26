@@ -683,8 +683,8 @@ function SettingsPage() {
           Скачать и поставить
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          Новая сборка {APP_VERSION}: Android — APK, iPhone — сайт в Safari или IPA при джейлбрейке,
-          компьютер — веб. Два места, откуда брать файл.
+          Новая сборка {APP_VERSION}: Android — APK, iPhone — Safari или IPA, Windows — EXE,
+          компьютер ещё и сайт. Два места, откуда брать файл.
         </p>
         <a
           href={UPDATE_URL}
@@ -710,7 +710,7 @@ function SettingsPage() {
           to="/apk"
           className="mt-2 flex h-11 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
         >
-          Как поставить: Android, iPhone, компьютер
+          Как поставить: Android, iPhone, Windows, сайт
         </Link>
       </section>
 

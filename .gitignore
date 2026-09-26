@@ -26,3 +26,8 @@ ios/*.xcodeproj
 ios/build/
 ios/www/
 ios/Payload/
+windows/www/
+windows/dist/
+windows/node_modules/
+public/yurec_xuec.exe
+public/yurec_xuec.ipa

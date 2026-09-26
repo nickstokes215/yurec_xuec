@@ -111,6 +111,7 @@ export const GITHUB_URL = "https://github.com/nickstokes215/yurec_xuec";
 export const GITHUB_RELEASES_URL = "https://github.com/nickstokes215/yurec_xuec/releases";
 export const GITHUB_APK_URL = "https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.apk";
 export const GITHUB_IPA_URL = "https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.ipa";
+export const GITHUB_EXE_URL = "https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.exe";
 export const GITHUB_WEB_URL = "https://nickstokes215.github.io/yurec_xuec/";
 
 export const DONATION_AMOUNT = "1000 ₽";

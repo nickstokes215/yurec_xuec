@@ -1,0 +1,84 @@
+# Собирает portable EXE (Windows x64). Сам Electron + тот же www, что APK/IPA.
+name: Сборка EXE
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  exe:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            windows
+            android/app/src/main/assets/www
+            src/data/changelog.json
+          sparse-checkout-cone: false
+
+      - name: Версия
+        id: ver
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re
+          ver = json.load(open("src/data/changelog.json"))["version"]
+          sem = ver if ver.count(".") >= 2 else ver + ".0"
+          p = pathlib.Path("windows/package.json")
+          p.write_text(re.sub(r'"version":\s*"[^"]+"', '"version": "%s"' % sem, p.read_text(), count=1))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"version={ver}\n")
+              f.write(f"sem={sem}\n")
+          PY
+
+      - name: www в оболочку
+        shell: bash
+        run: |
+          rm -rf windows/www
+          cp -a android/app/src/main/assets/www windows/www
+          test -f windows/www/index.html
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Electron
+        working-directory: windows
+        shell: bash
+        run: npm install --no-fund --no-audit
+
+      - name: Сборка portable EXE
+        working-directory: windows
+        shell: bash
+        run: npx electron-builder --win portable --x64
+
+      - name: Файл
+        shell: bash
+        run: |
+          ls -lh windows/dist
+          test -f windows/dist/yurec_xuec.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yurec_xuec-exe
+          path: windows/dist/yurec_xuec.exe
+          retention-days: 30
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.version }}
+          name: Жизнь Юрца ${{ steps.ver.outputs.version }}
+          files: windows/dist/yurec_xuec.exe
+          fail_on_unmatched_files: true
+          make_latest: true
+          append_body: true
+          body: |
+            **Windows:** `yurec_xuec.exe` — оффлайн, двойной щелчок. SmartScreen может спросить «всё равно выполнить».
+            **Сайт:** https://nickstokes215.github.io/yurec_xuec/

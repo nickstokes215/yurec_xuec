@@ -1,6 +1,6 @@
 # Жизнь Юрца
 
-Гибридный сборник: веб (Vite + React), Android (WebView) и iPhone (WKWebView / PWA). Канал [t.me/yurec_xuec](https://t.me/yurec_xuec), автор Константин Смирнов.
+Гибридный сборник: веб (Vite + React), Android (WebView), iPhone (WKWebView / PWA) и Windows (EXE). Канал [t.me/yurec_xuec](https://t.me/yurec_xuec), автор Константин Смирнов.
 
 Это не «ещё одно приложение с Юрцом». Это двор: серии, песни, визиты, кроссворды, Помойкобол, Алконоид, карта Шотмана и зашквары.
 
@@ -12,7 +12,8 @@
 | [`public/`](public/README.md) | Картинки, голоса, движки игр, APK для скачивания |
 | [`android/`](android/README.md) | Оболочка WebView, иконки, подпись |
 | [`ios/`](ios/README.md) | Оболочка WKWebView, unsigned IPA для джейлбрейка |
-| [`scripts/`](scripts/README.md) | Сборка APK / IPA, кроссворды, QA |
+| [`windows/`](windows/README.md) | Оболочка Electron, portable EXE |
+| [`scripts/`](scripts/README.md) | Сборка APK / IPA / EXE, кроссворды, QA |
 | [`docs/`](docs/README.md) | Карта проекта и исходники картинок |
 | `migrations/` | SQL для PGLite (авторизация-заготовка, в сборнике почти не используется) |
 
@@ -47,7 +48,17 @@ npm run dev
 
 На машине без Xcode скрипт только готовит `www`. Сам файл собирает GitHub Actions «Сборка IPA». Готовый файл: `public/yurec_xuec.ipa` и релиз.
 
-## GitHub: сайт, APK, IPA
+## Сборка EXE
+
+Исходники — [`windows/`](windows/README.md). Portable EXE, без магазина Microsoft. Тот же `www`, что в APK.
+
+```
+./scripts/build-exe.sh
+```
+
+Сам файл собирает GitHub Actions «Сборка EXE» на Windows. Готовый файл — релиз `yurec_xuec.exe`.
+
+## GitHub: сайт, APK, IPA, EXE
 
 Веб-сборник (компьютер и Safari): [nickstokes215.github.io/yurec_xuec](https://nickstokes215.github.io/yurec_xuec/)
 
@@ -55,8 +66,9 @@ npm run dev
 
 - APK: [yurec_xuec.apk](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.apk)
 - IPA: [yurec_xuec.ipa](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.ipa)
+- EXE: [yurec_xuec.exe](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.exe)
 
-Workflows: «Сайт», «Релиз APK», «Сборка IPA». Тег `1.65` кладёт оба файла в релиз.
+Workflows: «Сайт», «Релиз APK», «Сборка IPA», «Сборка EXE». Тег `1.65` кладёт файлы в релиз.
 
 ## iPhone
 

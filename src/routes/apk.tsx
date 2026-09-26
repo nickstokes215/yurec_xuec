@@ -5,6 +5,7 @@ import {
   APP_VERSION,
   GITHUB_APK_URL,
   GITHUB_IPA_URL,
+  GITHUB_EXE_URL,
   GITHUB_RELEASES_URL,
   GITHUB_WEB_URL,
 } from "@/data/catalog";
@@ -38,8 +39,8 @@ function ApkPage() {
       <p className="text-[11px] font-medium tracking-[0.16em] text-muted uppercase">Установка</p>
       <h2 className="mt-1 font-sans text-2xl font-semibold leading-tight">Поставить сборник</h2>
       <p className="mt-3 text-sm leading-relaxed text-muted">
-        Один двор, три оболочки. Android — APK. iPhone — сайт в Safari на экран «Домой»; если есть
-        джейлбрейк — IPA. Компьютер — веб-приложение по адресу сайта.
+        Один двор, четыре оболочки. Android — APK. iPhone — сайт в Safari на экран «Домой»; если есть
+        джейлбрейк — IPA. Windows — EXE оффлайн. Linux и Mac — сайт.
       </p>
 
       {home ? (
@@ -80,6 +81,12 @@ function ApkPage() {
           className="mt-2 flex h-12 items-center justify-center gap-2 rounded-xl bg-elevated text-sm font-medium"
         >
           IPA с GitHub
+        </a>
+        <a
+          href={GITHUB_EXE_URL}
+          className="mt-2 flex h-12 items-center justify-center gap-2 rounded-xl bg-elevated text-sm font-medium"
+        >
+          EXE с GitHub
         </a>
         <a
           href={GITHUB_RELEASES_URL}
@@ -180,21 +187,30 @@ function IphoneCard({ highlight }: { highlight: boolean }) {
 
 function DesktopCard({ highlight }: { highlight: boolean }) {
   return (
-    <Card highlight={highlight} icon={<Monitor className="size-4 text-muted" />} title="Компьютер — сайт">
-      <p className="mt-3 text-sm leading-relaxed text-muted">
-        Windows, Linux и Mac открывают тот же двор в браузере. Это веб-приложение, не установщик
-        .exe.
+    <Card highlight={highlight} icon={<Monitor className="size-4 text-muted" />} title="Компьютер — EXE и сайт">
+      <p className="mt-3 text-sm font-medium text-fg">Windows — EXE оффлайн</p>
+      <p className="mt-2 text-sm leading-relaxed text-muted">
+        Тот же двор, что в APK. Файл <span className="text-fg">yurec_xuec.exe</span>, номер {APP_VERSION}.
+        Интернет не обязателен: тексты, голоса и игры внутри.
       </p>
-      <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted">
+      <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted">
+        <li>Скачай EXE из релиза GitHub — кнопка ниже.</li>
+        <li>Двойной щелчок. Установщик не нужен: это портативный файл.</li>
+        <li>
+          Если SmartScreen напишет «неизвестный издатель» — «Подробнее» → «Всё равно выполнить». Это
+          нормально: файл не из магазина Microsoft.
+        </li>
+      </ol>
+      <p className="mt-4 text-sm font-medium text-fg">Любая система — сайт</p>
+      <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted">
         <li>
           Адрес:{" "}
           <a href={GITHUB_WEB_URL} className="text-fg underline decoration-fg/30 underline-offset-4">
             {GITHUB_WEB_URL.replace(/https:\/\//, "").replace(/\/$/, "")}
           </a>
         </li>
-        <li>Chrome / Edge: меню → «Установить приложение» / «Создать ярлык» — иконка на рабочий стол.</li>
-        <li>Safari на Mac: «Поделиться» → «Добавить на экран Домой» или просто оставь вкладку.</li>
-        <li>Firefox: сайт работает как страница. Отдельного «поставить» у него нет.</li>
+        <li>Chrome / Edge: меню → «Установить приложение» — ярлык на рабочий стол.</li>
+        <li>Safari на Mac: вкладка или «Поделиться» → на Домой.</li>
       </ol>
       <a
         href={GITHUB_WEB_URL}
