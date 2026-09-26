@@ -14,6 +14,8 @@ jobs:
   exe:
     runs-on: windows-latest
     timeout-minutes: 40
+    env:
+      PYTHONUTF8: "1"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,7 +23,7 @@ jobs:
             windows
             android/app/src/main/assets/www
             src/data/changelog.json
-          sparse-checkout-cone: false
+          sparse-checkout-cone-mode: false
 
       - name: Версия
         id: ver
@@ -29,11 +31,11 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os, pathlib, re
-          ver = json.load(open("src/data/changelog.json"))["version"]
+          ver = json.load(open("src/data/changelog.json", encoding="utf-8"))["version"]
           sem = ver if ver.count(".") >= 2 else ver + ".0"
           p = pathlib.Path("windows/package.json")
-          p.write_text(re.sub(r'"version":\s*"[^"]+"', '"version": "%s"' % sem, p.read_text(), count=1))
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+          p.write_text(re.sub(r'"version":\s*"[^"]+"', '"version": "%s"' % sem, p.read_text(encoding="utf-8"), count=1), encoding="utf-8")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"version={ver}\n")
               f.write(f"sem={sem}\n")
           PY
