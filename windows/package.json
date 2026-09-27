@@ -4,6 +4,7 @@
   "version": "1.65.0",
   "description": "Жизнь Юрца",
   "author": "Konstantin Smirnov",
+  "homepage": "https://nickstokes215.github.io/yurec_xuec/",
   "private": true,
   "main": "main.js",
   "scripts": {
