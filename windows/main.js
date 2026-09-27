@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 const VER = app.getVersion();
+const SHELL = process.platform === "win32" ? "win" : process.platform === "darwin" ? "mac" : "linux";
 app.setName("Жизнь Юрца");
 app.setAppUserModelId("ru.yurec.xuec");
 
@@ -18,7 +19,7 @@ function createWindow() {
     icon: fs.existsSync(icon) ? icon : undefined,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-      additionalArguments: ["--yurec-ver=" + VER],
+      additionalArguments: ["--yurec-ver=" + VER, "--yurec-shell=" + SHELL],
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -28,7 +29,9 @@ function createWindow() {
   win.loadFile(path.join(__dirname, "www", "index.html"));
 
   const flag =
-    "window.__NATIVE_SHELL__='win';window.__SHELL_VER__='" +
+    "window.__NATIVE_SHELL__='" +
+    SHELL +
+    "';window.__SHELL_VER__='" +
     String(VER).replace(/\\/g, "").replace(/'/g, "") +
     "';";
   win.webContents.on("dom-ready", () => {

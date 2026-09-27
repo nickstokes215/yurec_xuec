@@ -6,6 +6,7 @@ import {
   GITHUB_APK_URL,
   GITHUB_IPA_URL,
   GITHUB_EXE_URL,
+  GITHUB_DEB_URL,
   GITHUB_RELEASES_URL,
   GITHUB_WEB_URL,
 } from "@/data/catalog";
@@ -40,7 +41,7 @@ function ApkPage() {
       <h2 className="mt-1 font-sans text-2xl font-semibold leading-tight">Поставить сборник</h2>
       <p className="mt-3 text-sm leading-relaxed text-muted">
         Один двор, четыре оболочки. Android — APK. iPhone — сайт в Safari на экран «Домой»; если есть
-        джейлбрейк — IPA. Windows — EXE оффлайн. Linux и Mac — сайт.
+        джейлбрейк — IPA. Windows — EXE. Ubuntu — DEB. Mac — сайт.
       </p>
 
       {home ? (
@@ -87,6 +88,12 @@ function ApkPage() {
           className="mt-2 flex h-12 items-center justify-center gap-2 rounded-xl bg-elevated text-sm font-medium"
         >
           EXE с GitHub
+        </a>
+        <a
+          href={GITHUB_DEB_URL}
+          className="mt-2 flex h-12 items-center justify-center gap-2 rounded-xl bg-elevated text-sm font-medium"
+        >
+          DEB с GitHub
         </a>
         <a
           href={GITHUB_RELEASES_URL}
@@ -187,7 +194,7 @@ function IphoneCard({ highlight }: { highlight: boolean }) {
 
 function DesktopCard({ highlight }: { highlight: boolean }) {
   return (
-    <Card highlight={highlight} icon={<Monitor className="size-4 text-muted" />} title="Компьютер — EXE и сайт">
+    <Card highlight={highlight} icon={<Monitor className="size-4 text-muted" />} title="Компьютер — EXE, DEB и сайт">
       <p className="mt-3 text-sm font-medium text-fg">Windows — EXE оффлайн</p>
       <p className="mt-2 text-sm leading-relaxed text-muted">
         Тот же двор, что в APK. Файл <span className="text-fg">yurec_xuec.exe</span>, номер {APP_VERSION}.
@@ -200,6 +207,19 @@ function DesktopCard({ highlight }: { highlight: boolean }) {
           Если SmartScreen напишет «неизвестный издатель» — «Подробнее» → «Всё равно выполнить». Это
           нормально: файл не из магазина Microsoft.
         </li>
+      </ol>
+      <p className="mt-4 text-sm font-medium text-fg">Ubuntu — DEB</p>
+      <p className="mt-2 text-sm leading-relaxed text-muted">
+        Файл <span className="text-fg">yurec_xuec.deb</span>, номер {APP_VERSION}. Пакет{" "}
+        <span className="text-fg">yurec-xuec</span>, архитектура amd64. Двор внутри, как в EXE.
+      </p>
+      <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted">
+        <li>Скачай DEB из релиза GitHub.</li>
+        <li>
+          В терминале: <span className="text-fg">sudo apt install ./yurec_xuec.deb</span> из папки
+          загрузок. Или открой файл в «Файлы» и нажми «Установить».
+        </li>
+        <li>Ярлык «Жизнь Юрца» появится в меню приложений.</li>
       </ol>
       <p className="mt-4 text-sm font-medium text-fg">Любая система — сайт</p>
       <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted">

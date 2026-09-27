@@ -1,6 +1,6 @@
 # Жизнь Юрца
 
-Гибридный сборник: веб (Vite + React), Android (WebView), iPhone (WKWebView / PWA) и Windows (EXE). Канал [t.me/yurec_xuec](https://t.me/yurec_xuec), автор Константин Смирнов.
+Гибридный сборник: веб (Vite + React), Android (WebView), iPhone (WKWebView / PWA), Windows (EXE) и Ubuntu (DEB). Канал [t.me/yurec_xuec](https://t.me/yurec_xuec), автор Константин Смирнов.
 
 Это не «ещё одно приложение с Юрцом». Это двор: серии, песни, визиты, кроссворды, Помойкобол, Алконоид, карта Шотмана и зашквары.
 
@@ -12,8 +12,8 @@
 | [`public/`](public/README.md) | Картинки, голоса, движки игр, APK для скачивания |
 | [`android/`](android/README.md) | Оболочка WebView, иконки, подпись |
 | [`ios/`](ios/README.md) | Оболочка WKWebView, unsigned IPA для джейлбрейка |
-| [`windows/`](windows/README.md) | Оболочка Electron, portable EXE |
-| [`scripts/`](scripts/README.md) | Сборка APK / IPA / EXE, кроссворды, QA |
+| [`windows/`](windows/README.md) | Оболочка Electron: portable EXE и .deb для Ubuntu |
+| [`scripts/`](scripts/README.md) | Сборка APK / IPA / EXE / DEB, кроссворды, QA |
 | [`docs/`](docs/README.md) | Карта проекта и исходники картинок |
 | `migrations/` | SQL для PGLite (авторизация-заготовка, в сборнике почти не используется) |
 
@@ -58,7 +58,17 @@ npm run dev
 
 Сам файл собирает GitHub Actions «Сборка EXE» на Windows. Готовый файл — релиз `yurec_xuec.exe`.
 
-## GitHub: сайт, APK, IPA, EXE
+## Сборка DEB
+
+Тот же Electron и тот же `www`, пакет для Ubuntu/Debian amd64.
+
+```
+./scripts/build-deb.sh
+```
+
+Сам файл собирает GitHub Actions «Сборка DEB» на Linux. Готовый файл — релиз `yurec_xuec.deb`. Установка: `sudo apt install ./yurec_xuec.deb`.
+
+## GitHub: сайт, APK, IPA, EXE, DEB
 
 Веб-сборник (компьютер и Safari): [nickstokes215.github.io/yurec_xuec](https://nickstokes215.github.io/yurec_xuec/)
 
@@ -67,8 +77,9 @@ npm run dev
 - APK: [yurec_xuec.apk](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.apk)
 - IPA: [yurec_xuec.ipa](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.ipa)
 - EXE: [yurec_xuec.exe](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.exe)
+- DEB: [yurec_xuec.deb](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.deb)
 
-Workflows: «Сайт», «Релиз APK», «Сборка IPA», «Сборка EXE». Тег `1.65` кладёт файлы в релиз.
+Workflows: «Сайт», «Релиз APK», «Сборка IPA», «Сборка EXE», «Сборка DEB». Тег `1.65` кладёт файлы в релиз.
 
 ## iPhone
 

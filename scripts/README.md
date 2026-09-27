@@ -7,11 +7,12 @@
 | `build-apk.sh` | Собрать signed APK: копирует `public/` + `src/data` в Android assets |
 | `build-ipa.sh` | Подготовить www для iOS; IPA собирает Actions на macos |
 | `build-exe.sh` | Подготовить www для Windows; EXE собирает Actions на windows |
+| `build-deb.sh` | Подготовить www для Ubuntu; DEB собирает Actions на linux |
 | `../.github/workflows/release-apk.yml` | Кладёт APK в GitHub Release по тегу или кнопке Actions |
 | `fetch-yt-thumbs.py` | Докачать обложки YouTube в `public/thumbs/` |
 | `copy-pglite.mjs`, `migrate.mjs` | База PGLite |
 | `grok-pwa-*.mjs` | PWA, OG-карточка, тесты |
-| `.github/workflows/` | Сайт на Pages, релиз APK, сборка IPA и EXE |
+| `.github/workflows/` | Сайт на Pages, релиз APK, сборка IPA, EXE и DEB |
 | `brand-check.mjs`, `browser-smoke*.mjs`, `browser-guard.mjs` | Смоук и брендинг |
 | `crossword/` | Сборка и проверка сеток кроссвордов |
 | `press/` | Генерация разворотов газеты (исходники + `shot.mjs`) |
