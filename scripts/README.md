@@ -9,10 +9,13 @@
 | `build-exe.sh` | Подготовить www для Windows; EXE собирает Actions на windows |
 | `build-deb.sh` | Подготовить www для Ubuntu; DEB собирает Actions на linux |
 | `../.github/workflows/release-apk.yml` | Кладёт APK в GitHub Release по тегу или кнопке Actions |
+| `../.github/workflows/build-ipa.yml` | IPA — только кнопка Run workflow |
+| `../.github/workflows/build-exe.yml` | EXE — только кнопка Run workflow |
+| `../.github/workflows/build-deb.yml` | DEB — только кнопка Run workflow |
 | `fetch-yt-thumbs.py` | Докачать обложки YouTube в `public/thumbs/` |
 | `copy-pglite.mjs`, `migrate.mjs` | База PGLite |
 | `grok-pwa-*.mjs` | PWA, OG-карточка, тесты |
-| `.github/workflows/` | Сайт на Pages, релиз APK, сборка IPA, EXE и DEB |
+| `.github/workflows/` | Сайт на Pages, релиз APK по тегу; IPA/EXE/DEB только вручную |
 | `brand-check.mjs`, `browser-smoke*.mjs`, `browser-guard.mjs` | Смоук и брендинг |
 | `crossword/` | Сборка и проверка сеток кроссвордов |
 | `press/` | Генерация разворотов газеты (исходники + `shot.mjs`) |

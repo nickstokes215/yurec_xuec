@@ -1,11 +1,9 @@
 # Собирает .deb (Ubuntu/Debian x64). Тот же www, что APK/IPA/EXE.
+# Только вручную: Actions → «Сборка DEB» → Run workflow. По тегу не стартует.
 name: Сборка DEB
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "*"
 
 permissions:
   contents: write

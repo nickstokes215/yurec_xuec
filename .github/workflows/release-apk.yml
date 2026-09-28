@@ -1,5 +1,6 @@
 # Кладёт public/yurec_xuec.apk в GitHub Release.
-# Actions → «Релиз APK» → Run workflow. Или git tag 1.64 && git push origin 1.64
+# По тегу или Actions → «Релиз APK» → Run workflow.
+# IPA / EXE / DEB по тегу не стартуют — только вручную.
 name: Релиз APK
 
 on:

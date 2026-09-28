@@ -1,11 +1,9 @@
 # Собирает unsigned IPA (TrollStore / Sideloadly). Mac в Actions, не локально.
+# Только вручную: Actions → «Сборка IPA» → Run workflow. По тегу не стартует.
 name: Сборка IPA
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "*"
 
 permissions:
   contents: write

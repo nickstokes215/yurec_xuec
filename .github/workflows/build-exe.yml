@@ -1,11 +1,9 @@
 # Собирает portable EXE (Windows x64). Сам Electron + тот же www, что APK/IPA.
+# Только вручную: Actions → «Сборка EXE» → Run workflow. По тегу не стартует.
 name: Сборка EXE
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "*"
 
 permissions:
   contents: write

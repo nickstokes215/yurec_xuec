@@ -79,7 +79,7 @@ npm run dev
 - EXE: [yurec_xuec.exe](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.exe)
 - DEB: [yurec_xuec.deb](https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.deb)
 
-Workflows: «Сайт», «Релиз APK», «Сборка IPA», «Сборка EXE», «Сборка DEB». Тег `1.65` кладёт файлы в релиз.
+Workflows: «Сайт» (сам при пуше www), «Релиз APK» (тег или кнопка). «Сборка IPA», «Сборка EXE», «Сборка DEB» — только кнопка Run workflow, по тегу не стартуют.
 
 ## iPhone
 
