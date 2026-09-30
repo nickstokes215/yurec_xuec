@@ -1,0 +1,104 @@
+# Канон релиза. Тег (1.66) или кнопка «Релиз» собирает APK на GitHub
+# из исходников репозитория и кладёт yurec_xuec.apk в GitHub Release.
+# IPA / EXE / DEB сюда не входят — только явный запрос или их кнопки.
+name: Релиз
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Версия
+        id: ver
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re
+          ver = json.load(open("src/data/changelog.json"))["version"]
+          ref_type = os.environ.get("GITHUB_REF_TYPE", "")
+          ref_name = os.environ.get("GITHUB_REF_NAME", ver)
+          tag = ref_name[1:] if ref_type == "tag" and ref_name.startswith("v") else (ref_name if ref_type == "tag" else ver)
+          p = pathlib.Path("android/app/build.gradle")
+          p.write_text(re.sub(r'versionName\s+"[^"]+"', 'versionName "%s"' % ver, p.read_text(), count=1))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"version={ver}\n")
+              f.write(f"tag={tag}\n")
+          PY
+
+      - name: www
+        run: sh scripts/pack-www.sh
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Ключ подписи
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          YUREC_STORE_PASS: ${{ secrets.YUREC_STORE_PASS }}
+        run: |
+          mkdir -p android/keystore
+          if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/keystore/nickstokes215.jks
+            echo "keystore_from=secret" >> "$GITHUB_ENV"
+          elif [ -f public/yurec_xuec.apk ]; then
+            echo "Нет секрета ANDROID_KEYSTORE_BASE64 — в релиз уйдёт public/yurec_xuec.apk"
+            echo "keystore_from=fallback" >> "$GITHUB_ENV"
+          else
+            echo "Нужны секреты ANDROID_KEYSTORE_BASE64 и YUREC_STORE_PASS."
+            exit 1
+          fi
+
+      - name: Собрать APK
+        if: env.keystore_from == 'secret'
+        env:
+          YUREC_STORE_PASS: ${{ secrets.YUREC_STORE_PASS }}
+        run: |
+          test -n "$YUREC_STORE_PASS"
+          printf 'sdk.dir=%s\n' "$ANDROID_HOME" > android/local.properties
+          gradle -p android assembleRelease --no-daemon
+          test -f android/app/build/outputs/apk/release/app-release.apk
+          cp android/app/build/outputs/apk/release/app-release.apk yurec_xuec.apk
+
+      - name: APK из репозитория
+        if: env.keystore_from == 'fallback'
+        run: cp public/yurec_xuec.apk yurec_xuec.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yurec_xuec-apk
+          path: yurec_xuec.apk
+          retention-days: 30
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: Жизнь Юрца ${{ steps.ver.outputs.version }}
+          files: yurec_xuec.apk
+          fail_on_unmatched_files: true
+          make_latest: true
+          body: |
+            Сборник «Жизнь Юрца» ${{ steps.ver.outputs.version }}.
+
+            **Сайт:** https://nickstokes215.github.io/yurec_xuec/
+
+            **Android:** `yurec_xuec.apk` — пакет `ru.yurec.xuec`.
+            **iPhone:** Safari → сайт → «На экран Домой». IPA — кнопка «Сборка IPA».
+            **Windows / Ubuntu:** кнопки «Сборка EXE» / «Сборка DEB».

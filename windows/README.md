@@ -1,14 +1,13 @@
 # windows/ — оболочка Windows и Linux
 
-Electron открывает тот же `www`, что Android и iPhone. Windows — оффлайн EXE. Ubuntu — `.deb`. Магазин Microsoft и Snap не нужны.
+Electron открывает тот же `www`. Windows — portable EXE. Ubuntu — `.deb`.
 
 | Путь | Зачем |
 |---|---|
-| `main.js` | Окно Chromium, внешние ссылки в системный браузер |
-| `preload.js` | Флаг `__NATIVE_SHELL__` (win / linux) |
-| `icon.png` | Иконка ярлыка |
-| `www/` | Не хранить. Копируется из Android www на сборке |
+| `main.js` | Окно Chromium 420×860, внешние ссылки в браузер |
+| `preload.js` | `__YUREC_SHELL__` (win / linux) и версия |
+| `icon.png` | Ярлык, не меньше 256px |
+| `package.json` | electron-builder: appId `ru.yurec.xuec`, файлы `yurec_xuec.exe` / `yurec_xuec.deb` |
+| `www/` | Не в git. Копируется на сборке |
 
-Пакет: `ru.yurec.xuec` / `yurec-xuec`. Версия = номер из `changelog.json` (semver `1.65.0`).
-
-Сборка: `./scripts/build-exe.sh` или `./scripts/build-deb.sh` готовит `www`. Сами файлы собирает GitHub Actions «Сборка EXE» и «Сборка DEB». Релиз: `yurec_xuec.exe` и `yurec_xuec.deb`.
+**Не входят в авторелиз по тегу.** EXE: Actions → «Сборка EXE». DEB: «Сборка DEB». Или явный запрос в чате.

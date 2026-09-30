@@ -1,15 +1,18 @@
 # android/ — оболочка телефона
 
-WebView открывает `app/src/main/assets/www/`. Картинки и движки туда копирует `scripts/build-apk.sh` из `public/` и `src/data`.
+WebView открывает `app/src/main/assets/www/`. Картинки и JSON туда кладёт `scripts/pack-www.sh`. Gradle (`scripts/build-apk.sh` или Actions **Релиз**) заворачивает www в APK.
 
 | Путь | Зачем |
 |---|---|
-| `app/src/main/java/ru/yurec/xuec/` | MainActivity, оффлайн, ярлык, не гасить экран |
-| `app/src/main/res/` | Иконки comedy/horror, строки, тема |
-| `app/src/main/assets/www/` | Снапшот веба для APK. Не править руками — перезапишется сборкой |
-| `keystore/` | Авторская подпись. В git не класть. См. `keystore/README.md` |
-| `keystore.properties` | Пароль подписи. В git не класть |
+| [`app/`](app/README.md) | Модуль приложения |
+| `app/src/main/java/ru/yurec/xuec/` | MainActivity (WebView), оффлайн, виджет цитаты |
+| `app/src/main/res/` | Иконки comedy/horror, строки, тема, виджет |
+| `app/src/main/assets/www/` | Снапшот двора. Не править руками |
+| `keystore/` | Авторская подпись. **В git не класть** `.jks` |
+| `keystore.properties` | Пароль. **В git не класть** |
 | `keystore.properties.example` | Шаблон без пароля |
+| `app/build.gradle` | `applicationId ru.yurec.xuec`, `versionName`, `versionCode` |
 
-Пакет: `ru.yurec.xuec`. Версия — `app/build.gradle` (`versionName` = номер из `changelog.json`).
-Сестра на iPhone — папка [`ios/`](../ios/README.md).
+`versionName` должен совпадать с `src/data/changelog.json`. `versionCode` растёт на 1 с каждой новой сборкой, иначе Android не обновит поверх.
+
+Сестра на iPhone — [`ios/`](../ios/README.md). На Windows — [`windows/`](../windows/README.md).

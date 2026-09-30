@@ -1,29 +1,22 @@
-# Скрипты
+# scripts/
 
-Всё, что собирает, проверяет и генерирует сборник. Само приложение их не подключает.
+Сборка и генерация. Приложение эти файлы не импортирует.
 
-| Папка / файл | Зачем |
+| Файл / папка | Зачем |
 |---|---|
-| `build-apk.sh` | Собрать signed APK: копирует `public/` + `src/data` в Android assets |
-| `build-ipa.sh` | Подготовить www для iOS; IPA собирает Actions на macos |
-| `build-exe.sh` | Подготовить www для Windows; EXE собирает Actions на windows |
-| `build-deb.sh` | Подготовить www для Ubuntu; DEB собирает Actions на linux |
-| `../.github/workflows/release-apk.yml` | Кладёт APK в GitHub Release по тегу или кнопке Actions |
-| `../.github/workflows/build-ipa.yml` | IPA — только кнопка Run workflow |
-| `../.github/workflows/build-exe.yml` | EXE — только кнопка Run workflow |
-| `../.github/workflows/build-deb.yml` | DEB — только кнопка Run workflow |
-| `fetch-yt-thumbs.py` | Докачать обложки YouTube в `public/thumbs/` |
-| `copy-pglite.mjs`, `migrate.mjs` | База PGLite |
-| `grok-pwa-*.mjs` | PWA, OG-карточка, тесты |
-| `.github/workflows/` | Сайт на Pages, релиз APK по тегу; IPA/EXE/DEB только вручную |
-| `brand-check.mjs`, `browser-smoke*.mjs`, `browser-guard.mjs` | Смоук и брендинг |
-| `crossword/` | Сборка и проверка сеток кроссвордов |
-| `press/` | Генерация разворотов газеты (исходники + `shot.mjs`) |
-| `secret-gate.test.mjs` | Проверка, что затвор грузится и чужие слова не проходят |
-| `pack-svoya.py` | Колода «Юрца игра»: 25 тем × 80 × 5 = 10 000 вопросов в `public/game/svoya-q.json` |
+| `pack-www.sh` | Канон: `public/` + `src/data` → `android/.../www/`. Нужен перед релизом и сайтом |
+| `build-apk.sh` | pack-www + Gradle signed APK → `public/yurec_xuec.apk` |
+| `build-ipa.sh` | Готовит `ios/www`. IPA — Actions на Mac |
+| `build-exe.sh` | Готовит `windows/www`. EXE — Actions на Windows |
+| `build-deb.sh` | Готовит www. DEB — Actions на Linux |
+| [`crossword/`](crossword/README.md) | Сетки кроссвордов |
+| [`press/`](press/README.md) | Развороты газеты |
+| [`qa/`](qa/README.md) | Старые смоуки |
+| `pack-svoya.py` | Колода 10 000 вопросов → `public/game/svoya-q.json` |
+| `fetch-yt-thumbs.py` | Обложки YouTube в `public/thumbs/` |
+| `secret-gate.test.mjs` | Хеши на месте, чужие слова не проходят |
+| `brand-check.mjs`, `browser-smoke*.mjs` | Карточка OG и смоук превью |
+| `grok-pwa-*.mjs` | PWA превью Grok, не двор |
+| `copy-pglite.mjs`, `migrate.mjs` | База каркаса |
 
-Запуск кроссвордной проверки из корня проекта:
-
-```
-node scripts/crossword/validate-cw.mjs
-```
+Релиз на GitHub: [`.github/README.md`](../.github/README.md).

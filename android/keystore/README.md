@@ -7,7 +7,7 @@
 - `nickstokes215.jks` — хранилище ключа
 - Рядом, на уровень выше: `android/keystore.properties`
 
-Шаблон свойств: [`../keystore.properties.example`](../keystore.properties.example).
+Шаблон: [`../keystore.properties.example`](../keystore.properties.example).
 
 ```
 storePassword=...
@@ -15,7 +15,20 @@ keyPassword=...
 keyAlias=nickstokes215
 ```
 
-Либо переменные окружения `YUREC_STORE_PASS` / `YUREC_KEY_PASS`.
+Либо `YUREC_STORE_PASS` / `YUREC_KEY_PASS`.
+
+## GitHub Actions
+
+Чтобы workflow **Релиз** собирал APK сам, один раз в репозитории:
+
+Settings → Secrets and variables → Actions
+
+| Секрет | Откуда |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 android/keystore/nickstokes215.jks` |
+| `YUREC_STORE_PASS` | `storePassword` |
+
+Токен чата Grok секреты писать не умеет — только руками в браузере. Пока секретов нет, в релиз уходит `public/yurec_xuec.apk`, собранный локально.
 
 ## Чего не делать
 

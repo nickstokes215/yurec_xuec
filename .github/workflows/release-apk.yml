@@ -1,13 +1,9 @@
-# Кладёт public/yurec_xuec.apk в GitHub Release.
-# По тегу или Actions → «Релиз APK» → Run workflow.
-# IPA / EXE / DEB по тегу не стартуют — только вручную.
+# Только кнопка. Тег теперь поднимает workflow «Релиз» (APK+IPA+EXE).
+# Этот файл — запасной: положить уже лежащий public/yurec_xuec.apk в Release.
 name: Релиз APK
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "*"
 
 permissions:
   contents: write
@@ -28,12 +24,9 @@ jobs:
           python3 - <<'PY'
           import json, os
           ver = json.load(open("src/data/changelog.json"))["version"]
-          ref_type = os.environ.get("GITHUB_REF_TYPE", "")
-          ref_name = os.environ.get("GITHUB_REF_NAME", ver)
-          tag = ref_name[1:] if ref_type == "tag" and ref_name.startswith("v") else (ref_name if ref_type == "tag" else ver)
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"version={ver}\n")
-              f.write(f"tag={tag}\n")
+              f.write(f"tag={ver}\n")
           PY
 
       - name: Проверка APK
@@ -45,15 +38,9 @@ jobs:
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           name: Жизнь Юрца ${{ steps.ver.outputs.version }}
-          body: |
-            Сборник «Жизнь Юрца» ${{ steps.ver.outputs.version }}.
-
-            **Сайт:** https://nickstokes215.github.io/yurec_xuec/
-
-            **Android:** `yurec_xuec.apk` — пакет `ru.yurec.xuec`.
-
-            **iPhone:** Safari → сайт → «Поделиться» → «На экран Домой». С джейлбрейком — `yurec_xuec.ipa` (TrollStore).
           files: public/yurec_xuec.apk
           fail_on_unmatched_files: true
           make_latest: true
-          generate_release_notes: false
+          append_body: true
+          body: |
+            **Android:** `yurec_xuec.apk` — пакет `ru.yurec.xuec`.

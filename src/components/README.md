@@ -1,14 +1,27 @@
 # src/components/ — куски интерфейса
 
+Не экраны, а детали, которые экраны собирают.
+
 | Файл | Зачем |
 |---|---|
-| `app-shell.tsx` | Нижнее меню, шапка, тема |
-| `crossword.tsx` | Сетка кроссворда |
-| `yard-map.tsx` | Карта двора |
-| `starfall.tsx` | Звездопад зашквара |
-| `fireworks.tsx`, `rain.tsx` | Салют лицензии и дождь сброса |
-| `license-dialog.tsx`, `paid-gate.tsx` | Окно ключа |
-| `offline-*.tsx` | Скачивание и плеер оффлайн |
-| `quote-player.tsx` | Голосовые цитаты |
-| `story-card.tsx`, `chip-row.tsx`, `sort-bar.tsx` | Карточки и чипы сборника |
-| `zoom-layer.tsx` | Лупа |
+| `app-shell.tsx` | Шапка, нижнее меню (Сборник / Герои / Игры / Медиа / Ещё), прячет меню в играх |
+| `story-card.tsx` | Карточка серии на главной |
+| `chip-row.tsx` | Чипы «Все / Серии / Песни / …» |
+| `sort-bar.tsx` | Липкая сортировка |
+| `crossword.tsx` | Сетка, клавиатура, проверка, чит |
+| `yard-map.tsx` | Слои карты, пины, облачка |
+| `quote-player.tsx` | Кнопка «голос» у цитаты, mp3 из `public/quotes` |
+| `zoom-layer.tsx` | Полноэкранная лупа |
+| `license-dialog.tsx` | Окно «введи слово» |
+| `paid-gate.tsx` | Прячет платное, пока нет лицензии |
+| `offline-btn.tsx` | Скачать ролик |
+| `offline-manager.tsx` | Список скачанного |
+| `offline-player.tsx` | Плеер файла с диска |
+| `starfall.tsx` | Звездопад, когда открылся зашквар |
+| `fireworks.tsx` | Салют лицензии / плюса в «Юрца игре» |
+| `rain.tsx` | Дождь сброса статистики |
+| `scroll-top.tsx` | Кнопка наверх |
+| `preview-host-bridge.tsx` | Мост превью Grok, снаружи noop |
+| `ui/button.tsx` | Кнопка каркаса |
+
+Новый экран клади в `src/routes/`. Сюда — только то, что повторяется на двух экранах.
