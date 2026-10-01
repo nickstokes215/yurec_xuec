@@ -800,8 +800,7 @@
     function paintHud() {
       hud.querySelector(".av-score-z").textContent = "R" + (CHAIN.indexOf(levelId) + 1);
       hud.querySelector(".av-score-y").textContent = "";
-      shotBtn.hidden = !(laserShots > 0 && (phase === "play" || phase === "serve") && levelId !== "kostya");
-      shotBtn.textContent = laserShots > 1 ? ("ЛАЗЕР ×" + laserShots) : "ЛАЗЕР";
+      shotBtn.hidden = true;
     }
     function addPart(x, y, col, n) {
       var i;
@@ -1040,11 +1039,27 @@
     function fireLaser() {
       if (laserShots <= 0) return;
       if (phase !== "play" && phase !== "serve") return;
+      if (levelId === "kostya") return;
       laserShots -= 1;
       lasers.push({ x: paddle.x, y: paddle.y - 8, vy: -720, t: 0.6 });
       beep(980, 0.1, 0.05);
       buzz(20);
       paintHud();
+    }
+    function laserBtnRect() {
+      var bw = 110, bh = 38;
+      return { x: paddle.x - bw / 2, y: paddle.y - 56, w: bw, h: bh };
+    }
+    function laserArmed() {
+      return laserShots > 0 && (phase === "play" || phase === "serve") && levelId !== "kostya";
+    }
+    function hitLaserBtn(x, y) {
+      if (!laserArmed()) return false;
+      var r = laserBtnRect();
+      return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+    }
+    function inPaddleZone(y) {
+      return y >= paddle.y - 14;
     }
 
     function catchCap(kind) {
@@ -1066,7 +1081,7 @@
       } else if (kind === "grow") { paddle.w = clamp(paddle.w + 16, 52, 120); say("КАБАН. Шире двор."); }
       else if (kind === "shrink") { paddle.w = clamp(paddle.w - 16, 52, 120); say("КАРЛИК. Лови кромкой."); }
       else if (kind === "life") { lives += 1; say("ЖИЗНЬ! Ещё ракетка."); paintHud(); }
-      else if (kind === "laser") { laserShots += 1; say("ЛАЗЕР! Один заряд. Жми."); paintHud(); }
+      else if (kind === "laser") { laserShots += 1; say("ЛАЗЕР! Прицел горит. Жми ОГОНЬ над харей."); paintHud(); }
       else if (kind === "through") { fireball = dur || 8; say("ОГОНЬ! " + Math.round(fireball) + " с. Шарик жрёт кирпичи."); }
       else if (kind === "bomb") {
         var row = bricks.filter(function (br) { return br.alive && Math.abs(br.y - paddle.y) > 40; });
@@ -1784,6 +1799,46 @@
       }
     }
 
+    function drawLaserHud() {
+      if (!laserArmed()) return;
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,42,106,0.28)";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(paddle.x, paddle.y - 6);
+      ctx.lineTo(paddle.x, 14);
+      ctx.stroke();
+      ctx.setLineDash([7, 6]);
+      ctx.strokeStyle = "rgba(255,90,150,0.95)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(paddle.x, paddle.y - 6);
+      ctx.lineTo(paddle.x, 14);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#ff2a6a";
+      ctx.beginPath();
+      ctx.arc(paddle.x, 16, 4, 0, Math.PI * 2);
+      ctx.fill();
+      var r = laserBtnRect();
+      ctx.shadowColor = "rgba(255,42,106,0.55)";
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = "#ff2a6a";
+      rr(r.x, r.y, r.w, r.h, 10);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.lineWidth = 1.5;
+      rr(r.x, r.y, r.w, r.h, 10);
+      ctx.stroke();
+      ctx.fillStyle = "#fff";
+      ctx.font = "800 13px Manrope, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(laserShots > 1 ? ("ОГОНЬ ×" + laserShots) : "ОГОНЬ", r.x + r.w / 2, r.y + r.h / 2 + 1);
+      ctx.restore();
+    }
+
     function draw() {
       drawScene();
 
@@ -1907,6 +1962,7 @@
       ctx.globalAlpha = 1;
       if (phase === "serve") drawAim();
       drawPaddle();
+      drawLaserHud();
       if (vodkaT > 0) {
         var pulse = 0.28 + 0.12 * Math.sin((last || 0) * 0.01);
         ctx.save();
@@ -2035,7 +2091,11 @@
       if (e.cancelable) e.preventDefault();
       pointerX = eventX(e);
       pointerY = eventY(e);
-      if (phase === "serve") launch();
+      if (hitLaserBtn(pointerX, pointerY)) {
+        fireLaser();
+        return;
+      }
+      if (phase === "serve" && !inPaddleZone(pointerY)) launch();
     }
     function onMove(e) {
       if (e.cancelable) e.preventDefault();

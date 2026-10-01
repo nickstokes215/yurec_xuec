@@ -29,7 +29,7 @@ import { OfflinePlayer } from "@/components/offline-player";
 import { openZoom } from "@/lib/zoom";
 import { cn, rememberReturn } from "@/lib/utils";
 import { useTheme } from "@/lib/use-theme";
-import { useBookmarksNav, useInfoNav, useZashNav, useAiNav, useAiTop, applyStoredIcon, useAppIcon, APP_ICONS, applyKeepAwake } from "@/lib/use-settings";
+import { useBookmarksNav, useInfoNav, useZashNav, useAiNav, useAiTop, useCitatsNav, applyStoredIcon, useAppIcon, APP_ICONS, applyKeepAwake } from "@/lib/use-settings";
 
 const NAV = [
   { to: "/", label: "Сборник", icon: BookOpen },
@@ -57,6 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { resolved, cycle } = useTheme();
   const { show: showBooks } = useBookmarksNav();
+  const { show: showCitats } = useCitatsNav();
   const { show: showInfo } = useInfoNav();
   const { show: showZash } = useZashNav();
   const { show: showAi } = useAiNav();
@@ -89,6 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navItems = NAV.filter(
     (i) =>
       (i.to !== "/saved" || showBooks) &&
+      (i.to !== "/citats" || showCitats) &&
       (i.to !== "/zashkvary" || showZash) &&
       (i.to !== "/chat" || showAi) &&
       (i.to !== "/about" || showInfo),

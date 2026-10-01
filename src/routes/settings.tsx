@@ -46,6 +46,7 @@ import {
   useBookmarksNav,
   useInfoNav,
   useZashNav,
+  useCitatsNav,
   useAiNav,
   useAiTop,
   useAiKeep,
@@ -82,6 +83,7 @@ export const Route = createFileRoute("/settings")({ component: SettingsPage });
 function SettingsPage() {
   const theme = useTheme();
   const books = useBookmarksNav();
+  const citats = useCitatsNav();
   const info = useInfoNav();
   const zash = useZashNav();
   const ai = useAiNav();
@@ -150,7 +152,7 @@ function SettingsPage() {
           Нижнее меню
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          Закладки, Зашквары и Инфо можно убрать из нижнего ряда — остальные кнопки растянутся. По умолчанию Зашквары на месте, Закладки спрятаны. Сами разделы никуда не денутся.
+          Закладки, Цитатник, Зашквары и Инфо можно убрать из нижнего ряда — остальные кнопки растянутся. По умолчанию Зашквары на месте, Цитатник и Закладки спрятаны. Цитатник всё равно открывается с «Цитаты дня».
         </p>
         <button
           type="button"
@@ -170,6 +172,26 @@ function SettingsPage() {
             )}
           >
             {books.show ? "включены" : "отключены"}
+          </span>
+        </button>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={citats.show}
+          onClick={() => citats.set(!citats.show)}
+          className="mt-2 flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-elevated px-4 text-sm font-medium"
+        >
+          <span className="inline-flex items-center gap-2">
+            <Quote className={cn("size-4", !citats.show && "opacity-50")} />
+            Цитатник
+          </span>
+          <span
+            className={cn(
+              "rounded-full px-3 py-1 text-[11px]",
+              citats.show ? "bg-off text-off-fg" : "bg-danger text-danger-fg",
+            )}
+          >
+            {citats.show ? "включён" : "отключён"}
           </span>
         </button>
         <button
@@ -221,7 +243,7 @@ function SettingsPage() {
           <span className="rounded-full bg-elevated px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">бета</span>
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          Импровизация: пишешь Юрцу, он отвечает как в рассказах или как школьник из смс. Кнопку можно поставить вниз, наверх рядом с темой — или оба сразу.
+          Импровизация: пишешь Юрцу, он отвечает как в рассказах или как школьник из смс. По умолчанию кнопка стоит и внизу, и сверху рядом с темой. Можно оставить одну или убрать обе.
         </p>
         <button
           type="button"

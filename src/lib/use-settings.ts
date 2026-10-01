@@ -4,6 +4,7 @@ import { matchDev } from "@/lib/secret-gate";
 import changelogJson from "@/data/changelog.json";
 
 const BOOK_NAV_KEY = "yurec-bookmarks-nav";
+const CITATS_NAV_KEY = "yurec-citats-nav";
 const INFO_NAV_KEY = "yurec-info-nav";
 const ZASH_NAV_KEY = "yurec-zash-nav";
 const AI_NAV_KEY = "yurec-ai-nav";
@@ -24,6 +25,7 @@ export const SUPPORT_TG = "https://t.me/nick_stokes";
 export const SUPPORT_MAIL = "nickstokes215@gmail.com";
 
 const bookListeners = new Set<() => void>();
+const citatsListeners = new Set<() => void>();
 const infoListeners = new Set<() => void>();
 const zashListeners = new Set<() => void>();
 const aiListeners = new Set<() => void>();
@@ -38,6 +40,7 @@ const devListeners = new Set<() => void>();
 const iconListeners = new Set<() => void>();
 const nameListeners = new Set<() => void>();
 let bookCache: boolean | undefined;
+let citatsCache: boolean | undefined;
 let infoCache: boolean | undefined;
 let zashCache: boolean | undefined;
 let aiCache: boolean | undefined;
@@ -105,6 +108,26 @@ export function setBookmarksNav(on: boolean) {
   emit(bookListeners);
 }
 
+function readCitatsNav(): boolean {
+  if (citatsCache !== undefined) return citatsCache;
+  try {
+    citatsCache = localStorage.getItem(CITATS_NAV_KEY) === "1";
+  } catch {
+    citatsCache = false;
+  }
+  return citatsCache;
+}
+
+export function setCitatsNav(on: boolean) {
+  citatsCache = on;
+  try {
+    localStorage.setItem(CITATS_NAV_KEY, on ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+  emit(citatsListeners);
+}
+
 function readInfoNav(): boolean {
   if (infoCache !== undefined) return infoCache;
   try {
@@ -148,9 +171,9 @@ export function setZashNav(on: boolean) {
 function readAiNav(): boolean {
   if (aiCache !== undefined) return aiCache;
   try {
-    aiCache = localStorage.getItem(AI_NAV_KEY) === "1";
+    aiCache = localStorage.getItem(AI_NAV_KEY) !== "0";
   } catch {
-    aiCache = false;
+    aiCache = true;
   }
   return aiCache;
 }
@@ -168,9 +191,9 @@ export function setAiNav(on: boolean) {
 function readAiTop(): boolean {
   if (aiTopCache !== undefined) return aiTopCache;
   try {
-    aiTopCache = localStorage.getItem(AI_TOP_KEY) === "1";
+    aiTopCache = localStorage.getItem(AI_TOP_KEY) !== "0";
   } catch {
-    aiTopCache = false;
+    aiTopCache = true;
   }
   return aiTopCache;
 }
@@ -563,6 +586,19 @@ export function useBookmarksNav() {
   return { show, set };
 }
 
+export function useCitatsNav() {
+  const show = useSyncExternalStore(
+    (fn) => {
+      citatsListeners.add(fn);
+      return () => citatsListeners.delete(fn);
+    },
+    readCitatsNav,
+    () => false,
+  );
+  const set = useCallback((v: boolean) => setCitatsNav(v), []);
+  return { show, set };
+}
+
 export function useInfoNav() {
   const show = useSyncExternalStore(
     (fn) => {
@@ -596,7 +632,7 @@ export function useAiNav() {
       return () => aiListeners.delete(fn);
     },
     readAiNav,
-    () => false,
+    () => true,
   );
   const set = useCallback((v: boolean) => setAiNav(v), []);
   return { show, set };
@@ -609,7 +645,7 @@ export function useAiTop() {
       return () => aiTopListeners.delete(fn);
     },
     readAiTop,
-    () => false,
+    () => true,
   );
   const set = useCallback((v: boolean) => setAiTop(v), []);
   return { show, set };

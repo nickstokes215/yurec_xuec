@@ -197,6 +197,19 @@ html[data-wide="1"] .ach-board {
   text-shadow: 0 0 12px rgba(201, 162, 39, 0.45);
 }
 
+html.modal-lock,
+html.modal-lock body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  height: 100%;
+}
+html.modal-lock body {
+  position: fixed;
+  width: 100%;
+  left: 0;
+  right: 0;
+}
+
 .starfall {
   position: fixed;
   inset: 0;

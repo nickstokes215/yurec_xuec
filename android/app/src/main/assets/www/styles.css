@@ -2668,9 +2668,10 @@ html[data-wide="1"] .ach-board { grid-template-columns: 1fr 1fr 1fr; }
 }
 .ach-card.on .ach-name { color: #c9a227; }
 .ach-modal {
-  position: fixed; inset: 0; z-index: 90;
+  position: fixed; inset: 0; z-index: 120;
   display: grid; place-items: center;
   background: rgba(5,5,6,0.8); padding: 24px;
+  touch-action: none;
 }
 .ach-modal-card {
   width: 100%; max-width: 340px; overflow: hidden;

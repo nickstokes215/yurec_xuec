@@ -20,6 +20,7 @@ const FONT_KEY = "yurec-font";
 const PAPER_KEY = "yurec-paper";
 const THEME_KEY = "yurec-theme";
 const BOOK_NAV_KEY = "yurec-bookmarks-nav";
+const CITATS_NAV_KEY = "yurec-citats-nav";
 const INFO_NAV_KEY = "yurec-info-nav";
 const ZASH_NAV_KEY = "yurec-zash-nav";
 const AI_NAV_KEY = "yurec-ai-nav";
@@ -72,7 +73,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65", buildAt: "24.09.2026, 14:20 МСК", history: [] };
+var APP = { version: "1.65.1", buildAt: "01.10.2026, 16:55 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -570,6 +571,12 @@ function showBookNav() {
 function setBookNav(on) {
   try { localStorage.setItem(BOOK_NAV_KEY, on ? "1" : "0"); } catch (e) {}
 }
+function showCitatsNav() {
+  try { return localStorage.getItem(CITATS_NAV_KEY) === "1"; } catch (e) { return false; }
+}
+function setCitatsNav(on) {
+  try { localStorage.setItem(CITATS_NAV_KEY, on ? "1" : "0"); } catch (e) {}
+}
 function showInfoNav() {
   try { return localStorage.getItem(INFO_NAV_KEY) !== "0"; } catch (e) { return true; }
 }
@@ -583,13 +590,13 @@ function setZashNav(on) {
   try { localStorage.setItem(ZASH_NAV_KEY, on ? "1" : "0"); } catch (e) {}
 }
 function showAiNav() {
-  try { return localStorage.getItem(AI_NAV_KEY) === "1"; } catch (e) { return false; }
+  try { return localStorage.getItem(AI_NAV_KEY) !== "0"; } catch (e) { return true; }
 }
 function setAiNav(on) {
   try { localStorage.setItem(AI_NAV_KEY, on ? "1" : "0"); } catch (e) {}
 }
 function showAiTop() {
-  try { return localStorage.getItem(AI_TOP_KEY) === "1"; } catch (e) { return false; }
+  try { return localStorage.getItem(AI_TOP_KEY) !== "0"; } catch (e) { return true; }
 }
 function setAiTop(on) {
   try { localStorage.setItem(AI_TOP_KEY, on ? "1" : "0"); } catch (e) {}
@@ -1203,10 +1210,11 @@ function shell(inner, active, mediaCat, flags) {
   }
   var light = resolveTheme() === "light";
   var booksOn = showBookNav();
+  var citatsOn = showCitatsNav();
   var infoOn = showInfoNav();
   var zashOn = showZashNav();
   var aiOn = showAiNav();
-  var nNav = 5 + (aiOn ? 1 : 0) + (booksOn ? 1 : 0) + (zashOn ? 1 : 0) + (infoOn ? 1 : 0);
+  var nNav = 4 + (citatsOn ? 1 : 0) + (aiOn ? 1 : 0) + (booksOn ? 1 : 0) + (zashOn ? 1 : 0) + (infoOn ? 1 : 0);
   var navMod = nNav >= 9 ? " nav-9" : nNav >= 8 ? " nav-8" : nNav >= 7 ? " nav-7" : nNav === 6 ? "" : nNav === 5 ? " nav-5" : " nav-4";
   var brand = brandMeta();
   var header = '<header class="top">' +
@@ -1220,9 +1228,11 @@ function shell(inner, active, mediaCat, flags) {
         '<a class="iconbtn" href="#/settings" aria-label="Настройки">' + iconGear() + "</a>" +
       "</div></header>";
   var nav = '<nav class="nav' + navMod + '">' +
-    '<a href="#/" class="' + onNav("home") + '">' + navIco('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>') + "<span>Сборник</span></a>" +
-    '<a href="#/citats" class="' + onNav("citats") + '">' + navIco('<path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/>') + "<span>Цитатник</span></a>" +
-    '<a href="#/videos" class="' + onNav("videos") + '">' + navIco('<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M8 6V4M16 6V4"/>') + "<span>Медиа</span></a>" +
+    '<a href="#/" class="' + onNav("home") + '">' + navIco('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>') + "<span>Сборник</span></a>";
+  if (citatsOn) {
+    nav += '<a href="#/citats" class="' + onNav("citats") + '">' + navIco('<path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/>') + "<span>Цитатник</span></a>";
+  }
+  nav += '<a href="#/videos" class="' + onNav("videos") + '">' + navIco('<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M8 6V4M16 6V4"/>') + "<span>Медиа</span></a>" +
     '<a href="#/game" class="' + onNav("game") + '"><span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><circle cx="7" cy="7" r=".9" fill="currentColor" stroke="none"/><circle cx="17" cy="17" r=".9" fill="currentColor" stroke="none"/></svg></span><span>Игры</span></a>';
   if (aiOn) {
     nav += '<a href="#/chat" class="' + onNav("chat") + '"><span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg><span class="beta">бета</span></span><span>Юрец AI</span></a>';
@@ -2823,6 +2833,7 @@ function applyBackup(pack) {
 function renderSettings() {
   var choice = readTheme();
   var booksOn = showBookNav();
+  var citatsOn = showCitatsNav();
   var infoOn = showInfoNav();
   var zashOn = showZashNav();
   var aiOn = showAiNav();
@@ -2846,9 +2857,11 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<rect x="4" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="4" height="16" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/>') + "Нижнее меню</p>" +
-      '<p class="subtle">Закладки, Зашквары и Инфо можно убрать из нижнего ряда — остальные кнопки растянутся. По умолчанию Зашквары на месте, Закладки спрятаны. Сами разделы никуда не денутся.</p>' +
+      '<p class="subtle">Закладки, Цитатник, Зашквары и Инфо можно убрать из нижнего ряда — остальные кнопки растянутся. По умолчанию Зашквары на месте, Цитатник и Закладки спрятаны. Цитатник всё равно открывается с «Цитаты дня».</p>' +
       '<button type="button" class="set-switch" id="book-nav" role="switch" aria-checked="' + (booksOn ? "true" : "false") + '">' +
         "<span>Закладки</span><span class=\"pill" + (booksOn ? " on" : "") + '">' + (booksOn ? "включены" : "отключены") + "</span></button>" +
+      '<button type="button" class="set-switch" id="citats-nav" role="switch" aria-checked="' + (citatsOn ? "true" : "false") + '">' +
+        "<span>Цитатник</span><span class=\"pill" + (citatsOn ? " on" : "") + '">' + (citatsOn ? "включён" : "отключён") + "</span></button>" +
       '<button type="button" class="set-switch" id="zash-nav" role="switch" aria-checked="' + (zashOn ? "true" : "false") + '">' +
         "<span>Зашквары</span><span class=\"pill" + (zashOn ? " on" : "") + '">' + (zashOn ? "включены" : "отключены") + "</span></button>" +
       '<button type="button" class="set-switch" id="info-nav" role="switch" aria-checked="' + (infoOn ? "true" : "false") + '">' +
@@ -2856,7 +2869,7 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>') + "Юрец AI · бета</p>" +
-      '<p class="subtle">Импровизация: пишешь Юрцу. Кнопку можно поставить вниз, наверх рядом с темой — или оба сразу.</p>' +
+      '<p class="subtle">Импровизация: пишешь Юрцу. По умолчанию кнопка стоит и внизу, и сверху рядом с темой. Можно оставить одну или убрать обе.</p>' +
       '<button type="button" class="set-switch" id="ai-nav" role="switch" aria-checked="' + (aiOn ? "true" : "false") + '">' +
         "<span>Кнопка в нижнем меню</span><span class=\"pill" + (aiOn ? " on" : "") + '">' + (aiOn ? "включена" : "отключена") + "</span></button>" +
       '<button type="button" class="set-switch" id="ai-top" role="switch" aria-checked="' + (showAiTop() ? "true" : "false") + '">' +
@@ -3121,6 +3134,7 @@ function bindSettings() {
   }
   on($("#theme-system"), "click", function () { setTheme("system"); paint(); });
   on($("#book-nav"), "click", function () { setBookNav(!showBookNav()); paint(); });
+  on($("#citats-nav"), "click", function () { setCitatsNav(!showCitatsNav()); paint(); });
   on($("#zash-nav"), "click", function () { setZashNav(!showZashNav()); paint(); });
   on($("#info-nav"), "click", function () { setInfoNav(!showInfoNav()); paint(); });
   on($("#ai-nav"), "click", function () { setAiNav(!showAiNav()); paint(); });
@@ -3468,12 +3482,17 @@ function bindZashkvary() {
         (when ? '<p class="subtle" style="text-align:center;margin-top:8px">' + esc(when) + "</p>" : "") +
         '<button type="button" class="btn bar wide ach-modal-close" style="margin-top:16px">Закрыть</button></div>';
       overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) overlay.parentNode && overlay.parentNode.removeChild(overlay);
+        if (e.target === overlay) {
+          lockModal(false);
+          overlay.parentNode && overlay.parentNode.removeChild(overlay);
+        }
       });
       overlay.querySelector(".ach-modal-close").addEventListener("click", function () {
+        lockModal(false);
         if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
       });
       document.body.appendChild(overlay);
+      lockModal(true);
     });
   }
 }

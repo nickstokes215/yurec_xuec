@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ACH_COVER, ACH_LOCKED, ACH_PITCH, ACH_TOTAL, ACHIEVEMENTS, type Achievement } from "@/data/achievements";
 import { useAchievements } from "@/lib/use-achievements";
 import { openZoom } from "@/lib/zoom";
@@ -27,6 +27,27 @@ function ZashkvaryPage() {
   const { opened, when, count } = useAchievements();
   const [pick, setPick] = useState<Achievement | null>(null);
   const pickOpen = pick ? opened(pick.id) : false;
+
+  useEffect(() => {
+    if (!pick) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const y = window.scrollY;
+    html.classList.add("modal-lock");
+    body.style.top = `-${y}px`;
+    const block = (e: TouchEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && t.closest(".ach-modal-card")) return;
+      e.preventDefault();
+    };
+    document.addEventListener("touchmove", block, { passive: false });
+    return () => {
+      html.classList.remove("modal-lock");
+      body.style.top = "";
+      document.removeEventListener("touchmove", block);
+      window.scrollTo(0, y);
+    };
+  }, [pick]);
 
   return (
     <main className="px-4 pt-4 pb-10 wide:px-6">
@@ -86,12 +107,15 @@ function ZashkvaryPage() {
 
       {pick ? (
         <div
-          className="fixed inset-0 z-[85] grid place-items-center bg-void/80 px-6"
+          className="ach-modal fixed inset-0 z-[120] grid place-items-center bg-void/80 px-6"
           role="dialog"
           aria-modal="true"
           onClick={(e) => e.target === e.currentTarget && setPick(null)}
+          onTouchMove={(e) => {
+            if (!(e.target as HTMLElement).closest(".ach-modal-card")) e.preventDefault();
+          }}
         >
-          <div className="w-full max-w-[340px] overflow-hidden rounded-2xl bg-surface shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
+          <div className="ach-modal-card w-full max-w-[340px] overflow-hidden rounded-2xl bg-surface shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
             <img src={pickOpen ? pick.photo : ACH_LOCKED} alt="" className="aspect-square w-full object-cover" />
             <div className="px-4 py-4">
               <p className="text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
