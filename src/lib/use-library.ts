@@ -3,6 +3,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listBookmarks, listProgress, saveProgress, toggleBookmark } from "@/lib/library";
 import { markStoryRead, canAutoMark } from "@/lib/use-read";
 import { getStory } from "@/data/catalog";
+import { evaluateAchievements } from "@/lib/use-achievements";
 
 const BOOK_KEY = "yurec-bookmarks";
 const LAST_KEY = "yurec-last";
@@ -113,6 +114,11 @@ export function useBookmarks() {
       setSlugs(next);
       try {
         localStorage.setItem(BOOK_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      try {
+        evaluateAchievements();
       } catch {
         /* ignore */
       }

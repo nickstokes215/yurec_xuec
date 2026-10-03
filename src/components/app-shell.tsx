@@ -29,6 +29,7 @@ import { OfflinePlayer } from "@/components/offline-player";
 import { openZoom } from "@/lib/zoom";
 import { cn, rememberReturn } from "@/lib/utils";
 import { useTheme } from "@/lib/use-theme";
+import { noteVisit } from "@/lib/use-achievements";
 import { useBookmarksNav, useInfoNav, useZashNav, useAiNav, useAiTop, useCitatsNav, applyStoredIcon, useAppIcon, APP_ICONS, applyKeepAwake } from "@/lib/use-settings";
 
 const NAV = [
@@ -68,6 +69,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     applyStoredIcon();
     applyKeepAwake();
   }, []);
+  useEffect(() => {
+    noteVisit(pathname);
+  }, [pathname]);
   useEffect(() => {
     function syncWide() {
       const w = Math.max(

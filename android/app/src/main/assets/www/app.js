@@ -73,7 +73,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.1", buildAt: "01.10.2026, 16:55 МСК", history: [] };
+var APP = { version: "1.65.2", buildAt: "03.10.2026, 23:42 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -459,6 +459,7 @@ function books() {
 }
 function setBooks(list) {
   try { localStorage.setItem(BOOK_KEY, JSON.stringify(list)); } catch (e) {}
+  try { evaluateAchievements(); } catch (e2) {}
 }
 function isDev() {
   try { return localStorage.getItem(DEV_KEY) === "1"; } catch (e) { return false; }
@@ -521,6 +522,7 @@ function setAppIcon(id) {
   var v = id === "horror" ? "horror" : "comedy";
   try { localStorage.setItem(ICON_KEY, v); } catch (e) {}
   pushLauncher(v, readAppName());
+  try { evaluateAchievements(); } catch (e2) {}
 }
 function setAppName(id) {
   var v = (id === "saga" || id === "arthouse") ? id : "short";
@@ -633,6 +635,7 @@ function showSound() {
 }
 function setSound(on) {
   try { localStorage.setItem(SOUND_KEY, on ? "1" : "0"); } catch (e) {}
+  try { evaluateAchievements(); } catch (e2) {}
 }
 function showKeepAwake() {
   try { return localStorage.getItem(AWAKE_KEY) !== "0"; } catch (e) { return true; }
@@ -752,6 +755,7 @@ function applyTheme(choice) {
 function setTheme(next) {
   try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
   applyTheme(next);
+  try { noteAchFlag("theme"); } catch (e2) {}
 }
 function cycleTheme() {
   setTheme(resolveTheme() === "light" ? "dark" : "light");
@@ -2024,6 +2028,61 @@ var ACH_ITEMS = [
 var achWait = [];
 var achShowing = false;
 
+var ACH_META_KEY = "yurec-ach-meta";
+function emptyAchMeta() { return { f: {}, quotes: 0, chars: {} }; }
+function readAchMeta() {
+  try {
+    var raw = JSON.parse(localStorage.getItem(ACH_META_KEY) || "{}");
+    return {
+      f: raw.f && typeof raw.f === "object" ? raw.f : {},
+      quotes: Number(raw.quotes) || 0,
+      chars: raw.chars && typeof raw.chars === "object" ? raw.chars : {}
+    };
+  } catch (e) { return emptyAchMeta(); }
+}
+function writeAchMeta(m) {
+  try { localStorage.setItem(ACH_META_KEY, JSON.stringify(m)); } catch (e) {}
+}
+function noteAchFlag(id) {
+  var m = readAchMeta();
+  if (!m.f[id]) {
+    m.f[id] = Date.now();
+    writeAchMeta(m);
+  }
+  evaluateAchievements();
+}
+function noteAchQuote() {
+  var m = readAchMeta();
+  m.quotes = (m.quotes || 0) + 1;
+  writeAchMeta(m);
+  evaluateAchievements();
+}
+function noteAchChar(id) {
+  if (!id) return;
+  var m = readAchMeta();
+  if (!m.chars[id]) {
+    m.chars[id] = Date.now();
+    writeAchMeta(m);
+  }
+  evaluateAchievements();
+}
+function noteAchVisit(path) {
+  var p = String(path || "").split("?")[0];
+  if (p === "/characters/map" || p.indexOf("/characters/map/") === 0) noteAchFlag("map");
+  else if (p === "/citats" || p.indexOf("/citats/") === 0) noteAchFlag("citats");
+  else if (p === "/settings") noteAchFlag("settings");
+  else if (p === "/passport") noteAchFlag("passport");
+  else if (p === "/donate") noteAchFlag("donate");
+  else if (p === "/changelog") noteAchFlag("journal");
+  else if (p === "/offline") noteAchFlag("offline");
+  else if (p === "/zashkvary") noteAchFlag("zash");
+  else if (p.indexOf("/press/") === 0 || p === "/videos/press") noteAchFlag("press");
+  else if (p.indexOf("/characters/") === 0 && p !== "/characters/" && p !== "/characters") {
+    var cid = decodeURIComponent((p.split("/")[2] || "").split("?")[0]);
+    if (cid && cid !== "map") noteAchChar(cid);
+  }
+}
+
 function achSrc(id) {
   var v = (APP && APP.version) ? APP.version : "";
   var p = (id === "cover" || id === "locked") ? ("achievements/" + id + ".jpg") : ("achievements/" + id + ".jpg");
@@ -2129,6 +2188,79 @@ function achQualified(id) {
   if (id === "groza") {
     try { return localStorage.getItem(EGG_KEY) === "1"; } catch (e) { return false; }
   }
+  var meta = readAchMeta();
+  if (id === "pyat") return read.length >= 5;
+  if (id === "desyat") return read.length >= 10;
+  if (id === "polka") return read.length >= 25;
+  if (id === "kniga") {
+    if (!stories.length) return false;
+    for (i = 0; i < stories.length; i++) if (!set[stories[i].slug]) return false;
+    return true;
+  }
+  if (id === "karta") return !!meta.f.map;
+  if (id === "golos") return meta.quotes >= 1;
+  if (id === "hor") return meta.quotes >= 10;
+  if (id === "citata") return !!meta.f.citats;
+  if (id === "zakladka") {
+    try {
+      var b = JSON.parse(localStorage.getItem(BOOK_KEY) || "[]");
+      return Array.isArray(b) && b.length >= 1;
+    } catch (e) { return false; }
+  }
+  if (id === "geroi") return Object.keys(meta.chars).length >= 5;
+  if (id === "sosed") return !!meta.chars.sosed;
+  if (id === "nlo_vid") return !!meta.chars.nlo;
+  if (id === "granata") return !!meta.chars.granata;
+  if (id === "lupy") return !!meta.f.zoom;
+  if (id === "gazeta") return !!meta.f.press;
+  if (id === "passport") return !!meta.f.passport;
+  if (id === "zhurnal") return !!meta.f.journal;
+  if (id === "nastroika") return !!meta.f.settings;
+  if (id === "tema") return !!meta.f.theme;
+  if (id === "chernota") {
+    try { return localStorage.getItem(THEME_KEY) === "black"; } catch (e) { return false; }
+  }
+  if (id === "uzhas") {
+    try { return localStorage.getItem(ICON_KEY) === "horror"; } catch (e) { return false; }
+  }
+  if (id === "tikhii") {
+    try { return localStorage.getItem(SOUND_KEY) === "0"; } catch (e) { return false; }
+  }
+  if (id === "spravka") return !!meta.f.backup;
+  if (id === "chatok") {
+    if (meta.f.chat) return true;
+    try {
+      var log = JSON.parse((localStorage.getItem("yurec-ai-log") || sessionStorage.getItem("yurec-ai-log") || "[]"));
+      if (Array.isArray(log)) {
+        for (i = 0; i < log.length; i++) if (log[i] && log[i].role === "user") return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+  if (id === "donate") return !!meta.f.donate;
+  if (id === "offlayn") return !!meta.f.offline;
+  if (id === "noch") {
+    var hh = new Date().getHours();
+    if (hh >= 0 && hh < 5) {
+      if (!meta.f.noch) { meta.f.noch = Date.now(); writeAchMeta(meta); }
+      return true;
+    }
+    return !!meta.f.noch;
+  }
+  if (id === "dvornik") return !!meta.f.zash;
+  if (id === "proigral") {
+    try {
+      var avs = JSON.parse(localStorage.getItem("yurec-av-stats") || "{}");
+      var arks = JSON.parse(localStorage.getItem("yurec-ark-stats") || "{}");
+      var k;
+      for (k in avs) if (avs[k] && typeof avs[k] === "object" && Number(avs[k].l) > 0) return true;
+      for (k in arks) if (arks[k] && typeof arks[k] === "object" && Number(arks[k].l) > 0) return true;
+    } catch (e) {}
+    return false;
+  }
+  if (id === "svoya") {
+    try { return Number(localStorage.getItem("yurec-svoya-plays") || "0") >= 1; } catch (e) { return false; }
+  }
   return false;
 }
 function getAch(id) {
@@ -2159,10 +2291,6 @@ function inAvArk() {
 }
 function presentAch(items) {
   if (!items || !items.length) return;
-  if (inAvArk()) {
-    achWait = achWait.concat(items);
-    return;
-  }
   if (achShowing) {
     achWait = achWait.concat(items);
     return;
@@ -2170,10 +2298,34 @@ function presentAch(items) {
   burstStarfall(items);
 }
 function flushAchWait() {
-  if (inAvArk() || !achWait.length || achShowing) return;
+  if (!achWait.length || achShowing) return;
   var batch = achWait.slice();
   achWait = [];
   burstStarfall(batch);
+}
+function achFanfare() {
+  try {
+    if (localStorage.getItem(SOUND_KEY) === "0") return;
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    var ctx = new Ctx();
+    var now = ctx.currentTime;
+    var notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+    notes.forEach(function (freq, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = i === notes.length - 1 ? "triangle" : "square";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.09, now + 0.018 + i * 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42 + i * 0.09);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.07);
+      osc.stop(now + 0.55 + i * 0.09);
+    });
+    window.setTimeout(function () { try { ctx.close(); } catch (e) {} }, 1400);
+  } catch (e) {}
 }
 function burstStarfall(items) {
   try {
@@ -2184,15 +2336,29 @@ function burstStarfall(items) {
     root.id = "starfall-dom";
     root.className = "starfall";
     root.setAttribute("aria-hidden", "true");
-    var i, s, colors = ["#f6e7c2", "#e8c547", "#fff6d2", "#c9a227", "#ffe27a"];
-    for (i = 0; i < 48; i++) {
+    var flash = document.createElement("span");
+    flash.className = "starfall-flash";
+    root.appendChild(flash);
+    var i, s, colors = ["#f6e7c2", "#e8c547", "#fff6d2", "#c9a227", "#ffe27a", "#fff"];
+    for (i = 0; i < 56; i++) {
       s = document.createElement("span");
       s.className = "star-fall";
       s.style.left = (Math.random() * 100) + "%";
-      s.style.width = (8 + Math.random() * 16) + "px";
+      s.style.width = (8 + Math.random() * 18) + "px";
       s.style.height = s.style.width;
-      s.style.animationDelay = (Math.random() * 700) + "ms";
-      s.style.animationDuration = (1800 + Math.random() * 1200) + "ms";
+      s.style.animationDelay = (Math.random() * 480) + "ms";
+      s.style.animationDuration = (1600 + Math.random() * 1400) + "ms";
+      s.style.background = colors[i % colors.length];
+      root.appendChild(s);
+    }
+    for (i = 0; i < 24; i++) {
+      s = document.createElement("span");
+      s.className = "star-burst";
+      s.style.left = (42 + Math.random() * 16) + "%";
+      s.style.width = (6 + Math.random() * 12) + "px";
+      s.style.height = s.style.width;
+      s.style.animationDelay = (Math.random() * 120) + "ms";
+      s.style.animationDuration = (900 + Math.random() * 500) + "ms";
       s.style.background = colors[i % colors.length];
       root.appendChild(s);
     }
@@ -2216,8 +2382,9 @@ function burstStarfall(items) {
     }
     root.appendChild(card);
     document.body.appendChild(root);
+    try { achFanfare(); } catch (e3) {}
     try {
-      if (localStorage.getItem(VIBRATE_KEY) !== "0" && navigator.vibrate) navigator.vibrate([18, 40, 28]);
+      if (localStorage.getItem(VIBRATE_KEY) !== "0" && navigator.vibrate) navigator.vibrate([24, 30, 40, 30, 55]);
     } catch (e2) {}
     function closeFall() {
       var el = document.getElementById("starfall-dom");
@@ -2322,6 +2489,11 @@ function loadChatLog() {
 }
 function saveChatLog() {
   try { chatStore().setItem("yurec-ai-log", JSON.stringify((chatLog || []).slice(-80))); } catch (e) {}
+  try {
+    var i, has = false;
+    for (i = 0; i < (chatLog || []).length; i++) if (chatLog[i] && chatLog[i].role === "user") { has = true; break; }
+    if (has) noteAchFlag("chat");
+  } catch (e2) {}
 }
 function clearChatLog() {
   chatLog = null;
@@ -2779,6 +2951,7 @@ function makeBackup() {
   return { kind: "yurec-spravka", version: 1, at: new Date().toISOString(), keys: keys };
 }
 function exportBackup() {
+  try { noteAchFlag("backup"); } catch (e0) {}
   var pack = makeBackup();
   var text = JSON.stringify(pack, null, 2);
   try {
@@ -4942,6 +5115,7 @@ function renderSvoya() {
 }
 function svoyaBump() {
   try { localStorage.setItem("yurec-svoya-plays", String(svoyaPlays() + 1)); } catch (e) {}
+  try { evaluateAchievements(); } catch (e2) {}
 }
 function bindSvoya() {
   if (!svoyaPack().questions || !svoyaPack().questions.length) {
@@ -5408,7 +5582,8 @@ function qLoad(autoplay) {
   qAudio.volume = readQVol() / 100;
   if (autoplay) {
     var p = qAudio.play();
-    if (p && p.catch) p.catch(function () {});
+    if (p && p.then) p.then(function () { try { noteAchQuote(); } catch (eQ) {} }).catch(function () {});
+    else { try { noteAchQuote(); } catch (eQ2) {} }
   }
   qSyncUi();
 }
@@ -6390,6 +6565,7 @@ function tabKey(path) {
 
 function paint() {
   var r = route();
+  try { noteAchVisit(r); } catch (eVis) {}
   var avNow = r === "/game/av" || r.indexOf("/game/av") === 0;
   var arkNow = r === "/game/ark" || r.indexOf("/game/ark") === 0;
   var svoyaNow = r === "/game/svoya" || r.indexOf("/game/svoya") === 0;
@@ -6555,6 +6731,7 @@ function zImg() {
 }
 
 function openZoom(src, gallery, index, syncFn) {
+  try { noteAchFlag("zoom"); } catch (eZ) {}
   zEnsure();
   zGallery = gallery && gallery.length ? gallery : null;
   zIndex = index || 0;

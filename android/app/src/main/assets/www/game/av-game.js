@@ -1078,6 +1078,7 @@
         s.streak = 0;
       }
       saveStats(s);
+      try { window.dispatchEvent(new Event("yurec-av-wins")); } catch (e2) {}
       var t = totals(s);
       var pack = pickEnding();
       var ni = CHAIN.indexOf(diffId);

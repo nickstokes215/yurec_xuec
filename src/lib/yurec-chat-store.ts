@@ -1,4 +1,5 @@
 import type { ChatMode, ChatMsg } from "@/lib/yurec-brain";
+import { noteFlag } from "@/lib/use-achievements";
 
 const CHAT_LOG_KEY = "yurec-ai-log";
 const AI_KEEP_KEY = "yurec-ai-keep";
@@ -61,6 +62,13 @@ export function writeChatLog(list: ChatMsg[]) {
     store().setItem(CHAT_LOG_KEY, payload);
   } catch {
     /* ignore */
+  }
+  if (list.some((m) => m.role === "user")) {
+    try {
+      noteFlag("chat");
+    } catch {
+      /* ignore */
+    }
   }
 }
 

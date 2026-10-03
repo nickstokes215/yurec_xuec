@@ -2681,8 +2681,17 @@ html[data-wide="1"] .ach-board { grid-template-columns: 1fr 1fr 1fr; }
 .ach-modal-card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
 .ach-modal-card .starfall-kicker { margin-top: 16px; }
 .starfall {
-  position: fixed; inset: 0; z-index: 135; overflow: hidden;
-  background: radial-gradient(ellipse at 50% 18%, rgba(201,162,39,0.22), rgba(5,5,8,0.62));
+  position: fixed; inset: 0; z-index: 160; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 18%, rgba(201,162,39,0.34), rgba(5,5,8,0.72));
+}
+.starfall-flash {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 50% 42%, rgba(255,226,122,0.55), transparent 58%);
+  animation: starfall-flash 0.7s ease-out both;
+}
+@keyframes starfall-flash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
 .star-fall {
   position: absolute; top: -10%;
@@ -2692,10 +2701,23 @@ html[data-wide="1"] .ach-board { grid-template-columns: 1fr 1fr 1fr; }
   animation-fill-mode: forwards;
   filter: drop-shadow(0 0 6px #ffe27a);
 }
+.star-burst {
+  position: absolute; top: 42%;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation-name: yurec-starburst;
+  animation-timing-function: cubic-bezier(0.12, 0.7, 0.3, 1);
+  animation-fill-mode: forwards;
+  filter: drop-shadow(0 0 8px #ffe27a);
+}
 @keyframes yurec-starfall {
   0% { transform: translateY(-8vh) rotate(0deg); opacity: 0; }
   12% { opacity: 1; }
   100% { transform: translateY(112vh) rotate(220deg); opacity: 0.15; }
+}
+@keyframes yurec-starburst {
+  0% { transform: translate(-50%, 0) scale(0.4) rotate(0deg); opacity: 0; }
+  18% { opacity: 1; }
+  100% { transform: translate(calc(-50% + 40vw), -46vh) scale(1.15) rotate(280deg); opacity: 0; }
 }
 .starfall-card {
   position: absolute; left: 50%; top: 46%;
@@ -2728,7 +2750,7 @@ html[data-wide="1"] .ach-board { grid-template-columns: 1fr 1fr 1fr; }
 .starfall-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
 .starfall-thumbs img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
 @media (prefers-reduced-motion: reduce) {
-  .star-fall, .starfall-card { animation: none; }
+  .star-fall, .star-burst, .starfall-card, .starfall-flash { animation: none; }
 }
 
 .chat-page { display: flex; flex-direction: column; flex: 1; min-height: 0; height: auto; overflow: hidden; margin: 0; padding: 0; position: relative; }

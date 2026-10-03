@@ -7,6 +7,7 @@ import {
   type QuoteClip,
 } from "@/data/quotes";
 import { cn } from "@/lib/utils";
+import { noteQuotePlay } from "@/lib/use-achievements";
 
 let sharedAudio: HTMLAudioElement | null = null;
 const VOL_KEY = "yurec-quote-vol";
@@ -79,7 +80,10 @@ export function QuotePlayer() {
     setPos(nextPos);
     setTime(0);
     if (autoplay) {
-      void audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      void audio.play().then(() => {
+        setPlaying(true);
+        try { noteQuotePlay(); } catch { /* ignore */ }
+      }).catch(() => setPlaying(false));
     }
   }
 

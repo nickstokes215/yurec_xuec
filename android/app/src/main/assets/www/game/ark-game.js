@@ -955,6 +955,7 @@
         row.l = (row.l || 0) + 1;
         st[levelId] = row;
         localStorage.setItem("yurec-ark-stats", JSON.stringify(st));
+        window.dispatchEvent(new Event("yurec-ark-wins"));
       } catch (e) {}
     }
 

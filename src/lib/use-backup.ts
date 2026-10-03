@@ -1,3 +1,5 @@
+import { noteFlag } from "@/lib/use-achievements";
+
 const FILE_NAME = "Жизнь Юрца.json";
 
 export type BackupFile = {
@@ -32,6 +34,7 @@ export function makeBackup(): BackupFile {
 }
 
 export async function exportBackup(): Promise<string> {
+  noteFlag("backup");
   const pack = makeBackup();
   const text = JSON.stringify(pack, null, 2);
   const native = (window as Window & { YurecNative?: { saveBackup?: (name: string, json: string) => string | void } }).YurecNative;

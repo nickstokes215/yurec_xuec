@@ -3,13 +3,22 @@ import { ACHIEVEMENTS, type Achievement } from "@/data/achievements";
 import { stories } from "@/data/catalog";
 import { CROSSWORDS } from "@/data/crossword";
 import { AV_CHAIN, ARK_CHAIN } from "@/data/game";
+import { playsCount } from "@/lib/svoya-stats";
 
 const KEY = "yurec-achievements";
 const EGG_KEY = "yurec-egg";
+const META_KEY = "yurec-ach-meta";
 const QUEST_IDS = ["day", "olimpik", "tsar", "mirage", "dinner"] as const;
 
 const listeners = new Set<() => void>();
 let cache: Record<string, number> | undefined;
+let metaCache: AchMeta | undefined;
+
+type AchMeta = {
+  f: Record<string, number>;
+  quotes: number;
+  chars: Record<string, number>;
+};
 
 function emit() {
   for (const fn of listeners) fn();
@@ -42,6 +51,77 @@ function writeStore(next: Record<string, number>) {
     /* ignore */
   }
   emit();
+}
+
+function emptyMeta(): AchMeta {
+  return { f: {}, quotes: 0, chars: {} };
+}
+
+function readMeta(): AchMeta {
+  if (metaCache) return metaCache;
+  try {
+    const raw = JSON.parse(localStorage.getItem(META_KEY) || "{}") as Partial<AchMeta>;
+    metaCache = {
+      f: raw.f && typeof raw.f === "object" ? raw.f : {},
+      quotes: Number(raw.quotes) || 0,
+      chars: raw.chars && typeof raw.chars === "object" ? raw.chars : {},
+    };
+  } catch {
+    metaCache = emptyMeta();
+  }
+  return metaCache;
+}
+
+function writeMeta(next: AchMeta) {
+  metaCache = next;
+  try {
+    localStorage.setItem(META_KEY, JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function noteFlag(id: string) {
+  const m = readMeta();
+  if (m.f[id]) {
+    evaluateAchievements();
+    return;
+  }
+  m.f = { ...m.f, [id]: Date.now() };
+  writeMeta(m);
+  evaluateAchievements();
+}
+
+export function noteQuotePlay() {
+  const m = readMeta();
+  m.quotes = (m.quotes || 0) + 1;
+  writeMeta(m);
+  evaluateAchievements();
+}
+
+export function noteCharOpen(id: string) {
+  if (!id) return;
+  const m = readMeta();
+  if (!m.chars[id]) m.chars = { ...m.chars, [id]: Date.now() };
+  writeMeta(m);
+  evaluateAchievements();
+}
+
+export function noteVisit(path: string) {
+  const p = (path || "").split("?")[0];
+  if (p === "/characters/map" || p.startsWith("/characters/map/")) noteFlag("map");
+  else if (p === "/citats" || p.startsWith("/citats/")) noteFlag("citats");
+  else if (p === "/settings" || p.startsWith("/settings/")) noteFlag("settings");
+  else if (p === "/passport" || p.startsWith("/passport/")) noteFlag("passport");
+  else if (p === "/donate" || p.startsWith("/donate/")) noteFlag("donate");
+  else if (p === "/changelog" || p.startsWith("/changelog/")) noteFlag("journal");
+  else if (p === "/offline" || p.startsWith("/offline/")) noteFlag("offline");
+  else if (p === "/zashkvary" || p.startsWith("/zashkvary/")) noteFlag("zash");
+  else if (p.startsWith("/press/") || p === "/videos/press" || p.startsWith("/videos/press")) noteFlag("press");
+  else if (p.startsWith("/characters/") && p !== "/characters/" && p !== "/characters") {
+    const id = decodeURIComponent(p.slice("/characters/".length).split("/")[0] || "");
+    if (id && id !== "map") noteCharOpen(id);
+  }
 }
 
 function readSlugs(key: string): string[] {
@@ -84,13 +164,46 @@ function eggOn() {
   }
 }
 
+function flag(id: string) {
+  return Boolean(readMeta().f[id]);
+}
+
+function lostAny(): boolean {
+  try {
+    const av = JSON.parse(localStorage.getItem("yurec-av-stats") || "{}") as Record<string, { l?: number }>;
+    const ark = JSON.parse(localStorage.getItem("yurec-ark-stats") || "{}") as Record<string, { l?: number }>;
+    for (const row of Object.values(av)) if (row && typeof row === "object" && Number(row.l) > 0) return true;
+    for (const row of Object.values(ark)) if (row && typeof row === "object" && Number(row.l) > 0) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+function chatHasUser(): boolean {
+  try {
+    const raw = localStorage.getItem("yurec-ai-log") || sessionStorage.getItem("yurec-ai-log") || "[]";
+    const arr = JSON.parse(raw) as { role?: string }[];
+    return Array.isArray(arr) && arr.some((m) => m && m.role === "user");
+  } catch {
+    return false;
+  }
+}
+
 function qualified(id: string): boolean {
   const read = new Set(readSlugs("yurec-read"));
   const av = winsOf("yurec-av-wins");
   const ark = winsOf("yurec-ark-wins");
+  const meta = readMeta();
   switch (id) {
     case "rjumka":
       return read.size >= 1;
+    case "pyat":
+      return read.size >= 5;
+    case "desyat":
+      return read.size >= 10;
+    case "polka":
+      return read.size >= 25;
     case "serii":
       return stories.filter((s) => s.kind === "episode").every((s) => read.has(s.slug));
     case "vizity":
@@ -119,6 +232,8 @@ function qualified(id: string): boolean {
       const list = stories.filter((s) => s.kind === "sms");
       return list.length > 0 && list.every((s) => read.has(s.slug));
     }
+    case "kniga":
+      return stories.length > 0 && stories.every((s) => read.has(s.slug));
     case "questall":
       return QUEST_IDS.every((qid) => endingsOf(qid).length > 0);
     case "yasher":
@@ -126,9 +241,9 @@ function qualified(id: string): boolean {
     case "fsb":
       return Number(av.batya) > 0;
     case "avall":
-      return AV_CHAIN.every((id) => Number(av[id]) > 0);
+      return AV_CHAIN.every((xid) => Number(av[xid]) > 0);
     case "arkall":
-      return ARK_CHAIN.every((id) => Number(ark[id]) > 0);
+      return ARK_CHAIN.every((xid) => Number(ark[xid]) > 0);
     case "zhilet":
       try {
         return localStorage.getItem("yurec-license") === "1" || localStorage.getItem("yurec-dev") === "1";
@@ -137,6 +252,83 @@ function qualified(id: string): boolean {
       }
     case "groza":
       return eggOn();
+    case "karta":
+      return flag("map");
+    case "golos":
+      return meta.quotes >= 1;
+    case "hor":
+      return meta.quotes >= 10;
+    case "citata":
+      return flag("citats");
+    case "zakladka":
+      return readSlugs("yurec-bookmarks").length >= 1;
+    case "geroi":
+      return Object.keys(meta.chars).length >= 5;
+    case "sosed":
+      return Boolean(meta.chars.sosed);
+    case "nlo_vid":
+      return Boolean(meta.chars.nlo);
+    case "granata":
+      return Boolean(meta.chars.granata);
+    case "lupy":
+      return flag("zoom");
+    case "gazeta":
+      return flag("press");
+    case "passport":
+      return flag("passport");
+    case "zhurnal":
+      return flag("journal");
+    case "nastroika":
+      return flag("settings");
+    case "tema":
+      return flag("theme");
+    case "chernota":
+      try {
+        return localStorage.getItem("yurec-theme") === "black";
+      } catch {
+        return false;
+      }
+    case "uzhas":
+      try {
+        return localStorage.getItem("yurec-app-icon") === "horror";
+      } catch {
+        return false;
+      }
+    case "tikhii":
+      try {
+        return localStorage.getItem("yurec-sound") === "0";
+      } catch {
+        return false;
+      }
+    case "spravka":
+      return flag("backup");
+    case "chatok":
+      return flag("chat") || chatHasUser();
+    case "donate":
+      return flag("donate");
+    case "offlayn":
+      return flag("offline");
+    case "noch": {
+      const h = new Date().getHours();
+      if (h >= 0 && h < 5) {
+        if (!meta.f.noch) {
+          meta.f = { ...meta.f, noch: Date.now() };
+          writeMeta(meta);
+        }
+        return true;
+      }
+      return flag("noch");
+    }
+    case "dvornik":
+      return flag("zash");
+    case "proigral":
+      return lostAny();
+    case "svoya":
+      try {
+        return playsCount() >= 1;
+      } catch {
+        return false;
+      }
     default:
       return false;
   }
@@ -163,6 +355,7 @@ export function markEgg() {
     /* ignore */
   }
   pingProgress();
+  evaluateAchievements();
 }
 
 export function evaluateAchievements(): Achievement[] {
