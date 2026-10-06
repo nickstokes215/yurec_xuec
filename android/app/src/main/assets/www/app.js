@@ -42,6 +42,7 @@ const SORT_LEGACY = "yurec-newest";
 const GSAVE_LEGACY = "yurec-game-save";
 const GEND_LEGACY = "yurec-game-endings";
 const PAID_KEY = "yurec-license";
+const TOUR_KEY = "yurec-tour";
 const READ_KEY = "yurec-read";
 const READ_SKIP = "yurec-read-skip";
 const STUDIO_URL = "https://studio.youtube.com/channel/UCUe2h3bjoip1jAD2eX1stIA";
@@ -1222,31 +1223,31 @@ function shell(inner, active, mediaCat, flags) {
   var navMod = nNav >= 9 ? " nav-9" : nNav >= 8 ? " nav-8" : nNav >= 7 ? " nav-7" : nNav === 6 ? "" : nNav === 5 ? " nav-5" : " nav-4";
   var brand = brandMeta();
   var header = '<header class="top">' +
-      '<button type="button" class="brandbtn" data-zoom="' + brand.src + '" aria-label="Открыть баннер">' +
+      '<button type="button" class="brandbtn" data-tour="brand" data-zoom="' + brand.src + '" aria-label="Открыть баннер">' +
         '<img src="' + brand.src + '" alt="" />' +
         '<div><div class="kicker">' + brand.kicker + '</div><div class="brand">Жизнь Юрца</div></div>' +
       "</button>" +
       '<div class="top-actions">' +
         (showAiTop() ? '<a class="iconbtn" href="#/chat" aria-label="Юрец AI">' + iconSpark() + "</a>" : "") +
         '<button type="button" class="iconbtn" id="theme-btn" aria-label="Тема оформления">' + (light ? iconMoon() : iconSun()) + "</button>" +
-        '<a class="iconbtn" href="#/settings" aria-label="Настройки">' + iconGear() + "</a>" +
+        '<a class="iconbtn" href="#/settings" data-tour="settings" aria-label="Настройки">' + iconGear() + "</a>" +
       "</div></header>";
   var nav = '<nav class="nav' + navMod + '">' +
-    '<a href="#/" class="' + onNav("home") + '">' + navIco('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>') + "<span>Сборник</span></a>";
+    '<a href="#/" data-tour="nav:/" class="' + onNav("home") + '">' + navIco('<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>') + "<span>Сборник</span></a>";
   if (citatsOn) {
     nav += '<a href="#/citats" class="' + onNav("citats") + '">' + navIco('<path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/>') + "<span>Цитатник</span></a>";
   }
-  nav += '<a href="#/videos" class="' + onNav("videos") + '">' + navIco('<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M8 6V4M16 6V4"/>') + "<span>Медиа</span></a>" +
-    '<a href="#/game" class="' + onNav("game") + '"><span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><circle cx="7" cy="7" r=".9" fill="currentColor" stroke="none"/><circle cx="17" cy="17" r=".9" fill="currentColor" stroke="none"/></svg></span><span>Игры</span></a>';
+  nav += '<a href="#/videos" data-tour="nav:/videos" class="' + onNav("videos") + '">' + navIco('<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M8 6V4M16 6V4"/>') + "<span>Медиа</span></a>" +
+    '<a href="#/game" data-tour="nav:/game" class="' + onNav("game") + '"><span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><circle cx="7" cy="7" r=".9" fill="currentColor" stroke="none"/><circle cx="17" cy="17" r=".9" fill="currentColor" stroke="none"/></svg></span><span>Игры</span></a>';
   if (aiOn) {
-    nav += '<a href="#/chat" class="' + onNav("chat") + '"><span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg><span class="beta">бета</span></span><span>Юрец AI</span></a>';
+    nav += '<a href="#/chat" data-tour="nav:/chat" class="' + onNav("chat") + '"><span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg><span class="beta">бета</span></span><span>Юрец AI</span></a>';
   }
-  nav += '<a href="#/characters" class="' + onNav("chars") + '">' + navIco('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>') + "<span>Герои</span></a>";
+  nav += '<a href="#/characters" data-tour="nav:/characters" class="' + onNav("chars") + '">' + navIco('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>') + "<span>Герои</span></a>";
   if (booksOn) {
     nav += '<a href="#/saved" class="' + onNav("saved") + '">' + navIco('<path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>') + "<span>Закладки</span></a>";
   }
   if (zashOn) {
-    nav += '<a href="#/zashkvary" class="' + onNav("zash") + '">' + navIco('<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>') + "<span>Зашквары</span></a>";
+    nav += '<a href="#/zashkvary" data-tour="nav:/zashkvary" class="' + onNav("zash") + '">' + navIco('<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>') + "<span>Зашквары</span></a>";
   }
   if (infoOn) {
     nav += '<a href="#/about" class="' + onNav("about") + '">' + navIco('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>') + "<span>Инфо</span></a>";
@@ -1286,7 +1287,7 @@ function renderHome() {
   if (CITATS && CITATS.length) {
     var qd = citatOfDay();
     if (qd) {
-      html += '<a class="card quote-day" href="#/citats">' +
+      html += '<a class="card quote-day" data-tour="citat-day" href="#/citats">' +
         '<div class="kicker">Цитата дня</div>' +
         '<p class="quote-text">«' + esc(qd.text) + '»</p>' +
         '<p class="subtle">' + esc(qd.speaker) + " · " + CITATS.length + " в цитатнике</p></a>";
@@ -3029,6 +3030,11 @@ function renderSettings() {
       '<button type="button" class="btn wide' + (choice === "system" ? " on-sys" : " ghost") + '" id="theme-system">Задано системой</button>' +
     "</section>" +
     '<section class="set-card">' +
+      '<p class="set-head">' + setIco('<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>') + "Обучение</p>" +
+      '<p class="subtle">Первый запуск сам водит по двору. Потом больше не лезет. Если хочешь ещё раз — кнопка ниже.</p>' +
+      '<button type="button" class="btn wide gold" id="tour-again" style="margin-top:8px">Пройти обучение заново</button>' +
+    "</section>" +
+    '<section class="set-card">' +
       '<p class="set-head">' + setIco('<rect x="4" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="4" height="16" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/>') + "Нижнее меню</p>" +
       '<p class="subtle">Закладки, Цитатник, Зашквары и Инфо можно убрать из нижнего ряда — остальные кнопки растянутся. По умолчанию Зашквары на месте, Цитатник и Закладки спрятаны. Цитатник всё равно открывается с «Цитаты дня».</p>' +
       '<button type="button" class="set-switch" id="book-nav" role="switch" aria-checked="' + (booksOn ? "true" : "false") + '">' +
@@ -3306,6 +3312,10 @@ function bindSettings() {
     });
   }
   on($("#theme-system"), "click", function () { setTheme("system"); paint(); });
+  on($("#tour-again"), "click", function () {
+    go("/");
+    window.setTimeout(function () { startTour(true); }, 80);
+  });
   on($("#book-nav"), "click", function () { setBookNav(!showBookNav()); paint(); });
   on($("#citats-nav"), "click", function () { setCitatsNav(!showCitatsNav()); paint(); });
   on($("#zash-nav"), "click", function () { setZashNav(!showZashNav()); paint(); });
@@ -6699,6 +6709,7 @@ function paint() {
     if (chipsAfter && chipMap[r] != null) chipsAfter.scrollLeft = chipMap[r];
     updateTotop();
     try { evaluateAchievements(); } catch (errAch) {}
+    try { maybeStartTour(); } catch (errTour) {}
   }, 0);
 }
 
@@ -6952,7 +6963,149 @@ function parentPath(r) {
   if (r === "/videos" || r === "/game" || r === "/characters" || r === "/citats" || r === "/saved" || r === "/about" || r === "/donate" || r === "/offline" || r === "/changelog" || r === "/apk" || r === "/ideas" || r === "/channel" || r === "/settings" || r === "/passport" || r === "/zashkvary") return "/";
   return "/";
 }
+
+var tourOn = false;
+var tourIdx = 0;
+var tourTriedAuto = false;
+var TOUR_STEPS = [
+  { id: "hello", title: "Алё, двор открыт", text: "Это Жизнь Юрца. Сборник с Шотмана: рассказы, ролики, игры и болтовня со мной. Сейчас ткну пальцем — где что лежит." },
+  { id: "brand", title: "Шапка", text: "Слева — двор. Справа тема (солнце/луна) и шестерёнка. Шестерёнка — настройки. Если заблудился, всегда сюда.", target: "brand" },
+  { id: "citat", title: "Цитата дня", text: "Каждый заход новая. Ткнул карточку — весь цитатник. В нижнем меню его можно спрятать, вход всё равно здесь.", target: "citat-day" },
+  { id: "home", title: "Сборник", text: "Серии, песни, визиты, бонусы. Ищи Юрца, Зинаиду, Гошу. Отметил «прочитано» — двор помнит.", target: "nav:/" },
+  { id: "media", title: "Медиа", text: "Ролики, шортсы, песни, газета, звонки. Киоск в кармане, можно и без интернета — если скачал.", target: "nav:/videos" },
+  { id: "games", title: "Игры", text: "Помойкобол, Алконоид, кроссворды, квест, своя игра. Проиграл — тоже бывает медаль. Двор уважает лузеров.", target: "nav:/game" },
+  { id: "ai", title: "Юрец AI", text: "Пишешь — орёт в ответ. Бета, хамоватый, свой. Кнопка есть и внизу, и сверху, если не выключил.", target: "nav:/chat" },
+  { id: "chars", title: "Герои", text: "Карточки двора и карта Шотмана. Сосед, НЛО, граната, Светка — все на месте.", target: "nav:/characters" },
+  { id: "zash", title: "Зашквары", text: "Медали. За подвиг и за то, что просто ткнул не туда. Пятьдесят штук. Двор выдаёт сам.", target: "nav:/zashkvary" },
+  { id: "settings", title: "Настройки", text: "Тема, нижнее меню, справка, обучение. Это окно больше само не вылезет. Захочешь ещё раз — кнопка «Пройти обучение заново».", target: "settings" }
+];
+
+function tourSeen() {
+  try { return localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { return true; }
+}
+function markTourSeen() {
+  try { localStorage.setItem(TOUR_KEY, "1"); } catch (e) {}
+}
+function shouldAutoTour() {
+  if (tourSeen()) return false;
+  try {
+    if (localStorage.getItem("yurec-last")) return false;
+    var read = JSON.parse(localStorage.getItem(READ_KEY) || "[]");
+    if (read && read.length) return false;
+    var av = localStorage.getItem("yurec-av-wins");
+    if (av && av !== "{}" && av !== "null") return false;
+    if (localStorage.getItem(PAID_KEY) === "1") return false;
+  } catch (e) { return false; }
+  return true;
+}
+function tourLive() {
+  var out = [], i, s;
+  for (i = 0; i < TOUR_STEPS.length; i++) {
+    s = TOUR_STEPS[i];
+    if (!s.target || document.querySelector('[data-tour="' + s.target + '"]')) out.push(s);
+  }
+  return out;
+}
+function startTour(force) {
+  if (force) {
+    try { localStorage.removeItem(TOUR_KEY); } catch (e) {}
+  }
+  if (route() !== "/") go("/");
+  tourOn = true;
+  tourIdx = 0;
+  lockModal(true);
+  window.setTimeout(drawTour, 80);
+}
+function stopTour() {
+  tourOn = false;
+  tourIdx = 0;
+  markTourSeen();
+  lockModal(false);
+  var el = document.getElementById("tour-root");
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+function drawTour() {
+  if (!tourOn) return;
+  var pack = tourLive();
+  if (!pack.length) { stopTour(); return; }
+  if (tourIdx >= pack.length) tourIdx = pack.length - 1;
+  if (tourIdx < 0) tourIdx = 0;
+  var cur = pack[tourIdx];
+  var last = tourIdx >= pack.length - 1;
+  var hole = null;
+  if (cur.target) {
+    var t = document.querySelector('[data-tour="' + cur.target + '"]');
+    if (t) {
+      var b = t.getBoundingClientRect();
+      if (b.width >= 4 && b.height >= 4) {
+        var pad = 6;
+        hole = {
+          top: Math.max(6, b.top - pad),
+          left: Math.max(6, b.left - pad),
+          width: Math.min(window.innerWidth - 12, b.width + pad * 2),
+          height: Math.min(window.innerHeight - 12, b.height + pad * 2),
+          r: Math.min(18, Math.round(Math.min(b.width, b.height) / 4) + 8)
+        };
+      }
+    }
+  }
+  var root = document.getElementById("tour-root");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "tour-root";
+    root.className = "tour";
+    document.body.appendChild(root);
+  }
+  var placeUp = hole ? hole.top + hole.height > window.innerHeight * 0.55 : false;
+  var cardStyle = "";
+  var cardClass = "tour-card";
+  if (!hole) cardClass += " tour-card-mid";
+  else if (placeUp) {
+    cardClass += " tour-card-up";
+    cardStyle = "bottom:" + Math.max(16, window.innerHeight - hole.top + 12) + "px";
+  } else {
+    cardClass += " tour-card-down";
+    cardStyle = "top:" + Math.min(window.innerHeight - 200, hole.top + hole.height + 12) + "px";
+  }
+  var html = '<button type="button" class="tour-dim" aria-label="Пропустить обучение"></button>';
+  if (hole) {
+    html += '<span class="tour-hole" style="top:' + hole.top + "px;left:" + hole.left + "px;width:" + hole.width + "px;height:" + hole.height + "px;border-radius:" + hole.r + 'px"></span>';
+  }
+  html += '<div class="' + cardClass + '" style="' + cardStyle + '">' +
+    '<p class="tour-kicker">Обучение · ' + (tourIdx + 1) + " / " + pack.length + "</p>" +
+    '<p class="tour-title">' + esc(cur.title) + "</p>" +
+    '<p class="tour-text">' + esc(cur.text) + "</p>" +
+    '<div class="tour-row">' +
+      '<button type="button" class="tour-skip" id="tour-skip">' + (last ? "Закрыть" : "Пропустить") + "</button>" +
+      (tourIdx > 0 ? '<button type="button" class="tour-next ghost" id="tour-back">Назад</button>' : "") +
+      '<button type="button" class="tour-next" id="tour-next">' + (last ? "Понял, пошёл" : "Дальше") + "</button>" +
+    "</div></div>";
+  root.innerHTML = html;
+  var skip = document.getElementById("tour-skip");
+  var next = document.getElementById("tour-next");
+  var back = document.getElementById("tour-back");
+  var dim = root.querySelector(".tour-dim");
+  if (skip) skip.onclick = function () { stopTour(); };
+  if (dim) dim.onclick = function () { stopTour(); };
+  if (back) back.onclick = function () { tourIdx = Math.max(0, tourIdx - 1); drawTour(); };
+  if (next) next.onclick = function () {
+    if (last) stopTour();
+    else { tourIdx += 1; drawTour(); }
+  };
+}
+function maybeStartTour() {
+  if (tourOn) { drawTour(); return; }
+  if (tourTriedAuto) return;
+  tourTriedAuto = true;
+  if (shouldAutoTour()) window.setTimeout(function () { startTour(false); }, 500);
+}
+
 function yurecBack() {
+  if (tourOn) {
+    if (tourIdx <= 0) stopTour();
+    else { tourIdx -= 1; drawTour(); }
+    return true;
+  }
   if (offOpen) {
     closeOffPlayer();
     return true;

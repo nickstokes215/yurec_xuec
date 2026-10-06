@@ -118,6 +118,7 @@ function Home() {
 
       <Link
         to="/citats"
+        data-tour="citat-day"
         className="mt-4 block rounded-2xl bg-surface px-4 py-3 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
       >
         <p className="text-[11px] font-medium tracking-[0.16em] text-accent uppercase">Цитата дня</p>

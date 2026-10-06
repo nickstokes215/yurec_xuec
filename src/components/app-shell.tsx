@@ -23,6 +23,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { FireworksHost } from "@/components/fireworks";
 import { RainHost } from "@/components/rain";
 import { StarfallHost } from "@/components/starfall";
+import { TourHost } from "@/components/tour";
 import { ScrollTop } from "@/components/scroll-top";
 import { ZoomLayer } from "@/components/zoom-layer";
 import { OfflinePlayer } from "@/components/offline-player";
@@ -215,7 +216,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         {!hideChrome && (
           <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-bg/92 px-4 backdrop-blur-sm">
-            <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5" data-tour="brand">
               <button
                 type="button"
                 onClick={() => openZoom(iconMeta.src)}
@@ -256,6 +257,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 to="/settings"
                 aria-label="Настройки"
+                data-tour="settings"
                 className="grid size-11 place-items-center rounded-md"
               >
                 <Settings className="size-5" />
@@ -328,6 +330,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <Link
                       to={item.to}
                       aria-label={item.label}
+                      data-tour={`nav:${item.to}`}
                       onClick={(e) => {
                         if (item.to === "/") {
                           if (pathname !== "/") return;
@@ -440,6 +443,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <FireworksHost />
       <RainHost />
       <StarfallHost />
+      <TourHost />
     </div>
   );
 }

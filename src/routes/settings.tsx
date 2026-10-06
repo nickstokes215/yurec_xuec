@@ -31,6 +31,7 @@ import {
   VolumeX,
   Vibrate,
   Youtube,
+  GraduationCap,
 } from "lucide-react";
 import { APP_VERSION, GITHUB_APK_URL } from "@/data/catalog";
 import { useTheme, type ThemeChoice } from "@/lib/use-theme";
@@ -77,6 +78,7 @@ import {
   pinChatShortcut,
 } from "@/lib/yurec-chat-store";
 import { cn } from "@/lib/utils";
+import { startTour } from "@/lib/use-tour";
 
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
@@ -143,6 +145,26 @@ function SettingsPage() {
           )}
         >
           Задано системой
+        </button>
+      </section>
+
+      <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+        <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
+          <GraduationCap className="size-3.5" />
+          Обучение
+        </p>
+        <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
+          Первый запуск сам водит по двору. Потом больше не лезет. Если хочешь ещё раз — кнопка ниже.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            void navigate({ to: "/" });
+            window.setTimeout(() => startTour(), 80);
+          }}
+          className="mt-3 flex h-12 w-full items-center justify-center rounded-xl bg-elevated text-sm font-medium"
+        >
+          Пройти обучение заново
         </button>
       </section>
 
