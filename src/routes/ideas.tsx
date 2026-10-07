@@ -3,12 +3,7 @@ import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/ideas")({ component: IdeasPage });
 
-const IDEAS = [
-  "Публикация приложения в Google Play Market или RuStore (для Android);",
-  "Подпись IPA в App Store (99$ в год). Без стора IPA уже в релизах для джейлбрейка, без джейлбрейка — Safari;",
-  "Новые уровни «Юрцовского квеста» и «Кроссворды»;",
-  "Третий визит к Юрцу (ещё больше треш-контента).",
-];
+const IDEAS = ["Дальнейшее развитие проекта."];
 
 function IdeasPage() {
   return (

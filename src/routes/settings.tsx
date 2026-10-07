@@ -32,6 +32,7 @@ import {
   Vibrate,
   Youtube,
   GraduationCap,
+  KeyRound,
 } from "lucide-react";
 import { APP_VERSION, GITHUB_APK_URL } from "@/data/catalog";
 import { useTheme, type ThemeChoice } from "@/lib/use-theme";
@@ -41,6 +42,7 @@ import {
   SUPPORT_MAIL,
   SUPPORT_TG,
   UPDATE_URL,
+  TG_UPDATE_URL,
   buildBugBody,
   openSupportMail,
   openKingDial,
@@ -79,6 +81,7 @@ import {
 } from "@/lib/yurec-chat-store";
 import { cn } from "@/lib/utils";
 import { startTour } from "@/lib/use-tour";
+import { applyAdminCheat, CHEAT_MSG, type CheatKind } from "@/lib/use-cheat";
 
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
@@ -104,6 +107,7 @@ function SettingsPage() {
   const readN = useReadCount();
   const [bugOpen, setBugOpen] = useState(false);
   const [devOpen, setDevOpen] = useState(false);
+  const [cheatOpen, setCheatOpen] = useState(false);
   const [wipeRead, setWipeRead] = useState(false);
   const [wipeChar, setWipeChar] = useState(false);
   const [wipeGames, setWipeGames] = useState(false);
@@ -728,10 +732,10 @@ function SettingsPage() {
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
           Новая сборка {APP_VERSION}: Android — APK, iPhone — Safari или IPA, Windows — EXE,
-          Ubuntu — DEB, компьютер — веб. Два места, откуда брать файл.
+          Ubuntu — DEB, компьютер — веб. Два места, откуда брать файл. Все версии — на GitHub Releases.
         </p>
         <a
-          href={UPDATE_URL}
+          href={TG_UPDATE_URL}
           target="_blank"
           rel="noreferrer"
           className="mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-tg px-4 text-sm font-medium text-tg-fg"
@@ -748,6 +752,16 @@ function SettingsPage() {
         >
           <Github className="size-4" />
           Скачать с GitHub
+          <ExternalLink className="size-4 opacity-80" />
+        </a>
+        <a
+          href={UPDATE_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 flex h-11 items-center justify-center gap-2 rounded-xl bg-elevated px-4 text-sm font-medium"
+        >
+          <Github className="size-4" />
+          Все релизы
           <ExternalLink className="size-4 opacity-80" />
         </a>
         <Link
@@ -797,6 +811,15 @@ function SettingsPage() {
         action="Позвонить"
         onClick={() => (dev.on ? openKingDial() : setDevOpen(true))}
       />
+      <SettingsCard
+        tone="gold"
+        icon={<KeyRound className="size-4" />}
+        title="Чит-коды"
+        titleIcon={<KeyRound className="size-3.5" />}
+        text="Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит."
+        action="Ввести код"
+        onClick={() => setCheatOpen(true)}
+      />
 
       <p className="mt-8 text-center text-[12px] text-subtle">
         Версия {APP_VERSION}
@@ -812,6 +835,7 @@ function SettingsPage() {
 
       {bugOpen ? <BugModal onClose={() => setBugOpen(false)} /> : null}
       {devOpen ? <DevModal onClose={() => setDevOpen(false)} /> : null}
+      {cheatOpen ? <CheatModal onClose={() => setCheatOpen(false)} /> : null}
     </main>
   );
 }
@@ -1034,6 +1058,77 @@ function DevModal({ onClose }: { onClose: () => void }) {
           </button>
           <button type="submit" className="h-11 flex-1 rounded-xl bg-gold text-sm font-medium text-gold-fg">
             Войти
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function CheatModal({ onClose }: { onClose: () => void }) {
+  const [value, setValue] = useState("");
+  const [err, setErr] = useState(false);
+  const [ok, setOk] = useState<CheatKind | null>(null);
+  useBodyLock(true);
+
+  function submit() {
+    const kind = applyAdminCheat(value);
+    if (!kind) {
+      setErr(true);
+      setOk(null);
+      return;
+    }
+    setErr(false);
+    setOk(kind);
+    setValue("");
+    if (kind === "joke") {
+      onClose();
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[85] grid place-items-center bg-void/80 px-6"
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <form
+        className="w-full max-w-[340px] rounded-2xl bg-surface p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <p className="text-center font-sans text-[15px] font-semibold leading-snug">Чит-коды</p>
+        <p className="mt-2 text-center text-[12px] leading-relaxed text-subtle">
+          Введи слово двора. Регистр не важен. Гоша смотрит, но молчит.
+        </p>
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setErr(false);
+            setOk(null);
+          }}
+          className="mt-4 h-12 w-full rounded-xl bg-elevated px-3 text-center text-sm text-fg shadow-[0_0_0_1px_rgba(255,255,255,0.06)] focus:outline-2 focus:outline-offset-2 focus:outline-accent"
+          placeholder="код"
+          autoComplete="off"
+        />
+        {err ? (
+          <p className="mt-2 text-center text-[12px] text-danger">Не тот код. Гоша смотрит.</p>
+        ) : ok ? (
+          <p className="mt-2 text-center text-[12px] text-[#c9a227]">{CHEAT_MSG[ok]}</p>
+        ) : (
+          <p className="mt-2 text-center text-[12px] text-subtle">Одно поле на все слова.</p>
+        )}
+        <div className="mt-4 flex gap-2">
+          <button type="button" onClick={onClose} className="h-11 flex-1 rounded-xl bg-danger text-sm font-medium text-danger-fg">
+            Закрыть
+          </button>
+          <button type="submit" className="h-11 flex-1 rounded-xl bg-gold text-sm font-medium text-gold-fg">
+            Открыть
           </button>
         </div>
       </form>

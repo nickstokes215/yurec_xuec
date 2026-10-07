@@ -24,6 +24,7 @@ import { FireworksHost } from "@/components/fireworks";
 import { RainHost } from "@/components/rain";
 import { StarfallHost } from "@/components/starfall";
 import { TourHost } from "@/components/tour";
+import { RavenHost } from "@/components/raven";
 import { ScrollTop } from "@/components/scroll-top";
 import { ZoomLayer } from "@/components/zoom-layer";
 import { OfflinePlayer } from "@/components/offline-player";
@@ -444,6 +445,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <RainHost />
       <StarfallHost />
       <TourHost />
+      <RavenHost />
     </div>
   );
 }

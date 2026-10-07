@@ -21,7 +21,8 @@ const ICON_KEY = "yurec-app-icon";
 const NAME_KEY = "yurec-app-name";
 export const STUDIO_URL = "https://studio.youtube.com/channel/UCUe2h3bjoip1jAD2eX1stIA";
 export const DEV_CHAT_URL = "https://grok.com/c/bd6138f0-50b2-46ff-ad22-78e3151fb58f";
-export const UPDATE_URL = "https://t.me/yurec_xuec/479";
+export const UPDATE_URL = "https://github.com/nickstokes215/yurec_xuec/releases";
+export const TG_UPDATE_URL = "https://t.me/yurec_xuec/479";
 export const SUPPORT_TG = "https://t.me/nick_stokes";
 export const SUPPORT_MAIL = "nickstokes215@gmail.com";
 

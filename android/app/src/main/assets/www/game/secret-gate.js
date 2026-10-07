@@ -6,7 +6,9 @@
     dev: "d0e40de8149446e6c06f9e70e7e9cf8d32834ab6e842d5a3112fae0b151896ba",
     cheat: "6afa1fe1be0ed6d03d9821ea68ac1e53c55afad51a567d6942fd1912dfb7a900",
     sticky: "3f11fe3bb8da21265933dc605210cfd4b91a568c58f59886f0e62c80b976cb53",
-    life: "f7d1db7622822a84084a78e935bf1ac486bb42e508200a7ac73b76d7be96dbf6"
+    life: "f7d1db7622822a84084a78e935bf1ac486bb42e508200a7ac73b76d7be96dbf6",
+    raven: "2d964f6d570f767f792afb0dbdb5abb0c8f620135bf8c5cb0bb487032f3679e2",
+    joke: "e85d1dec079d8350d011edd34444f361daf59aaa5b9bf2264dc21d4be0643a98"
   };
 
   function utf8Bytes(s) {
@@ -75,12 +77,19 @@
   function digest(v) { return sha256hex(SALT + "|" + v); }
   function trim(s) { return String(s == null ? "" : s).replace(/^\s+|\s+$/g, ""); }
   function cheatNorm(s) { return trim(s).toLowerCase().replace(/ё/g, "е"); }
+  function titleNorm(s) {
+    var n = cheatNorm(s);
+    if (!n) return n;
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  }
 
   root.YurecGate = {
-    paid: function (s) { return digest(trim(s)) === HASH.paid; },
-    dev: function (s) { return digest(trim(s)) === HASH.dev; },
+    paid: function (s) { return digest(trim(s)) === HASH.paid || digest(cheatNorm(s)) === HASH.paid || digest(titleNorm(s)) === HASH.paid; },
+    dev: function (s) { return digest(trim(s)) === HASH.dev || digest(cheatNorm(s)) === HASH.dev || digest(titleNorm(s)) === HASH.dev; },
     cheat: function (s) { return digest(cheatNorm(s)) === HASH.cheat; },
     sticky: function (s) { return digest(cheatNorm(s)) === HASH.sticky; },
-    life: function (s) { return digest(cheatNorm(s)) === HASH.life; }
+    life: function (s) { return digest(cheatNorm(s)) === HASH.life; },
+    raven: function (s) { return digest(cheatNorm(s)) === HASH.raven; },
+    joke: function (s) { return digest(cheatNorm(s)) === HASH.joke; }
   };
 })(typeof window !== "undefined" ? window : this);

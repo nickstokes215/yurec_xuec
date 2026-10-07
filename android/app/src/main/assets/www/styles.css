@@ -1600,6 +1600,64 @@ html.modal-lock body {
   background: var(--elevated, #1c1c20);
   color: var(--fg);
 }
+.raven-joke {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #050508;
+}
+.raven-joke-sky {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(201, 162, 39, 0.28), transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(80, 40, 10, 0.4), transparent 50%);
+  animation: raven-pulse 5s ease-in-out both;
+}
+.raven-joke-bird {
+  width: min(72vw, 320px);
+  height: auto;
+  z-index: 1;
+  filter: drop-shadow(0 0 24px rgba(201, 162, 39, 0.55));
+  animation: raven-fly 5s ease-in-out both;
+}
+.raven-joke-word {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 0;
+  font-family: var(--sans);
+  font-size: clamp(28px, 8vw, 48px);
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  color: #c9a227;
+  text-shadow: 0 0 18px rgba(201, 162, 39, 0.6);
+}
+.raven-joke-sub {
+  position: relative;
+  z-index: 1;
+  margin: 4px 0 0;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-style: italic;
+  color: #9c9a94;
+}
+@keyframes raven-fly {
+  0% { transform: translate(-40vw, 18vh) rotate(-18deg) scale(0.4); opacity: 0; }
+  18% { opacity: 1; }
+  50% { transform: translate(0, -6vh) rotate(8deg) scale(1); }
+  82% { opacity: 1; }
+  100% { transform: translate(42vw, -20vh) rotate(22deg) scale(0.6); opacity: 0; }
+}
+@keyframes raven-pulse {
+  0%, 100% { opacity: 0.4; }
+  40% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .raven-joke-bird, .raven-joke-sky { animation: none; }
+}
 .modal .box > a.btn.wide,
 .modal .box > button.btn.wide {
   margin-top: 10px;

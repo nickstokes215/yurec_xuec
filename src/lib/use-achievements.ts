@@ -8,6 +8,7 @@ import { playsCount } from "@/lib/svoya-stats";
 const KEY = "yurec-achievements";
 const EGG_KEY = "yurec-egg";
 const META_KEY = "yurec-ach-meta";
+const PEEK_KEY = "yurec-ach-peek";
 const QUEST_IDS = ["day", "olimpik", "tsar", "mirage", "dinner"] as const;
 
 const listeners = new Set<() => void>();
@@ -334,18 +335,40 @@ function qualified(id: string): boolean {
   }
 }
 
+export function isAchPeek(): boolean {
+  try {
+    return sessionStorage.getItem(PEEK_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setAchPeek(on: boolean) {
+  try {
+    if (on) sessionStorage.setItem(PEEK_KEY, "1");
+    else sessionStorage.removeItem(PEEK_KEY);
+  } catch {
+    /* ignore */
+  }
+  emit();
+  pingProgress();
+}
+
 export function isAchieved(id: string) {
+  if (isAchPeek()) return true;
   return Boolean(readStore()[id]);
 }
 
 export function achievedCount() {
+  if (isAchPeek()) return ACHIEVEMENTS.length;
   const store = readStore();
   return ACHIEVEMENTS.reduce((n, a) => n + (store[a.id] ? 1 : 0), 0);
 }
 
 export function achievedAt(id: string) {
   const t = readStore()[id];
-  return typeof t === "number" && t > 0 ? t : 0;
+  if (typeof t === "number" && t > 0) return t;
+  return 0;
 }
 
 export function markEgg() {
@@ -387,7 +410,8 @@ export function useAchievements() {
     },
     () => {
       const s = readStore();
-      return ACHIEVEMENTS.map((a) => `${a.id}:${s[a.id] || 0}`).join("|");
+      const peek = isAchPeek() ? "1" : "0";
+      return peek + "|" + ACHIEVEMENTS.map((a) => `${a.id}:${s[a.id] || 0}`).join("|");
     },
     () => "",
   );

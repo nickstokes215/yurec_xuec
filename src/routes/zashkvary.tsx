@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ACH_COVER, ACH_LOCKED, ACH_PITCH, ACH_TOTAL, ACHIEVEMENTS, type Achievement } from "@/data/achievements";
-import { useAchievements } from "@/lib/use-achievements";
+import { useAchievements, isAchPeek } from "@/lib/use-achievements";
 import { openZoom } from "@/lib/zoom";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,7 @@ function formatWhen(ts: number) {
 
 function ZashkvaryPage() {
   const { opened, when, count } = useAchievements();
+  const peek = isAchPeek();
   const [pick, setPick] = useState<Achievement | null>(null);
   const pickOpen = pick ? opened(pick.id) : false;
 
@@ -72,6 +73,7 @@ function ZashkvaryPage() {
       <p className="mt-2 font-serif text-[16px] leading-relaxed text-muted">{ACH_PITCH}</p>
       <p className="mt-4 text-center text-[12px] tabular-nums text-subtle">
         открыто {count} / {ACH_TOTAL}
+        {peek ? <span className="block mt-1 text-[11px] text-[#c9a227]">просмотр ворона · до перезахода</span> : null}
       </p>
       <ul className="ach-board mt-4">
         {ACHIEVEMENTS.map((a) => {

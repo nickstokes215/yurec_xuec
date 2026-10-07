@@ -47,7 +47,14 @@ const READ_KEY = "yurec-read";
 const READ_SKIP = "yurec-read-skip";
 const STUDIO_URL = "https://studio.youtube.com/channel/UCUe2h3bjoip1jAD2eX1stIA";
 const DEV_CHAT_URL = "https://grok.com/c/bd6138f0-50b2-46ff-ad22-78e3151fb58f";
-const UPDATE_URL = "https://t.me/yurec_xuec/479";
+const UPDATE_URL = "https://github.com/nickstokes215/yurec_xuec/releases";
+const TG_UPDATE_URL = "https://t.me/yurec_xuec/479";
+const GITHUB_APK_URL = "https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.apk";
+const GITHUB_IPA_URL = "https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.ipa";
+const GITHUB_EXE_URL = "https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.exe";
+const GITHUB_DEB_URL = "https://github.com/nickstokes215/yurec_xuec/releases/latest/download/yurec_xuec.deb";
+const GITHUB_WEB_URL = "https://nickstokes215.github.io/yurec_xuec/";
+const PEEK_KEY = "yurec-ach-peek";
 const SUPPORT_TG = "https://t.me/nick_stokes";
 const SUPPORT_MAIL = "nickstokes215@gmail.com";
 const BANNER = {
@@ -74,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.2", buildAt: "03.10.2026, 23:42 МСК", history: [] };
+var APP = { version: "1.65.4", buildAt: "07.10.2026, 22:30 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -2098,7 +2105,21 @@ function readAchStore() {
 function writeAchStore(s) {
   try { localStorage.setItem(ACH_KEY, JSON.stringify(s)); } catch (e) {}
 }
+function isAchPeek() {
+  try { return sessionStorage.getItem(PEEK_KEY) === "1"; } catch (e) { return false; }
+}
+function setAchPeek(on) {
+  try {
+    if (on) sessionStorage.setItem(PEEK_KEY, "1");
+    else sessionStorage.removeItem(PEEK_KEY);
+  } catch (e) {}
+}
+function isAchieved(id) {
+  if (isAchPeek()) return true;
+  return !!readAchStore()[id];
+}
 function achCount() {
+  if (isAchPeek()) return ACH_ITEMS.length;
   var s = readAchStore(), n = 0, i;
   for (i = 0; i < ACH_ITEMS.length; i++) if (s[ACH_ITEMS[i].id]) n++;
   return n;
@@ -3144,9 +3165,12 @@ function renderSettings() {
       '<button type="button" class="btn wide tg" id="bug-open">Сообщить о баге</button>' +
     "</section>" +
     '<section class="set-card">' +
-      '<p class="set-head">' + setIco('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>') + "Обновление</p>" +
-      '<p class="subtle">Проверить, вышла ли новая сборка. Пока ведёт в пост канала, откуда ставится приложение.</p>' +
-      '<a class="btn wide gold" href="' + UPDATE_URL + '">Проверить обновления</a>' +
+      '<p class="set-head">' + setIco('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>') + "Скачать и поставить</p>" +
+      '<p class="subtle">Новая сборка: Android — APK, iPhone — Safari или IPA, Windows — EXE, Ubuntu — DEB, компьютер — веб. Два места, откуда брать файл. Все версии — на GitHub Releases.</p>' +
+      '<a class="btn wide tg" href="' + TG_UPDATE_URL + '">Скачать из Telegram</a>' +
+      '<a class="btn wide gold" href="' + GITHUB_APK_URL + '" style="margin-top:8px">Скачать с GitHub</a>' +
+      '<a class="btn wide off" href="' + UPDATE_URL + '" style="margin-top:8px">Все релизы</a>' +
+      '<a class="btn wide off" href="#/apk" style="margin-top:8px">Как поставить: Android, iPhone, Windows, Ubuntu</a>' +
     "</section>" +
     '<div class="set-rule" role="separator"><span></span><span class="set-rule-lab">' +
       setIco('<path d="M12 3l8 4v5c0 5-3.5 8.5-8 10C7.5 20.5 4 17 4 12V7z"/>') +
@@ -3167,7 +3191,12 @@ function renderSettings() {
       '<p class="subtle">Позвонить помойному королю. Короткий набор, как его зовут. Живой номер в приложении не лежит.</p>' +
       '<button type="button" class="btn wide call" id="king-call">Позвонить</button>' +
     "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.50.4") +
+    '<section class="set-card">' +
+      '<p class="set-head">' + setIco('<path d="M21 2l-2 2m-7.6 7.6L3 21l7.4-8.4M15 9l6-6"/><circle cx="9" cy="9" r="2"/>') + "Чит-коды</p>" +
+      '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит.</p>' +
+      '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
+    "</section>" +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.4") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -3299,6 +3328,121 @@ function openDevModal() {
   if (hint) {
     hint.textContent = "Быстрые ссылки для перехода в Творческую студию YouTube и в облачный чат с Grok. Полезно исключительно для разработчика приложения.";
   }
+  el.style.display = "flex";
+  lockModal(true);
+  window.setTimeout(function () { if (inp) inp.focus(); }, 50);
+}
+var ADMIN_CHEAT_MSG = {
+  joke: "Гоша каркнул. И всё. Двор ржёт.",
+  raven: "Все зашквары открыты до перезахода. Честные медали на месте.",
+  hack: "Уровни открыты. Даже бабка вышла из бака.",
+  paid: "Лицензия стоит. Двор твой.",
+  dev: "Режим разработчика. Студия и чат открываются без спроса."
+};
+function unlockAllPlay() {
+  try {
+    localStorage.setItem("yurec-av-all", "1");
+    localStorage.setItem("yurec-av-batya", "1");
+    localStorage.setItem("yurec-av-sveta", "1");
+    localStorage.setItem("yurec-av-kostya", "1");
+    localStorage.setItem("yurec-ark-all", "1");
+  } catch (e) {}
+  var i, j, lvl, ids;
+  for (i = 0; i < LEVELS.length; i++) {
+    lvl = LEVELS[i];
+    ids = [];
+    for (j = 0; j < (lvl.endings || []).length; j++) ids.push(lvl.endings[j].id);
+    try { localStorage.setItem("yurec-game-endings:" + lvl.id, JSON.stringify(ids)); } catch (e2) {}
+  }
+}
+var ravenTimer = 0;
+var ravenAudio = null;
+function hideRaven() {
+  var el = document.getElementById("raven-joke");
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+  if (ravenTimer) { window.clearTimeout(ravenTimer); ravenTimer = 0; }
+  if (ravenAudio) {
+    try { ravenAudio.pause(); ravenAudio.src = ""; } catch (e) {}
+    ravenAudio = null;
+  }
+  try { lockModal(false); } catch (e2) {}
+}
+function burstRaven() {
+  hideRaven();
+  var el = document.createElement("div");
+  el.id = "raven-joke";
+  el.className = "raven-joke";
+  el.setAttribute("role", "dialog");
+  el.setAttribute("aria-label", "Гоша");
+  el.innerHTML = '<span class="raven-joke-sky"></span>' +
+    '<svg class="raven-joke-bird" viewBox="0 0 64 40" aria-hidden="true">' +
+    '<path fill="#0a0a0c" stroke="#c9a227" stroke-width="1.2" d="M8 22c6-10 16-16 28-14 6 1 12 5 18 2-4 6-8 10-6 16 2 5-2 10-8 11-8 1-16-2-22-7-4 4-8 6-12 5 4-4 6-8 2-13z"/>' +
+    '<circle cx="46" cy="14" r="2.2" fill="#c9a227"/>' +
+    '<path fill="#c9a227" d="M52 13l10 2-10 3z"/></svg>' +
+    '<p class="raven-joke-word">РЕВЭЛ</p><p class="raven-joke-sub">кар-кар</p>';
+  document.body.appendChild(el);
+  try { lockModal(true); } catch (e0) {}
+  try {
+    if (localStorage.getItem(SOUND_KEY) !== "0") {
+      ravenAudio = new Audio("quotes/gosha-kar.mp3");
+      ravenAudio.loop = true;
+      ravenAudio.play().catch(function () {});
+    }
+  } catch (e) {}
+  ravenTimer = window.setTimeout(hideRaven, 5000);
+}
+function applyAdminCheat(raw) {
+  if (window.YurecGate && window.YurecGate.joke(raw)) { burstRaven(); return "joke"; }
+  if (window.YurecGate && window.YurecGate.raven(raw)) { setAchPeek(true); return "raven"; }
+  if (window.YurecGate && window.YurecGate.cheat(raw)) { unlockAllPlay(); return "hack"; }
+  if (unlockDeveloper(raw)) return "dev";
+  if (window.YurecGate && window.YurecGate.paid(raw)) {
+    try { localStorage.setItem(PAID_KEY, "1"); } catch (e) {}
+    return "paid";
+  }
+  return false;
+}
+function openAdminCheatModal() {
+  var el = document.getElementById("admin-cheat-modal");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "admin-cheat-modal";
+    el.className = "modal";
+    el.innerHTML = '<form class="box">' +
+      '<p class="ttl">Чит-коды</p>' +
+      '<p class="hint">Введи слово двора. Регистр не важен. Гоша смотрит, но молчит.</p>' +
+      '<input id="admin-cheat-key" type="text" autocomplete="off" placeholder="код" />' +
+      '<p class="hint" id="admin-cheat-err">Одно поле на все слова.</p>' +
+      '<div class="row"><button type="button" class="btn danger" id="admin-cheat-cancel">Закрыть</button>' +
+      '<button type="submit" class="btn gold" id="admin-cheat-enter">Открыть</button></div></form>';
+    document.body.appendChild(el);
+    el.addEventListener("click", function (e) { if (e.target === el) { el.style.display = "none"; lockModal(false); } });
+    document.getElementById("admin-cheat-cancel").addEventListener("click", function () { el.style.display = "none"; lockModal(false); });
+    el.querySelector("form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var inp = document.getElementById("admin-cheat-key");
+      var v = (inp && inp.value) || "";
+      var kind = applyAdminCheat(v);
+      var h = document.getElementById("admin-cheat-err");
+      if (!kind) {
+        if (h) { h.textContent = "Не тот код. Гоша смотрит."; h.className = "hint err"; }
+        return;
+      }
+      if (inp) inp.value = "";
+      if (h) { h.textContent = ADMIN_CHEAT_MSG[kind] || "Готово."; h.className = "hint"; }
+      if (kind === "joke") {
+        el.style.display = "none";
+        lockModal(false);
+      } else if (kind === "dev" || kind === "paid") {
+        try { burstFireworks(); } catch (err) {}
+        try { paint(); } catch (err2) {}
+      }
+    });
+  }
+  var inp = document.getElementById("admin-cheat-key");
+  if (inp) inp.value = "";
+  var err = document.getElementById("admin-cheat-err");
+  if (err) { err.className = "hint"; err.textContent = "Одно поле на все слова."; }
   el.style.display = "flex";
   lockModal(true);
   window.setTimeout(function () { if (inp) inp.focus(); }, 50);
@@ -3442,6 +3586,7 @@ function bindSettings() {
     if (isDev()) openKingDial();
     else openDevModal();
   });
+  on($("#cheat-admin"), "click", function () { openAdminCheatModal(); });
 }
 
 function collectPassport() {
@@ -3595,10 +3740,7 @@ function renderAbout() {
 
 function renderIdeas() {
   var ideas = [
-    "Публикация приложения в Google Play Market или RuStore (для Android);",
-    "Порт приложения на iOS (для iPhone);",
-    "Новые уровни «Юрцовского квеста» и «Кроссворды»;",
-    "Третий визит к Юрцу (ещё больше треш-контента)."
+    "Дальнейшее развитие проекта."
   ];
   var html = '<a class="back" href="#/about">← Назад в Инфо</a>' +
     '<p class="kicker" style="margin-top:16px">О приложении</p>' +
@@ -3611,6 +3753,41 @@ function renderIdeas() {
   return shell(html, "about");
 }
 
+function renderApk() {
+  var ver = (APP && APP.version) || "1.65.4";
+  var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
+    '<p class="kicker" style="margin-top:16px">Установка</p>' +
+    '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +
+    '<p class="ideas-lead">Один двор, четыре оболочки. Android — APK. iPhone — сайт в Safari на экран «Домой»; если есть джейлбрейк — IPA. Windows — EXE. Ubuntu — DEB. Mac — сайт.</p>' +
+    '<section class="set-card">' +
+      '<p class="set-head">Android — APK</p>' +
+      '<p class="subtle">Пакет ru.yurec.xuec ' + esc(ver) + '. Android 5 и новее. Скачай yurec_xuec.apk, открой файл, разреши установку из этого источника.</p>' +
+      '<a class="btn wide gold" href="' + GITHUB_APK_URL + '">APK с GitHub</a>' +
+    "</section>" +
+    '<section class="set-card">' +
+      '<p class="set-head">iPhone — сайт и IPA</p>' +
+      '<p class="subtle">Без джейлбрейка: в Safari открой сайт, «Поделиться» → «На экран Домой». С джейлбрейком: скачай IPA и поставь через TrollStore или Sideloadly.</p>' +
+      '<a class="btn wide off" href="' + GITHUB_WEB_URL + '">Открыть веб-сборник</a>' +
+      '<a class="btn wide gold" href="' + GITHUB_IPA_URL + '" style="margin-top:8px">IPA с GitHub</a>' +
+    "</section>" +
+    '<section class="set-card">' +
+      '<p class="set-head">Windows — EXE</p>' +
+      '<p class="subtle">Портативный файл, установщик не нужен. Двойной щелчок. Если SmartScreen спросит — «Подробнее» → «Всё равно выполнить».</p>' +
+      '<a class="btn wide gold" href="' + GITHUB_EXE_URL + '">EXE с GitHub</a>' +
+    "</section>" +
+    '<section class="set-card">' +
+      '<p class="set-head">Ubuntu — DEB</p>' +
+      '<p class="subtle">Пакет yurec-xuec, amd64. sudo apt install ./yurec_xuec.deb из папки загрузок — или открой файл в «Файлы».</p>' +
+      '<a class="btn wide gold" href="' + GITHUB_DEB_URL + '">DEB с GitHub</a>' +
+    "</section>" +
+    '<section class="set-card">' +
+      '<p class="set-head">Любая система — сайт</p>' +
+      '<p class="subtle">Адрес nickstokes215.github.io/yurec_xuec. Chrome / Edge: меню → «Установить приложение».</p>' +
+      '<a class="btn wide off" href="' + UPDATE_URL + '">Все релизы</a>' +
+    "</section>";
+  return shell(html, "about");
+}
+
 function renderZashkvary() {
   var store = readAchStore();
   var html = '<a class="back" href="#/about">← Назад в Инфо</a>' +
@@ -3619,12 +3796,14 @@ function renderZashkvary() {
     '<p class="kicker" style="margin-top:16px;text-align:center">Инфо</p>' +
     '<h2 style="font-size:28px;margin-top:4px;text-align:center">Зашквары двора</h2>' +
     '<p class="ideas-lead">Двор не выдаёт медали. Двор выдаёт зашквары. Список закрыт, пока сам не нажрёшься славы. На закрытый — подсказка. На открытый — ор и дата.</p>' +
-    '<p class="subtle" style="text-align:center;margin-top:12px">открыто ' + achCount() + " / " + ACH_ITEMS.length + "</p>" +
+    '<p class="subtle" style="text-align:center;margin-top:12px">открыто ' + achCount() + " / " + ACH_ITEMS.length +
+    (isAchPeek() ? '<span style="display:block;margin-top:4px;color:#c9a227;font-size:11px">просмотр ворона · до перезахода</span>' : "") +
+    "</p>" +
     '<ul class="ach-board">';
   var i, a, on;
   for (i = 0; i < ACH_ITEMS.length; i++) {
     a = ACH_ITEMS[i];
-    on = !!store[a.id];
+    on = isAchieved(a.id);
     html += '<li><button type="button" class="ach-card' + (on ? " on" : "") + '" data-ach="' + a.id + '">' +
       '<span class="ach-shot"><img src="' + (on ? achSrc(a.id) : achSrc("locked")) + '" alt=""' + (on ? "" : ' class="ach-locked-img"') + ' />' +
       (on ? "" : '<span class="ach-lock-label">???</span>') + "</span>" +
@@ -3648,9 +3827,9 @@ function bindZashkvary() {
       var a = getAch(id);
       if (!a) return;
       var store = readAchStore();
-      var open = !!store[a.id];
+      var open = isAchieved(a.id);
       var when = "";
-      if (open && store[a.id]) {
+      if (store[a.id]) {
         try {
           when = new Date(store[a.id]).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
         } catch (e) {}
@@ -6627,6 +6806,7 @@ function paint() {
   else if (r.indexOf("/chat") === 0) { root.innerHTML = renderChat(); bindChat(); }
   else if (r.indexOf("/saved") === 0) root.innerHTML = renderSaved();
   else if (r.indexOf("/ideas") === 0) root.innerHTML = renderIdeas();
+  else if (r.indexOf("/apk") === 0) root.innerHTML = renderApk();
   else if (r.indexOf("/passport") === 0) { root.innerHTML = renderPassport(); bindPassport(); }
   else if (r.indexOf("/zashkvary") === 0) { root.innerHTML = renderZashkvary(); bindZashkvary(); }
   else if (r.indexOf("/changelog") === 0) root.innerHTML = renderChangelog();
@@ -7101,6 +7281,10 @@ function maybeStartTour() {
 }
 
 function yurecBack() {
+  if (document.getElementById("raven-joke")) {
+    hideRaven();
+    return true;
+  }
   if (tourOn) {
     if (tourIdx <= 0) stopTour();
     else { tourIdx -= 1; drawTour(); }
@@ -7118,6 +7302,12 @@ function yurecBack() {
   var cheat = document.getElementById("cheat-modal");
   if (cheat && cheat.style.display === "flex") {
     cheat.style.display = "none";
+    return true;
+  }
+  var adm = document.getElementById("admin-cheat-modal");
+  if (adm && adm.style.display === "flex") {
+    adm.style.display = "none";
+    lockModal(false);
     return true;
   }
   var paid = document.getElementById("paid-modal");

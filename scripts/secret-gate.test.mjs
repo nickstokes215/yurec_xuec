@@ -13,12 +13,16 @@ test("затвор грузится и чужие слова не проходя
   assert.equal(typeof Gate.paid, "function");
   assert.equal(typeof Gate.dev, "function");
   assert.equal(typeof Gate.cheat, "function");
+  assert.equal(typeof Gate.raven, "function");
+  assert.equal(typeof Gate.joke, "function");
   assert.equal(Gate.paid(""), false);
   assert.equal(Gate.paid("xyz"), false);
   assert.equal(Gate.dev("nope"), false);
   assert.equal(Gate.cheat("нет"), false);
   assert.equal(Gate.sticky("нет"), false);
   assert.equal(Gate.life("нет"), false);
+  assert.equal(Gate.raven("нет"), false);
+  assert.equal(Gate.joke("нет"), false);
 });
 
 test("в файле нет открытых констант-паролей", () => {

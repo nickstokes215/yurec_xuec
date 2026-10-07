@@ -14,6 +14,8 @@ const HASH = {
   cheat: "6afa1fe1be0ed6d03d9821ea68ac1e53c55afad51a567d6942fd1912dfb7a900",
   sticky: "3f11fe3bb8da21265933dc605210cfd4b91a568c58f59886f0e62c80b976cb53",
   life: "f7d1db7622822a84084a78e935bf1ac486bb42e508200a7ac73b76d7be96dbf6",
+  raven: "2d964f6d570f767f792afb0dbdb5abb0c8f620135bf8c5cb0bb487032f3679e2",
+  joke: "e85d1dec079d8350d011edd34444f361daf59aaa5b9bf2264dc21d4be0643a98",
 } as const;
 
 function utf8Bytes(s: string): Uint8Array {
@@ -115,12 +117,18 @@ function cheatNorm(s: string): string {
     .replace(/ё/g, "е");
 }
 
+function titleNorm(s: string): string {
+  const n = cheatNorm(s);
+  if (!n) return n;
+  return n.charAt(0).toUpperCase() + n.slice(1);
+}
+
 export function matchPaid(input: string): boolean {
-  return digest(trim(input)) === HASH.paid;
+  return digest(trim(input)) === HASH.paid || digest(cheatNorm(input)) === HASH.paid || digest(titleNorm(input)) === HASH.paid;
 }
 
 export function matchDev(input: string): boolean {
-  return digest(trim(input)) === HASH.dev;
+  return digest(trim(input)) === HASH.dev || digest(cheatNorm(input)) === HASH.dev || digest(titleNorm(input)) === HASH.dev;
 }
 
 export function matchCheat(input: string): boolean {
@@ -135,12 +143,22 @@ export function matchLife(input: string): boolean {
   return digest(cheatNorm(input)) === HASH.life;
 }
 
+export function matchRaven(input: string): boolean {
+  return digest(cheatNorm(input)) === HASH.raven;
+}
+
+export function matchJoke(input: string): boolean {
+  return digest(cheatNorm(input)) === HASH.joke;
+}
+
 export type YurecGateApi = {
   paid: (s: string) => boolean;
   dev: (s: string) => boolean;
   cheat: (s: string) => boolean;
   sticky: (s: string) => boolean;
   life: (s: string) => boolean;
+  raven: (s: string) => boolean;
+  joke: (s: string) => boolean;
 };
 
 declare global {
@@ -156,6 +174,8 @@ if (typeof window !== "undefined") {
     cheat: matchCheat,
     sticky: matchSticky,
     life: matchLife,
+    raven: matchRaven,
+    joke: matchJoke,
   };
 }
 
