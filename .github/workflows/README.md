@@ -4,7 +4,7 @@ YAML здесь. Крутятся на GitHub, не на телефоне авт
 
 | Файл | Имя в Actions | Триггер | Что делает |
 |---|---|---|---|
-| `release.yml` | Релиз | тег `*` или кнопка | **Собирает APK** из исходников, кладёт в Release |
+| `release.yml` | Релиз | тег `*` или кнопка | **Собирает APK** из исходников, кладёт в Release. SDK без пакета `tools` — его больше нет |
 | `release-apk.yml` | Релиз APK | кнопка | Кладёт уже лежащий `public/yurec_xuec.apk` (без Gradle) |
 | `build-ipa.yml` | Сборка IPA | **только кнопка** | Unsigned IPA, macos-15 |
 | `build-exe.yml` | Сборка EXE | **только кнопка** | Portable EXE, windows-latest |
