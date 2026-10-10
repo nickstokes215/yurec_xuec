@@ -385,12 +385,12 @@
         '<div class="av-cheat-actions"><button type="button" class="av-cheat-cancel">Отмена</button><button type="submit" class="av-cheat-go">Открыть</button></div>' +
       "</form>";
 
-    wrap.appendChild(hud);
     wrap.appendChild(menu);
     wrap.appendChild(end);
     wrap.appendChild(manual);
     wrap.appendChild(cheatModal);
     host.appendChild(head);
+    host.appendChild(hud);
     host.appendChild(wrap);
     host.appendChild(shotBtn);
     host.appendChild(gods);

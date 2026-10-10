@@ -542,12 +542,12 @@
         '<div class="av-cheat-actions"><button type="button" class="av-cheat-cancel">Отмена</button><button type="submit" class="av-cheat-go">Открыть</button></div>' +
       "</form>";
 
-    wrap.appendChild(hud);
     wrap.appendChild(menu);
     wrap.appendChild(end);
     wrap.appendChild(manual);
     wrap.appendChild(cheatModal);
     host.appendChild(head);
+    host.appendChild(hud);
     host.appendChild(wrap);
     host.appendChild(shotBtn);
     host.appendChild(kitEl);
@@ -798,8 +798,12 @@
     }
     function say(text, hold) { banner = text; bannerT = hold == null ? 2.4 : hold; }
     function paintHud() {
-      hud.querySelector(".av-score-z").textContent = "R" + (CHAIN.indexOf(levelId) + 1);
-      hud.querySelector(".av-score-y").textContent = "";
+      var hearts = "";
+      var hi;
+      for (hi = 0; hi < Math.max(0, lives); hi++) hearts += "♥";
+      if (!hearts) hearts = "×0";
+      hud.querySelector(".av-score-z").textContent = "R" + (CHAIN.indexOf(levelId) + 1) + "  " + hearts;
+      hud.querySelector(".av-score-y").textContent = String(score);
       shotBtn.hidden = true;
     }
     function addPart(x, y, col, n) {
@@ -814,7 +818,7 @@
       }
     }
     function makeBall(x, y, vx, vy) {
-      return { x: x, y: y, vx: vx, vy: vy, r: 11, stuck: false, trail: [] };
+      return { x: x, y: y, vx: vx, vy: vy, r: 11, stuck: false, trail: [], sincePad: 0 };
     }
     function buildBricks(rows) {
       bricks = [];
@@ -865,6 +869,7 @@
         b = balls[i];
         if (!b.stuck) continue;
         b.stuck = false;
+        b.sincePad = 0;
         b.vx = d.vx * spd;
         b.vy = d.vy * spd;
       }
@@ -1130,6 +1135,7 @@
       if (br.hp <= 0) {
         br.alive = false;
         score += 50;
+        paintHud();
         facePop = 0.38;
         facePopX = br.x + br.w / 2;
         facePopY = br.y + br.h / 2;
@@ -1153,6 +1159,7 @@
     }
 
     function bouncePaddle(b) {
+      b.sincePad = 0;
       var dx = (b.x - paddle.x) / (paddle.w * 0.5);
       dx = clamp(dx, -1, 1);
       var spd = Math.max(cfg.speed * 0.95, Math.hypot(b.vx, b.vy) || cfg.speed);
@@ -1504,6 +1511,17 @@
             buzz([30, 40, 30], true);
             if (lives <= 0) { finish(false); return; }
             say("Ракетка сгорела. Осталось ×" + lives);
+            resetServe();
+          }
+          continue;
+        }
+        if (!b.stuck) b.sincePad = (b.sincePad || 0) + dt;
+        if (!b.stuck && b.sincePad >= 20) {
+          addPart(b.x, b.y, "#ff6b4a", 16);
+          beep(140, 0.12, 0.05);
+          balls.splice(i, 1);
+          if (balls.length === 0) {
+            say("Шарик застрял. Вернул на харю. Жизнь цела.");
             resetServe();
           }
           continue;
@@ -2042,16 +2060,6 @@
         ctx.restore();
         if (imgs.yurec) drawFaceClip(imgs.yurec, b.x, b.y, b.r * 0.72, b.r * 0.82, 0.14, 0.06, 0.7, 0.6);
       }
-      var hi;
-      for (hi = 0; hi < Math.max(3, lives); hi++) {
-        ctx.fillStyle = hi < lives ? "#ff4d6d" : "rgba(255,255,255,0.18)";
-        ctx.beginPath();
-        var hx2 = 16 + hi * 18, hy2 = 18;
-        ctx.moveTo(hx2, hy2 + 3);
-        ctx.bezierCurveTo(hx2 - 7, hy2 - 6, hx2 - 12, hy2 + 6, hx2, hy2 + 12);
-        ctx.bezierCurveTo(hx2 + 12, hy2 + 6, hx2 + 7, hy2 - 6, hx2, hy2 + 3);
-        ctx.fill();
-      }
       if (bannerT > 0 && banner) {
         ctx.fillStyle = "rgba(0,0,0,0.72)";
         ctx.fillRect(12, H * 0.38, W - 24, 52);
@@ -2060,10 +2068,6 @@
         ctx.textAlign = "center";
         ctx.fillText(banner, W / 2, H * 0.38 + 32);
       }
-      ctx.fillStyle = "rgba(236,234,228,0.85)";
-      ctx.font = "800 13px Manrope, sans-serif";
-      ctx.textAlign = "right";
-      ctx.fillText(String(score), W - 14, 22);
     }
 
     function loop(ts) {

@@ -1036,22 +1036,27 @@ html.av-nodock .dock-inner {
 }
 .av-hud {
   pointer-events: none;
-  position: absolute;
-  inset: 10px 12px auto;
+  position: relative;
   z-index: 2;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 4px;
   font-variant-numeric: tabular-nums;
 }
+.av-hud[hidden] { display: none !important; }
 .av-score {
-  min-width: 32px;
-  height: 32px;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
   display: grid;
   place-items: center;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 .av-score-z { background: #6a9a52; color: #12200e; }
 .av-score-y { background: #c46a3a; color: #fff; }

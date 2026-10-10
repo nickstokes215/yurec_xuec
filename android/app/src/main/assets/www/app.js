@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.4", buildAt: "07.10.2026, 22:30 МСК", history: [] };
+var APP = { version: "1.65.5", buildAt: "10.10.2026, 10:15 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -3196,7 +3196,7 @@ function renderSettings() {
       '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
     "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.4") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.5") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -3754,7 +3754,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.4";
+  var ver = (APP && APP.version) || "1.65.5";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +
