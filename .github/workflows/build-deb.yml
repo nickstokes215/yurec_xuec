@@ -71,7 +71,4 @@ jobs:
           files: windows/dist/yurec_xuec.deb
           fail_on_unmatched_files: true
           make_latest: true
-          append_body: true
-          body: |
-            **Ubuntu/Debian:** `yurec_xuec.deb` — `sudo apt install ./yurec_xuec.deb`, ярлык «Жизнь Юрца».
-            **Сайт:** https://nickstokes215.github.io/yurec_xuec/
+          body_path: .github/RELEASE.md

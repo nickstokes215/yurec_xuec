@@ -78,7 +78,4 @@ jobs:
           files: windows/dist/yurec_xuec.exe
           fail_on_unmatched_files: true
           make_latest: true
-          append_body: true
-          body: |
-            **Windows:** `yurec_xuec.exe` — оффлайн, двойной щелчок. SmartScreen может спросить «всё равно выполнить».
-            **Сайт:** https://nickstokes215.github.io/yurec_xuec/
+          body_path: .github/RELEASE.md

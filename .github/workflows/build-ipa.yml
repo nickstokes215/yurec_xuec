@@ -88,7 +88,4 @@ jobs:
             yurec_xuec.ipa
           fail_on_unmatched_files: true
           make_latest: true
-          append_body: true
-          body: |
-            **iPhone (джейлбрейк):** `yurec_xuec.ipa` — TrollStore / Sideloadly.
-            **iPhone без джейлбрейка:** https://nickstokes215.github.io/yurec_xuec/ в Safari → «На экран Домой».
+          body_path: .github/RELEASE.md

@@ -96,11 +96,4 @@ jobs:
           files: yurec_xuec.apk
           fail_on_unmatched_files: true
           make_latest: true
-          body: |
-            Сборник «Жизнь Юрца» ${{ steps.ver.outputs.version }}.
-
-            **Сайт:** https://nickstokes215.github.io/yurec_xuec/
-
-            **Android:** `yurec_xuec.apk` — пакет `ru.yurec.xuec`.
-            **iPhone:** Safari → сайт → «На экран Домой». IPA — кнопка «Сборка IPA».
-            **Windows / Ubuntu:** кнопки «Сборка EXE» / «Сборка DEB».
+          body_path: .github/RELEASE.md

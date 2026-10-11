@@ -13,6 +13,8 @@ YAML здесь. Крутятся на GitHub, не на телефоне авт
 
 Тег не поднимает IPA/EXE/DEB — так бережём лимиты Actions.
 
+Текст под всеми сборками один: [.github/RELEASE.md](../RELEASE.md). Workflow его ставит целиком и больше не дописывает свои абзацы.
+
 ## Откуда берётся двор внутри файла
 
 Общий снапшот: `scripts/pack-www.sh` → `android/app/src/main/assets/www/`.

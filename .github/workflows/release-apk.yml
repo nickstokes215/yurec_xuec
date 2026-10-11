@@ -41,6 +41,4 @@ jobs:
           files: public/yurec_xuec.apk
           fail_on_unmatched_files: true
           make_latest: true
-          append_body: true
-          body: |
-            **Android:** `yurec_xuec.apk` — пакет `ru.yurec.xuec`.
+          body_path: .github/RELEASE.md
