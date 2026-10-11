@@ -50,9 +50,9 @@ def grab(vid: str) -> bytes | None:
 
 
 def dest_for(v: dict) -> Path | None:
-    thumb = str(v.get("thumb") or "")
+    thumb = str(v.get("thumb") or "").split("?", 1)[0]
     if thumb.startswith("/thumbs/") and thumb.endswith(".jpg"):
-        return ROOT / "public" / thumb.lstrip("/").split("?")[0]
+        return ROOT / "public" / thumb.lstrip("/")
     return None
 
 

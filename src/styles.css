@@ -1800,6 +1800,10 @@ html[data-wide="1"] .av-diffs {
   background: var(--color-elevated);
   color: var(--color-fg);
 }
+.chat-wipe.armed {
+  background: #c43b6e;
+  color: #fff;
+}
 .chat-send {
   background: var(--color-hero);
   color: var(--color-hero-fg);

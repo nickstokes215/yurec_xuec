@@ -2972,6 +2972,7 @@ html[data-wide="1"] .ach-board { grid-template-columns: 1fr 1fr 1fr; }
   display: grid; place-items: center; flex-shrink: 0; font-size: 18px;
 }
 .chat-wipe { background: var(--elevated); color: var(--fg); }
+.chat-wipe.armed { background: #c43b6e; color: #fff; }
 .chat-send { background: var(--hero, #b4532a); color: #fff; }
 .chat-send:disabled { opacity: .45; }
 .chat-chips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; }

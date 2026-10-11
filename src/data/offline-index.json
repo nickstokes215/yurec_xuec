@@ -2,8 +2,8 @@
   "version": 1,
   "pack": "yurec-offline",
   "source": "yandex-disk-public",
-  "count": 39,
-  "bytes": 3747201336,
+  "count": 40,
+  "bytes": 3762775895,
   "note": "url — публичная ссылка Яндекс.Диска. Прямую ссылку на скачивание приложение берёт через cloud-api в момент нажатия «Скачать». sha256 проверен по API.",
   "items": [
     {
@@ -341,6 +341,20 @@
       "sha256": "f5a924a759ae10b5c3182fee4034f53439518e668871ef702ec6c9c237efc2e2",
       "md5": "434516181fe19a614e551e47863c59d0",
       "duration": "6:50"
+    },
+    {
+      "id": "s01e18c",
+      "videoId": "07l8zQgW70c",
+      "storySlug": "s01e18c",
+      "code": "s01e18c",
+      "title": "Юрец в Курске",
+      "kind": "episode",
+      "file": "s01e18c — Юрец в Курске 🌇.mp4",
+      "url": "https://disk.yandex.ru/i/95fNO4qGn1SsGw",
+      "size": 15574559,
+      "sha256": "cb7a7f686d11f25f788fbf1e6292231a2c167ae2619cd37e118c77b6f61205f9",
+      "md5": "f041807a445c316a171bccf01d957664",
+      "duration": "1:50"
     },
     {
       "id": "s01e29-teaser",

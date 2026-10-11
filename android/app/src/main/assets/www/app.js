@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.5", buildAt: "10.10.2026, 10:15 МСК", history: [] };
+var APP = { version: "1.65.6", buildAt: "11.10.2026, 14:30 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -114,6 +114,8 @@ var chatSelecting = false;
 var chatPicked = [];
 var chatShareOpen = false;
 var chatNote = "";
+var chatWipeAsk = false;
+var chatWipeTimer = 0;
 var qAudio = null;
 var qOrder = [];
 var qPos = 0;
@@ -2781,7 +2783,7 @@ function renderChat() {
         '<button type="button" class="chat-chip gold" id="chat-random">Случайный звонок</button>' +
       "</div>" +
       '<form class="chat-composer" id="chat-form">' +
-      '<button type="button" class="chat-wipe" id="chat-wipe" aria-label="Стереть переписку">×</button>' +
+      '<button type="button" class="chat-wipe' + (chatWipeAsk ? " armed" : "") + '" id="chat-wipe" aria-label="' + (chatWipeAsk ? "Ещё раз — стереть" : "Стереть переписку") + '">' + (chatWipeAsk ? "!" : "×") + "</button>" +
       '<textarea id="chat-input" rows="1" maxlength="500" placeholder="' + (chatMode === "sms" ? "пиши смс…" : "Написать Юрцу…") + '">' + esc(chatDraft) + "</textarea>" +
       '<button type="submit" class="chat-send" ' + (chatBusy ? "disabled" : "") + ' aria-label="Отправить">➤</button>' +
     "</form></div>";
@@ -2864,6 +2866,23 @@ function bindChat() {
     });
   }
   on($("#chat-wipe"), "click", function () {
+    if (!chatWipeAsk) {
+      chatWipeAsk = true;
+      chatNote = "Ещё раз — и переписка сгорит.";
+      if (chatWipeTimer) clearTimeout(chatWipeTimer);
+      chatWipeTimer = setTimeout(function () {
+        chatWipeAsk = false;
+        chatWipeTimer = 0;
+        if (chatNote === "Ещё раз — и переписка сгорит.") chatNote = "";
+        paint();
+      }, 4000);
+      paint();
+      return;
+    }
+    if (chatWipeTimer) clearTimeout(chatWipeTimer);
+    chatWipeTimer = 0;
+    chatWipeAsk = false;
+    chatNote = "";
     chatLog = [{ role: "yurec", text: chatWelcome(chatMode) }];
     saveChatLog();
     paint();
@@ -2888,6 +2907,10 @@ function bindChat() {
 }
 function sendChat() {
   if (chatBusy) return;
+  if (chatWipeTimer) clearTimeout(chatWipeTimer);
+  chatWipeTimer = 0;
+  chatWipeAsk = false;
+  if (chatNote === "Ещё раз — и переписка сгорит.") chatNote = "";
   var inp = $("#chat-input");
   var text = String((inp && inp.value) || chatDraft || "").replace(/\s+/g, " ").trim();
   if (!text) return;
@@ -3196,7 +3219,7 @@ function renderSettings() {
       '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
     "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.5") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.6") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -3724,6 +3747,7 @@ function renderAbout() {
     '<a class="btn pass wide" href="#/passport">Паспорт двора</a>' +
     '<a class="btn zash wide" href="#/zashkvary">Зашквары двора · ' + achCount() + " / " + ACH_ITEMS.length + "</a>" +
     '<a class="btn ideas wide" href="#/ideas">Нереализованные идеи</a>' +
+    '<a class="btn wide" href="#/apk">Инструкция по установке</a>' +
     '<a class="btn log wide" href="#/changelog">История изменений</a>' +
     '<a class="btn gold wide" href="#/donate">Пожертвование</a></div>' +
     '<section class="disclaimer">' +
@@ -3754,7 +3778,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.5";
+  var ver = (APP && APP.version) || "1.65.6";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +

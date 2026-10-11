@@ -57,8 +57,10 @@ function ChatPage() {
   const [pick, setPick] = useState(false);
   const [picked, setPicked] = useState<number[]>([]);
   const [note, setNote] = useState("");
+  const [wipeAsk, setWipeAsk] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const wipeTimer = useRef<number | null>(null);
   const mood = useMemo(() => detectMood(log), [log]);
 
   useEffect(() => {
@@ -105,6 +107,28 @@ function ChatPage() {
     writeChatLog([{ role: "yurec", text: hello }]);
   }
 
+  function cancelWipeAsk() {
+    if (wipeTimer.current) window.clearTimeout(wipeTimer.current);
+    wipeTimer.current = null;
+    setWipeAsk(false);
+  }
+
+  function requestWipe() {
+    if (!wipeAsk) {
+      setWipeAsk(true);
+      setNote("Ещё раз — и переписка сгорит.");
+      if (wipeTimer.current) window.clearTimeout(wipeTimer.current);
+      wipeTimer.current = window.setTimeout(() => {
+        setWipeAsk(false);
+        setNote((n) => (n === "Ещё раз — и переписка сгорит." ? "" : n));
+      }, 4000);
+      return;
+    }
+    cancelWipeAsk();
+    setNote("");
+    wipe();
+  }
+
   function putDraft(text: string) {
     setDraft(text);
     window.setTimeout(() => input.current?.focus(), 40);
@@ -113,6 +137,8 @@ function ChatPage() {
   async function sendText(raw: string) {
     const text = raw.replace(/\s+/g, " ").trim();
     if (!text || busy) return;
+    cancelWipeAsk();
+    setNote((n) => (n === "Ещё раз — и переписка сгорит." ? "" : n));
     const user: ChatMsg = { role: "user", text: text.slice(0, 500) };
     const next = [...log, user].slice(-80);
     setLog(next);
@@ -295,7 +321,7 @@ function ChatPage() {
               void send();
             }}
           >
-            <button type="button" className="chat-wipe" onClick={wipe} aria-label="Стереть переписку" title="Стереть переписку">
+            <button type="button" className={cn("chat-wipe", wipeAsk && "armed")} onClick={requestWipe} aria-label={wipeAsk ? "Ещё раз — стереть" : "Стереть переписку"} title={wipeAsk ? "Ещё раз — стереть" : "Стереть переписку"}>
               <Eraser className="size-4" />
             </button>
             <textarea
