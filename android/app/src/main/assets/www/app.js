@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.6", buildAt: "11.10.2026, 14:30 МСК", history: [] };
+var APP = { version: "1.65.7", buildAt: "14.10.2026, 12:20 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -1284,6 +1284,274 @@ function citatOfDay() {
   return pick;
 }
 
+var walkAt = -1;
+var WALK = [
+  { layer: "yard", pin: "larek", title: "Ларёк", text: "Жёлтая лампочка, окошко 24/7. Пенсионный фонд «Путинки». Юрец берёт сдачу орлом и идёт дальше.", voice: "quotes/yurec-legenda.mp3" },
+  { layer: "yard", pin: "pomoyka", title: "Помойка", text: "Три бака слева. Казна двора. Гоша уже смотрит, кто что выбросил. Отсюда холодильник не закрывается.", voice: "quotes/gosha-revel.mp3" },
+  { layer: "flat", pin: "fridge", title: "Трёшка", text: "Подъезд пройден. Холодильник нараспашку: капуста, кефир, империя. Можно разуваться. Можно не разуваться.", voice: "quotes/yurec-dlya-svetki.mp3" }
+];
+function yardHoliday(d) {
+  var m = d.getMonth(), day = d.getDate();
+  if (m === 0 && day === 1) return true;
+  if (m === 1 && day === 23) return true;
+  if (m === 6) return true;
+  return false;
+}
+function yardMorning(d) {
+  d = d || new Date();
+  var m = d.getMonth(), day = d.getDate();
+  if (m === 0 && day === 1) return "С Новым, Шотман. Ёлка подождёт. Рюмка — нет.";
+  if (m === 1 && day === 23) return "Двадцать третье. Батя салютовал бы дробью. Юрец салютует «Путинкой».";
+  if (m === 6) return "Июльская жара. Окно открыто, ор идёт на весь Невский район.";
+  var months = ["Январь. Батарея молчит, ор нет.","Февраль. Двор серый, «Путинка» прозрачная.","Март. Снег сдался, линолеум ещё нет.","Апрель. Лужи стали характером.","Май. Ёлка всё ещё в углу. Это уже стиль.","Июнь. Комары и Гоша делят антенну.","Июль. Жара. Бак пахнет сильнее легенды.","Август. Асфальт липнет к тапку.","Сентябрь. Киоск снова шуршит газетой.","Октябрь. Темнеет рано, ор слышно дальше.","Ноябрь. Шотман мокрый. Империя в носках.","Декабрь. Снег на баке. Юрец говорит — это погоны."];
+  var week = ["Воскресенье. Двор выходной, Юрец нет.","Понедельник. Сосед уже стучит. Рано.","Вторник. Обычное утро, необычный ор.","Среда. Середина. Рюмка считает себя завтраком.","Четверг. До выходных как до Искровского.","Пятница. Киоск ставит кроссворд посвежее.","Суббота. Помойка богаче, чем в будни."];
+  return months[m] + " " + week[d.getDay()];
+}
+function wwwEndings(id) {
+  try {
+    var raw = localStorage.getItem("yurec-game-endings:" + id);
+    if (!raw && id === "crossword") raw = localStorage.getItem("yurec-game-endings");
+    var arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) && arr.length > 0;
+  } catch (e) { return false; }
+}
+function wwwWins(key) {
+  try {
+    var raw = JSON.parse(localStorage.getItem(key) || "{}");
+    return raw && typeof raw === "object" ? raw : {};
+  } catch (e) { return {}; }
+}
+function readWall() {
+  try {
+    var raw = JSON.parse(localStorage.getItem("yurec-wall") || "[]");
+    return Array.isArray(raw) ? raw : [];
+  } catch (e) { return []; }
+}
+function writeWall(list) {
+  try { localStorage.setItem("yurec-wall", JSON.stringify(list.slice(0, 40))); } catch (e) {}
+}
+function takeShout() {
+  try {
+    if (sessionStorage.getItem("yurec-shout-seen") === "1") return "";
+    if (tourOn || localStorage.getItem(TOUR_KEY) !== "1") return "";
+  } catch (e) { return ""; }
+  var pool = [];
+  var cws = window.YUREC_CROSSWORDS || [];
+  var empty = [], i, n = 0;
+  for (i = 0; i < cws.length; i++) if (!wwwEndings(cws[i].id)) empty.push(cws[i]);
+  if (empty.length) {
+    pool.push({ id: "cw-" + empty[0].id, text: empty[0].title + " до сих пор пустой." });
+    if (empty.length > 3) pool.push({ id: "cw-n", text: "В киоске пустых сеток: " + empty.length + ". Карандаш стынет." });
+  } else if (cws.length) pool.push({ id: "cw-all", text: "Киоск закрыт. Все кроссворды уже орёт «готово»." });
+  var av = wwwWins("yurec-av-wins");
+  var ark = wwwWins("yurec-ark-wins");
+  if (!(Number(av.yasher) > 0)) pool.push({ id: "yasher", text: "Бабку не отбил." });
+  if (!(Number(av.batya) > 0)) pool.push({ id: "batya", text: "Батя ещё с дробью. Купол не проверял." });
+  if (!(Number(av.sveta) > 0)) pool.push({ id: "sveta", text: "Светка в Максидоме. Поцелуй так и висит." });
+  var arkAny = false, k;
+  for (k in ark) if (Number(ark[k]) > 0) arkAny = true;
+  if (!arkAny) pool.push({ id: "ark", text: "Харя ещё не ракетка. Алконоид пылится." });
+  var read = [];
+  try { read = JSON.parse(localStorage.getItem("yurec-read") || "[]"); } catch (e2) { read = []; }
+  if (!Array.isArray(read)) read = [];
+  var stories = window.STORIES || [];
+  var left = 0, set = {};
+  for (i = 0; i < read.length; i++) set[read[i]] = 1;
+  for (i = 0; i < stories.length; i++) if (!set[stories[i].slug]) left++;
+  if (!read.length) pool.push({ id: "read0", text: "Ни одной серии. Двор думает, ты почтальон." });
+  else if (left > 0) pool.push({ id: "readn", text: "Недочитано " + left + ". Полка уже орёт." });
+  else if (stories.length) pool.push({ id: "readdone", text: "Сборник дочитан. Юрец не верит и орёт ещё раз." });
+  try {
+    var ach = JSON.parse(localStorage.getItem("yurec-achievements") || "{}");
+    n = ach && typeof ach === "object" ? Object.keys(ach).length : 0;
+    if (n < 50) pool.push({ id: "ach", text: "Зашкваров " + n + ". Остальные сами не откроются." });
+  } catch (e3) {}
+  try {
+    if (localStorage.getItem("yurec-license") !== "1" && localStorage.getItem("yurec-dev") !== "1") {
+      pool.push({ id: "vest", text: "Жилетка не куплена. Двор считает тебя гостем." });
+    }
+  } catch (e4) {}
+  var wall = readWall();
+  if (!wall.length) pool.push({ id: "wall", text: "Стена в подъезде голая. Мел лежит. Пиши." });
+  else pool.push({ id: "wall-n", text: "На стене " + wall.length + " надписей. Сосед уже читает." });
+  try {
+    var last = JSON.parse(localStorage.getItem("yurec-last") || "null");
+    if (last && last.slug && last.percent > 3 && last.percent < 99) {
+      var st = bySlug(last.slug);
+      if (st) pool.push({ id: "cont", text: "«" + st.title + "» брошен на " + Math.round(last.percent) + "%." });
+    }
+  } catch (e5) {}
+  try {
+    if (Number(localStorage.getItem("yurec-svoya-plays") || "0") < 1) pool.push({ id: "svoya", text: "«Юрца игра» пылится. Темы сами не откроются." });
+  } catch (e6) {}
+  if (!pool.length) pool.push({ id: "ok", text: "Двор на месте. Ты тоже. Это уже прогресс." });
+  var prev = "";
+  try { prev = localStorage.getItem("yurec-shout-last") || ""; } catch (e7) {}
+  var fresh = [];
+  for (i = 0; i < pool.length; i++) if (pool[i].id !== prev) fresh.push(pool[i]);
+  var src = fresh.length ? fresh : pool;
+  var pick = src[Math.floor(Math.random() * src.length)];
+  try {
+    localStorage.setItem("yurec-shout-last", pick.id);
+    sessionStorage.setItem("yurec-shout-seen", "1");
+  } catch (e8) {}
+  return pick.text;
+}
+function maybeShout() {
+  var r = route();
+  if (r.indexOf("/game/av") === 0 || r.indexOf("/game/ark") === 0) return;
+  if (document.getElementById("shout-pop")) return;
+  var text = takeShout();
+  if (!text) return;
+  var b = document.createElement("button");
+  b.id = "shout-pop";
+  b.className = "shout";
+  b.innerHTML = "<b>Юрец с порога</b><span>" + esc(text) + "</span>";
+  b.addEventListener("click", function () { if (b.parentNode) b.parentNode.removeChild(b); });
+  document.body.appendChild(b);
+}
+function sharePostcard(text, speaker, speakerId) {
+  var canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1440;
+  var ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  var ch = null, i;
+  for (i = 0; i < CHARACTERS.length; i++) if (CHARACTERS[i].id === speakerId) ch = CHARACTERS[i];
+  function draw(img) {
+    ctx.fillStyle = "#14110c";
+    ctx.fillRect(0, 0, 1080, 1440);
+    ctx.strokeStyle = "#c9a227";
+    ctx.lineWidth = 10;
+    ctx.strokeRect(48, 48, 984, 1344);
+    if (img) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(540, 340, 168, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(img, 372, 172, 336, 336);
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(540, 340, 168, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#e8c547";
+    ctx.font = "600 28px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(String(speaker || "").toUpperCase(), 540, 560);
+    ctx.fillStyle = "#f4efe4";
+    ctx.font = "italic 52px Georgia, serif";
+    var words = ("«" + text + "»").split(" ");
+    var lines = [], line = "", w;
+    for (i = 0; i < words.length; i++) {
+      w = words[i];
+      var tryLine = line ? line + " " + w : w;
+      if (ctx.measureText(tryLine).width > 860) { if (line) lines.push(line); line = w; }
+      else line = tryLine;
+    }
+    if (line) lines.push(line);
+    var y = 660;
+    for (i = 0; i < lines.length && i < 8; i++) { ctx.fillText(lines[i], 540, y); y += 68; }
+    ctx.save();
+    ctx.translate(820, 1180);
+    ctx.rotate(-0.28);
+    ctx.beginPath();
+    ctx.arc(0, 0, 118, 0, Math.PI * 2);
+    ctx.strokeStyle = "#c43b6e";
+    ctx.lineWidth = 8;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 100, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "#c43b6e";
+    ctx.font = "700 36px sans-serif";
+    ctx.fillText("ШОТМАН", 0, 8);
+    ctx.font = "600 18px sans-serif";
+    ctx.fillText("НЕВСКИЙ", 0, 40);
+    ctx.restore();
+    ctx.fillStyle = "#a89878";
+    ctx.font = "600 26px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Жизнь Юрца", 96, 1280);
+    canvas.toBlob(function (blob) {
+      if (!blob) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        var raw = String(reader.result || "");
+        var b64 = raw.indexOf(",") >= 0 ? raw.split(",")[1] : raw;
+        var saved = false;
+        try {
+          if (window.YurecNative && typeof window.YurecNative.savePostcard === "function") {
+            saved = window.YurecNative.savePostcard(b64) === "ok";
+          }
+        } catch (e) {}
+        var note = document.getElementById("post-note");
+        if (note) note.textContent = saved ? "Лежит в галерее: Pictures/Yurec_Xuec." : "На телефоне это папка Pictures/Yurec_Xuec. С сайта файл уходит в загрузки.";
+        var file = new File([blob], "shotman-otkrytka.jpg", { type: "image/jpeg" });
+        if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+          navigator.share({ files: [file], title: "Открытка со Шотмана", text: text }).catch(function () {});
+          return;
+        }
+        if (saved) return;
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "shotman-otkrytka.jpg";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      };
+      reader.readAsDataURL(blob);
+    }, "image/jpeg", 0.92);
+  }
+  if (ch && ch.photo) {
+    var img = new Image();
+    img.onload = function () { draw(img); };
+    img.onerror = function () { draw(null); };
+    img.src = photoSrc(ch.photo);
+  } else draw(null);
+}
+function playWalkVoice(src) {
+  try { if (localStorage.getItem("yurec-sound") === "0") return; } catch (e) {}
+  if (!src) return;
+  try {
+    if (!window._walkAudio) window._walkAudio = new Audio();
+    window._walkAudio.src = src;
+    window._walkAudio.play().catch(function () {});
+  } catch (e2) {}
+}
+function renderWall() {
+  var notes = readWall();
+  var html = '<a class="back" href="#/characters">← К героям</a>';
+  html += '<p class="kicker" style="margin-top:12px">Подъезд</p><h2 style="font-size:28px;margin-top:6px">Стена</h2>';
+  html += '<p class="muted" style="font-family:var(--serif);font-size:16px;line-height:1.55;margin-top:8px">Мел только на этом телефоне. Чужих комментариев нет. Надписи уезжают вместе со справкой из настроек.</p>';
+  html += '<section class="wall"><ul style="list-style:none;padding:0;margin:0">';
+  if (!notes.length) html += '<li><p class="muted">Стена голая. Сосед ещё не видел.</p></li>';
+  for (var i = 0; i < notes.length; i++) {
+    html += '<li><p>' + esc(notes[i].text) + '</p><button type="button" class="x" data-wall="' + esc(notes[i].id) + '" aria-label="Стереть">×</button></li>';
+  }
+  html += '</ul><form id="wall-form"><input id="wall-in" maxlength="120" placeholder="Написать мелом…" /><button type="submit">Мел</button></form></section>';
+  return shell(html, "chars");
+}
+function bindWall() {
+  var form = document.getElementById("wall-form");
+  if (form) form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var inp = document.getElementById("wall-in");
+    var t = String((inp && inp.value) || "").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "").slice(0, 120);
+    if (!t) return;
+    var next = [{ id: String(Date.now()), text: t, at: Date.now() }].concat(readWall()).slice(0, 40);
+    writeWall(next);
+    paint();
+  });
+  var xs = document.querySelectorAll("[data-wall]");
+  for (var i = 0; i < xs.length; i++) xs[i].addEventListener("click", function () {
+    var id = this.getAttribute("data-wall");
+    writeWall(readWall().filter(function (n) { return String(n.id) !== id; }));
+    paint();
+  });
+}
 function renderHome() {
   var list = filtered();
   var last = null;
@@ -1293,13 +1561,17 @@ function renderHome() {
   var html = '<section class="hero" data-zoom="' + bsrc + '" role="button" aria-label="Открыть баннер"><img src="' + bsrc + '" alt="" /><div class="cap">' +
     '<div class="kicker">Сборник рассказов</div><h2>Жизнь Юрца</h2>' +
     '<p class="muted">рассказы · ролики · песни · игры</p></div></section>';
+  html += '<p class="morn">' + esc(yardMorning()) + "</p>";
   if (CITATS && CITATS.length) {
     var qd = citatOfDay();
     if (qd) {
-      html += '<a class="card quote-day" data-tour="citat-day" href="#/citats">' +
+      html += '<div class="card quote-day" data-tour="citat-day">' +
+        '<a href="#/citats">' +
         '<div class="kicker">Цитата дня</div>' +
         '<p class="quote-text">«' + esc(qd.text) + '»</p>' +
-        '<p class="subtle">' + esc(qd.speaker) + " · " + CITATS.length + " в цитатнике</p></a>";
+        '<p class="subtle">' + esc(qd.speaker) + " · " + CITATS.length + " в цитатнике</p></a>" +
+        '<button type="button" class="post-btn" id="post-day" data-txt="' + esc(qd.text) + '" data-who="' + esc(qd.speaker) + '" data-id="' + esc(qd.speakerId || "") + '">Открытка</button>' +
+        '<p class="subtle" id="post-note" style="text-align:center;margin-top:8px">На телефоне картинка ложится в галерею, папка Pictures/Yurec_Xuec. С сайта — в загрузки или в «поделиться».</p></div>';
     }
   }
   if (cont && last && last.percent > 3 && last.percent < 99) {
@@ -2271,6 +2543,13 @@ function achQualified(id) {
     }
     return !!meta.f.noch;
   }
+  if (id === "sezon") {
+    if (yardHoliday(new Date())) {
+      if (!meta.f.sezon) { meta.f.sezon = Date.now(); writeAchMeta(meta); }
+      return true;
+    }
+    return !!meta.f.sezon;
+  }
   if (id === "dvornik") return !!meta.f.zash;
   if (id === "proigral") {
     try {
@@ -3174,7 +3453,7 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h2"/><path d="M20 8v11a2 2 0 0 1-2 2h-2"/><path d="m9 15 3-3 3 3"/><path d="M12 12v9"/>') + "Резервное копирование</p>" +
-      '<p class="subtle">Лицензия, прочитанное, игры, зашквары и тумблеры — всё в одном файле. Забери справку двора на диск и верни на другом телефоне.</p>' +
+      '<p class="subtle">Лицензия, прочитанное, игры, зашквары, стена подъезда и тумблеры — всё в одном файле. Забери справку двора на диск и верни на другом телефоне.</p>' +
       '<button type="button" class="btn wide tg" id="bak-export">Забрать справку (экспорт)</button>' +
       '<input id="bak-file" type="file" accept="application/json,.json" style="display:none" />' +
       '<button type="button" class="btn wide off" id="bak-import" style="margin-top:8px">' +
@@ -3219,7 +3498,7 @@ function renderSettings() {
       '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
     "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.6") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.7") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -3778,7 +4057,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.6";
+  var ver = (APP && APP.version) || "1.65.7";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +
@@ -5987,7 +6266,8 @@ function yardTeaserHtml() {
     '<div class="cap"><div class="kicker">Карта двора</div><h3>Петербург · Шотмана · трёшка</h3></div></a>' +
     '<a class="pad" href="#/characters/map">' +
     '<p class="muted" style="font-family:var(--serif);font-size:15px;line-height:1.45;margin:0">Сначала город, потом двор, потом холодильник, который не закрывается. Жми на огни.</p>' +
-    '<span class="go on" style="display:grid;margin-top:8px;height:44px;place-items:center;border-radius:12px">Открыть карту</span></a></article>';
+    '<span class="go on" style="display:grid;margin-top:8px;height:44px;place-items:center;border-radius:12px">Открыть карту</span></a>' +
+    '<a class="pad" href="#/wall" style="display:grid;height:44px;place-items:center;color:var(--muted)">Стена подъезда</a></article>';
 }
 function yardSheetHtml(pin) {
   var ch = pin.char ? CHARACTERS.find(function (x) { return x.id === pin.char; }) : null;
@@ -6014,6 +6294,10 @@ function renderYardMap() {
     if (saved && !state.ylayer) state.ylayer = saved;
     if (saved && state.ylayer === "peter" && saved !== "peter") state.ylayer = saved;
   } catch (e) {}
+  if (walkAt >= 0 && walkAt < WALK.length) {
+    state.ylayer = WALK[walkAt].layer;
+    state.ypin = WALK[walkAt].pin;
+  }
   var layer = getYardLayer(state.ylayer || "peter");
   if (!layer) return shell('<p class="empty">Карты нет. <a href="#/characters">Назад</a></p>', "chars");
   var crumbs = [["peter", "Петербург"], ["yard", "Шотмана"], ["flat", "Трёшка"]];
@@ -6028,6 +6312,8 @@ function renderYardMap() {
     html += '<button type="button" class="ymap-cr' + (i === at ? " on" : "") + '" data-ylayer="' + crumbs[i][0] + '">' + crumbs[i][1] + "</button>";
   }
   html += "</nav>";
+  html += '<div class="walk-row"><button type="button" class="walk-go" id="walk-go">Прогулка</button>' +
+    '<a class="walk-go is-quiet" href="#/wall">Стена подъезда</a></div>';
   html += '<p class="muted" style="font-family:var(--serif);font-size:15px;line-height:1.5;margin-top:8px">' + esc(layer.hint || "") + "</p>";
   html += '<div class="ymap-scroller"><div class="ymap-stage' + (layer.wide ? " is-wide" : "") + '">';
   html += '<img src="' + esc(photoSrc(layer.src)) + '" alt="' + esc(layer.title) + '" />';
@@ -6058,7 +6344,17 @@ function renderYardMap() {
   }
   if (offHtml) html += '<div class="ymap-off"><span class="ymap-off-lab">За кадром</span>' + offHtml + "</div>";
   html += "</div></div>";
-  if (open) {
+  if (walkAt >= 0 && walkAt < WALK.length) {
+    var stop = WALK[walkAt];
+    html += '<aside class="ymap-sheet"><p class="kicker">Прогулка · ' + (walkAt + 1) + " из " + WALK.length + "</p>";
+    html += "<h3>" + esc(stop.title) + "</h3>";
+    html += '<p class="muted" style="font-family:var(--serif);font-size:15px;line-height:1.55;margin-top:8px">' + esc(stop.text) + "</p>";
+    html += '<div class="walk-row"><button type="button" class="walk-go is-quiet" id="walk-voice">Голос</button>';
+    html += walkAt < WALK.length - 1
+      ? '<button type="button" class="walk-go" id="walk-next">Дальше</button>'
+      : '<button type="button" class="walk-go" id="walk-done">Дома</button>';
+    html += "</div></aside>";
+  } else if (open) {
     var pin = null;
     for (i = 0; i < pins.length; i++) if (pins[i].id === open) pin = pins[i];
     if (pin) html += yardSheetHtml(pin);
@@ -6092,8 +6388,27 @@ function bindYardMap() {
   if (home) home.addEventListener("click", function () {
     try { sessionStorage.removeItem("yurec-char-from"); } catch (e) {}
   });
+  var walk = document.getElementById("walk-go");
+  if (walk) walk.addEventListener("click", function () {
+    walkAt = 0;
+    playWalkVoice(WALK[0].voice);
+    paint();
+  });
+  var next = document.getElementById("walk-next");
+  if (next) next.addEventListener("click", function () {
+    if (walkAt < WALK.length - 1) walkAt += 1;
+    playWalkVoice(WALK[walkAt].voice);
+    paint();
+  });
+  var done = document.getElementById("walk-done");
+  if (done) done.addEventListener("click", function () { walkAt = -1; paint(); });
+  var voice = document.getElementById("walk-voice");
+  if (voice) voice.addEventListener("click", function () {
+    if (walkAt >= 0 && walkAt < WALK.length) playWalkVoice(WALK[walkAt].voice);
+  });
 }
 function yardHardwareBack() {
+  if (walkAt >= 0) { walkAt = -1; paint(); return true; }
   if (state.ypin) { state.ypin = null; paint(); return true; }
   var cur = state.ylayer || "peter";
   if (cur === "flat") { setYardLayer("yard"); paint(); return true; }
@@ -6358,6 +6673,10 @@ function gStart(fromSave) {
 }
 
 function bindHome() {
+  var post = document.getElementById("post-day");
+  if (post) post.addEventListener("click", function () {
+    sharePostcard(post.getAttribute("data-txt") || "", post.getAttribute("data-who") || "", post.getAttribute("data-id") || "");
+  });
   var q = $("#q");
   if (q) {
     q.addEventListener("input", function () {
@@ -6851,6 +7170,7 @@ function paint() {
   else if (r.indexOf("/settings") === 0) { root.innerHTML = renderSettings(); bindSettings(); }
   else if (r.indexOf("/about") === 0) { root.innerHTML = renderAbout(); bindAbout(); }
   else if (r.indexOf("/channel") === 0) root.innerHTML = renderChannel();
+  else if (r === "/wall" || r === "/wall/") { root.innerHTML = renderWall(); bindWall(); }
   else if (r === "/characters/map" || r === "/characters/map/") {
     root.innerHTML = renderYardMap();
     bindYardMap();
@@ -6914,6 +7234,7 @@ function paint() {
     updateTotop();
     try { evaluateAchievements(); } catch (errAch) {}
     try { maybeStartTour(); } catch (errTour) {}
+    try { maybeShout(); } catch (errShout) {}
   }, 0);
 }
 
@@ -7156,6 +7477,7 @@ function parentPath(r) {
   if (r.indexOf("/press/") === 0) return "/videos/press";
   if (r.indexOf("/offline") === 0) return "/donate";
   if (r.indexOf("/story/") === 0) return state.returnTo || "/";
+  if (r === "/wall" || r === "/wall/") return "/characters";
   if (r.indexOf("/characters/") === 0) {
     if (r === "/characters/map" || r === "/characters/map/") return "/characters";
     return "/characters";

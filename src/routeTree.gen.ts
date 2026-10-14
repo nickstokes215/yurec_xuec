@@ -26,6 +26,7 @@ import { Route as PassportRouteImport } from './routes/passport'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as VideosRouteImport } from './routes/videos'
+import { Route as WallRouteImport } from './routes/wall'
 import { Route as ZashkvaryRouteImport } from './routes/zashkvary'
 import { Route as ApiOfflineRouteImport } from './routes/api/offline'
 import { Route as CharactersIndexRouteImport } from './routes/characters.index'
@@ -127,6 +128,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const VideosRoute = VideosRouteImport.update({
   id: '/videos',
   path: '/videos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WallRoute = WallRouteImport.update({
+  id: '/wall',
+  path: '/wall',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ZashkvaryRoute = ZashkvaryRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
   '/videos': typeof VideosRouteWithChildren
+  '/wall': typeof WallRoute
   '/zashkvary': typeof ZashkvaryRoute
   '/api/offline': typeof ApiOfflineRoute
   '/characters/$id': typeof CharactersIdRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/passport': typeof PassportRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/wall': typeof WallRoute
   '/zashkvary': typeof ZashkvaryRoute
   '/api/offline': typeof ApiOfflineRoute
   '/characters/$id': typeof CharactersIdRoute
@@ -303,6 +311,7 @@ export interface FileRoutesById {
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
   '/videos': typeof VideosRouteWithChildren
+  '/wall': typeof WallRoute
   '/zashkvary': typeof ZashkvaryRoute
   '/api/offline': typeof ApiOfflineRoute
   '/characters/$id': typeof CharactersIdRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/saved'
     | '/settings'
     | '/videos'
+    | '/wall'
     | '/zashkvary'
     | '/api/offline'
     | '/characters/$id'
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/passport'
     | '/saved'
     | '/settings'
+    | '/wall'
     | '/zashkvary'
     | '/api/offline'
     | '/characters/$id'
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '/saved'
     | '/settings'
     | '/videos'
+    | '/wall'
     | '/zashkvary'
     | '/api/offline'
     | '/characters/$id'
@@ -447,6 +459,7 @@ export interface RootRouteChildren {
   SavedRoute: typeof SavedRoute
   SettingsRoute: typeof SettingsRoute
   VideosRoute: typeof VideosRouteWithChildren
+  WallRoute: typeof WallRoute
   ZashkvaryRoute: typeof ZashkvaryRoute
   ApiOfflineRoute: typeof ApiOfflineRoute
   PressIdRoute: typeof PressIdRoute
@@ -573,6 +586,13 @@ declare module '@tanstack/react-router' {
       path: '/videos'
       fullPath: '/videos'
       preLoaderRoute: typeof VideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wall': {
+      id: '/wall'
+      path: '/wall'
+      fullPath: '/wall'
+      preLoaderRoute: typeof WallRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zashkvary': {
@@ -766,6 +786,7 @@ const rootRouteChildren: RootRouteChildren = {
   SavedRoute: SavedRoute,
   SettingsRoute: SettingsRoute,
   VideosRoute: VideosRouteWithChildren,
+  WallRoute: WallRoute,
   ZashkvaryRoute: ZashkvaryRoute,
   ApiOfflineRoute: ApiOfflineRoute,
   PressIdRoute: PressIdRoute,

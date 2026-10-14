@@ -16,7 +16,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.media.MediaScannerConnection;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.webkit.JavascriptInterface;
@@ -395,6 +397,82 @@ public class YurecOffline {
             }
         });
         return "need";
+    }
+
+    @JavascriptInterface
+    public String savePostcard(final String base64) {
+        String r = writePostcardNow(base64);
+        if ("ok".equals(r)) {
+            ui.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(ctx, "Открытка: Pictures/Yurec_Xuec", Toast.LENGTH_LONG).show();
+                }
+            });
+            return "ok";
+        }
+        if ("need".equals(r)) {
+            ui.post(new Runnable() {
+                @Override
+                public void run() {
+                    requestStorageIfNeeded();
+                }
+            });
+        }
+        return r;
+    }
+
+    private String writePostcardNow(String base64) {
+        if (base64 == null || base64.length() == 0) return "fail";
+        byte[] bytes;
+        try {
+            bytes = Base64.decode(base64, Base64.DEFAULT);
+        } catch (Exception e) {
+            return "fail";
+        }
+        if (bytes == null || bytes.length == 0) return "fail";
+        String name = "shotman-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US).format(new java.util.Date()) + ".jpg";
+        if (Build.VERSION.SDK_INT >= 29) {
+            try {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/Yurec_Xuec");
+                values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+                Uri uri = ctx.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                if (uri != null) {
+                    java.io.OutputStream out = ctx.getContentResolver().openOutputStream(uri);
+                    if (out != null) {
+                        try {
+                            out.write(bytes);
+                        } finally {
+                            out.close();
+                        }
+                        ContentValues done = new ContentValues();
+                        done.put(MediaStore.MediaColumns.IS_PENDING, 0);
+                        ctx.getContentResolver().update(uri, done, null, null);
+                        return "ok";
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        if (!canWritePublic()) return "need";
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Yurec_Xuec");
+        try {
+            if (!dir.exists() && !dir.mkdirs()) return "fail";
+            File f = new File(dir, name);
+            FileOutputStream out = new FileOutputStream(f);
+            try {
+                out.write(bytes);
+            } finally {
+                out.close();
+            }
+            MediaScannerConnection.scanFile(ctx, new String[]{ f.getAbsolutePath() }, new String[]{ "image/jpeg" }, null);
+            return "ok";
+        } catch (Exception e) {
+            return "fail";
+        }
     }
 
     @JavascriptInterface

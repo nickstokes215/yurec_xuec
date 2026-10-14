@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { getCharacter } from "@/data/catalog";
 import { getYardLayer, YARD_LAYERS, type YardLayer, type YardPin } from "@/data/yard-map";
+import { WALK } from "@/lib/yard-life";
 import { cn } from "@/lib/utils";
 
 const LAYER_KEY = "yurec-yard-layer";
@@ -33,11 +34,15 @@ function writeLayer(id: string) {
 export function YardMap() {
   const [layerId, setLayerId] = useState("peter");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [walk, setWalk] = useState<number | null>(null);
   const layerIdRef = useRef(layerId);
   const openRef = useRef(openId);
+  const walkRef = useRef(walk);
+  const voiceRef = useRef<HTMLAudioElement | null>(null);
   const navigate = useNavigate();
   layerIdRef.current = layerId;
   openRef.current = openId;
+  walkRef.current = walk;
 
   useEffect(() => {
     setLayerId(readLayer());
@@ -53,6 +58,10 @@ export function YardMap() {
     const w = window as Window & { yurecBack?: () => boolean };
     const prev = w.yurecBack;
     const onBack = () => {
+      if (walkRef.current != null) {
+        setWalk(null);
+        return true;
+      }
       if (openRef.current) {
         setOpenId(null);
         return true;
@@ -74,6 +83,22 @@ export function YardMap() {
       if (w.yurecBack === onBack) w.yurecBack = prev;
     };
   }, []);
+
+  useEffect(() => {
+    if (walk == null) return;
+    const stop = WALK[walk];
+    setLayerId(stop.layer);
+    writeLayer(stop.layer);
+    setOpenId(stop.pin);
+    try {
+      if (localStorage.getItem("yurec-sound") === "0") return;
+    } catch {
+      /* ignore */
+    }
+    if (!voiceRef.current) voiceRef.current = new Audio();
+    voiceRef.current.src = stop.voice;
+    void voiceRef.current.play().catch(() => undefined);
+  }, [walk]);
 
   const layer = getYardLayer(layerId);
   const pin = layer.pins.find((p) => p.id === openId) || null;
@@ -121,6 +146,15 @@ export function YardMap() {
         })}
       </nav>
 
+      <div className="mt-3 flex gap-2">
+        <button type="button" className="walk-go" onClick={() => setWalk(0)}>
+          Прогулка
+        </button>
+        <Link to="/wall" className="walk-go is-quiet">
+          Стена подъезда
+        </Link>
+      </div>
+
       <p className="mt-2 font-serif text-[15px] leading-relaxed text-muted">{layer.hint}</p>
 
       <MapStage
@@ -129,7 +163,38 @@ export function YardMap() {
         onPin={(id) => setOpenId((cur) => (cur === id ? null : id))}
       />
 
-      {pin ? (
+      {walk != null ? (
+        <aside className="ymap-sheet walk-card mt-4">
+          <p className="text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
+            Прогулка · {walk + 1} из {WALK.length}
+          </p>
+          <h3 className="mt-1 font-sans text-lg font-semibold">{WALK[walk].title}</h3>
+          <p className="mt-2 font-serif text-[15px] leading-relaxed text-muted">{WALK[walk].text}</p>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              className="walk-go is-quiet"
+              onClick={() => {
+                const a = voiceRef.current || new Audio();
+                voiceRef.current = a;
+                a.src = WALK[walk].voice;
+                void a.play().catch(() => undefined);
+              }}
+            >
+              Голос
+            </button>
+            {walk < WALK.length - 1 ? (
+              <button type="button" className="walk-go" onClick={() => setWalk(walk + 1)}>
+                Дальше
+              </button>
+            ) : (
+              <button type="button" className="walk-go" onClick={() => setWalk(null)}>
+                Дома
+              </button>
+            )}
+          </div>
+        </aside>
+      ) : pin ? (
         <PinSheet
           pin={pin}
           onClose={() => setOpenId(null)}

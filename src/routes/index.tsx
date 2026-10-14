@@ -20,6 +20,7 @@ import { useSortMode } from "@/lib/use-sort";
 import { CITATS, citatOfDay } from "@/data/citats";
 import { cn } from "@/lib/utils";
 import { openZoom } from "@/lib/zoom";
+import { sharePostcard, yardMorning } from "@/lib/yard-life";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -90,6 +91,29 @@ function Home() {
 
   const banner = KIND_BANNERS[kind] || KIND_BANNERS.all;
   const dayCitat = useMemo(() => citatOfDay(), []);
+  const morning = useMemo(() => yardMorning(), []);
+  const [cardNote, setCardNote] = useState("");
+
+  async function postcard() {
+    setCardNote("");
+    try {
+      const how = await sharePostcard({
+        text: dayCitat.text,
+        speaker: dayCitat.speaker,
+        speakerId: dayCitat.speakerId,
+      });
+      setCardNote(
+        how === "gallery"
+          ? "Лежит в галерее: Pictures/Yurec_Xuec."
+          : how === "shared"
+            ? "Открытка ушла. На телефоне она ещё и в Pictures/Yurec_Xuec."
+            : "Файл скачан. В приложении это папка Pictures/Yurec_Xuec.",
+      );
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") return;
+      setCardNote("Не вышло собрать открытку.");
+    }
+  }
 
   return (
     <main className="px-4 pb-8 pt-4 wide:px-6">
@@ -116,17 +140,27 @@ function Home() {
         </button>
       </section>
 
-      <Link
-        to="/citats"
+      <p className="morn">{morning}</p>
+
+      <div
         data-tour="citat-day"
-        className="mt-4 block rounded-2xl bg-surface px-4 py-3 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
+        className="mt-4 rounded-2xl bg-surface px-4 py-3 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
       >
-        <p className="text-[11px] font-medium tracking-[0.16em] text-accent uppercase">Цитата дня</p>
-        <p className="mt-2 font-serif text-[16px] leading-snug text-fg italic">«{dayCitat.text}»</p>
-        <p className="mt-2 text-[12px] text-muted">
-          {dayCitat.speaker} <span className="text-subtle">· {CITATS.length} в цитатнике</span>
+        <Link to="/citats" className="block">
+          <p className="text-[11px] font-medium tracking-[0.16em] text-accent uppercase">Цитата дня</p>
+          <p className="mt-2 font-serif text-[16px] leading-snug text-fg italic">«{dayCitat.text}»</p>
+          <p className="mt-2 text-[12px] text-muted">
+            {dayCitat.speaker} <span className="text-subtle">· {CITATS.length} в цитатнике</span>
+          </p>
+        </Link>
+        <button type="button" className="post-btn" onClick={() => void postcard()}>
+          Открытка
+        </button>
+        <p className="mt-2 text-center text-[11px] leading-snug text-subtle">
+          На телефоне картинка ложится в галерею, папка Pictures/Yurec_Xuec. С сайта — в загрузки браузера или сразу в «поделиться».
         </p>
-      </Link>
+        {cardNote ? <p className="mt-2 text-center text-[12px] text-muted">{cardNote}</p> : null}
+      </div>
 
       {contStory && (
         <Link

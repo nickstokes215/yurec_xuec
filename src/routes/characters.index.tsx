@@ -89,6 +89,9 @@ function YardTeaser() {
           </span>
         </span>
       </Link>
+      <Link to="/wall" className="grid h-11 place-items-center border-t border-white/10 text-sm text-muted">
+        Стена подъезда
+      </Link>
     </section>
   );
 }

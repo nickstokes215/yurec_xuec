@@ -4,6 +4,7 @@ import { stories } from "@/data/catalog";
 import { CROSSWORDS } from "@/data/crossword";
 import { AV_CHAIN, ARK_CHAIN } from "@/data/game";
 import { playsCount } from "@/lib/svoya-stats";
+import { isYardHoliday } from "@/lib/yard-life";
 
 const KEY = "yurec-achievements";
 const EGG_KEY = "yurec-egg";
@@ -319,6 +320,17 @@ function qualified(id: string): boolean {
         return true;
       }
       return flag("noch");
+    }
+    case "sezon": {
+      if (isYardHoliday()) {
+        const m = readMeta();
+        if (!m.f.sezon) {
+          m.f = { ...m.f, sezon: Date.now() };
+          writeMeta(m);
+        }
+        return true;
+      }
+      return flag("sezon");
     }
     case "dvornik":
       return flag("zash");

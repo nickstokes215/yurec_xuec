@@ -3048,4 +3048,19 @@ html[data-wide="1"] .chat-log { max-width: 720px; margin-inline: auto; width: 10
 .svoya-hall li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 15px; }
 html[data-wide="1"] .svoya-cat { font-size: 12px; min-height: 52px; }
 html[data-wide="1"] .svoya-cell { min-height: 56px; font-size: 18px; }
+.morn { margin: 14px 0 0; font-family: var(--serif); font-size: 15px; line-height: 1.45; color: var(--muted); }
+.post-btn, .walk-go { display: grid; place-items: center; height: 40px; margin-top: 10px; width: 100%; border: 0; border-radius: 12px; background: #c9a227; color: #1a1408; font-size: 13px; font-weight: 650; text-decoration: none; }
+.walk-row { display: flex; gap: 8px; margin-top: 12px; }
+.walk-row .walk-go { margin-top: 0; flex: 1; }
+.walk-go.is-quiet { background: var(--elevated); color: var(--fg); }
+.shout { position: fixed; z-index: 70; left: 16px; right: 16px; top: calc(4.2rem + env(safe-area-inset-top, 0px)); text-align: left; border: 0; border-radius: 16px; padding: 12px 14px; background: #1c160e; color: #f4efe4; box-shadow: 0 0 0 1px #c9a227, 0 16px 40px rgba(0,0,0,.45); }
+.shout b { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #e8c547; font-weight: 650; }
+.shout span { display: block; margin-top: 4px; font-family: var(--serif); font-size: 16px; line-height: 1.35; }
+.wall { margin-top: 16px; border-radius: 18px; background: #1c2418; padding: 14px; }
+.wall li { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 10px; }
+.wall p { flex: 1; margin: 0; color: #e7f0d8; font-family: "Comic Sans MS", "Segoe Print", cursive; font-size: 18px; line-height: 1.35; }
+.wall button.x { border: 0; background: transparent; color: rgba(231,240,216,.7); font-size: 20px; }
+.wall form { display: flex; gap: 8px; }
+.wall input { flex: 1; height: 44px; border: 0; border-radius: 12px; padding: 0 12px; background: rgba(0,0,0,.28); color: #e7f0d8; font-size: 16px; }
+.wall form button { height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: #e7f0d8; color: #1c2418; font-weight: 700; }
 
