@@ -93,24 +93,33 @@ function Home() {
   const dayCitat = useMemo(() => citatOfDay(), []);
   const morning = useMemo(() => yardMorning(), []);
   const [cardNote, setCardNote] = useState("");
+  const [cardAsk, setCardAsk] = useState(false);
 
   async function postcard() {
-    setCardNote("");
+    if (!cardAsk) {
+      setCardAsk(true);
+      setCardNote(
+        "На телефоне картинка ложится в галерею, папка Pictures/Yurec_Xuec. С сайта — в загрузки или в «поделиться».",
+      );
+      return;
+    }
     try {
       const how = await sharePostcard({
         text: dayCitat.text,
         speaker: dayCitat.speaker,
         speakerId: dayCitat.speakerId,
       });
+      setCardAsk(false);
       setCardNote(
         how === "gallery"
           ? "Лежит в галерее: Pictures/Yurec_Xuec."
           : how === "shared"
-            ? "Открытка ушла. На телефоне она ещё и в Pictures/Yurec_Xuec."
+            ? "Ушла в «поделиться». На телефоне это папка Pictures/Yurec_Xuec."
             : "Файл скачан. В приложении это папка Pictures/Yurec_Xuec.",
       );
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return;
+      setCardAsk(false);
       setCardNote("Не вышло собрать открытку.");
     }
   }
@@ -153,13 +162,10 @@ function Home() {
             {dayCitat.speaker} <span className="text-subtle">· {CITATS.length} в цитатнике</span>
           </p>
         </Link>
-        <button type="button" className="post-btn" onClick={() => void postcard()}>
-          Открытка
+        <button type="button" className="post-link" onClick={() => void postcard()}>
+          {cardAsk ? "Сделать" : "Открытка"}
         </button>
-        <p className="mt-2 text-center text-[11px] leading-snug text-subtle">
-          На телефоне картинка ложится в галерею, папка Pictures/Yurec_Xuec. С сайта — в загрузки браузера или сразу в «поделиться».
-        </p>
-        {cardNote ? <p className="mt-2 text-center text-[12px] text-muted">{cardNote}</p> : null}
+        {cardNote ? <p className="post-note">{cardNote}</p> : null}
       </div>
 
       {contStory && (

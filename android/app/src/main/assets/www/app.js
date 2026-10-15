@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.7", buildAt: "14.10.2026, 12:20 МСК", history: [] };
+var APP = { version: "1.65.8", buildAt: "15.10.2026, 22:00 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -1410,71 +1410,173 @@ function maybeShout() {
   b.addEventListener("click", function () { if (b.parentNode) b.parentNode.removeChild(b); });
   document.body.appendChild(b);
 }
-function sharePostcard(text, speaker, speakerId) {
+function sharePostcard(text, speaker, speakerId, done) {
   var canvas = document.createElement("canvas");
   canvas.width = 1080;
   canvas.height = 1440;
   var ctx = canvas.getContext("2d");
   if (!ctx) return;
-  var ch = null, i;
-  for (i = 0; i < CHARACTERS.length; i++) if (CHARACTERS[i].id === speakerId) ch = CHARACTERS[i];
-  function draw(img) {
-    ctx.fillStyle = "#14110c";
+  var papers = [
+    { a: "#14110c", b: "#3a2a16", ink: "#f6f0e4", mute: "#e8c547", stamp: "#c43b6e", kind: "night" },
+    { a: "#1a2618", b: "#31422c", ink: "#e7f0d8", mute: "#d5e4c4", stamp: "#e8c547", kind: "chalk" },
+    { a: "#f4ead6", b: "#e2d0ae", ink: "#241910", mute: "#7a2e2e", stamp: "#9a3030", kind: "news" },
+    { a: "#0d2233", b: "#1c4664", ink: "#e8f4fb", mute: "#9ad4ea", stamp: "#e8c547", kind: "rain" },
+    { a: "#3b2214", b: "#8a4b28", ink: "#fff4e8", mute: "#f0c27a", stamp: "#1a120c", kind: "rust" },
+    { a: "#d7eef3", b: "#8fb9c6", ink: "#102830", mute: "#14586e", stamp: "#c43b6e", kind: "fridge" },
+    { a: "#6d1c28", b: "#2c0c12", ink: "#f8e7c4", mute: "#f0d78c", stamp: "#f4efe4", kind: "soviet" },
+    { a: "#241c16", b: "#4a3a28", ink: "#f4efe4", mute: "#c9a227", stamp: "#c43b6e", kind: "lino" },
+    { a: "#12101a", b: "#2c2640", ink: "#f4efe8", mute: "#d8c6f2", stamp: "#e8c547", kind: "night" },
+    { a: "#10211c", b: "#0c1412", ink: "#e7f3ec", mute: "#b7d7c4", stamp: "#c9a227", kind: "rain" }
+  ];
+  var fonts = [
+    "italic {s}px Georgia, 'Times New Roman', serif",
+    "{s}px 'Courier New', monospace",
+    "italic {s}px Palatino, Georgia, serif",
+    "{s}px 'Segoe Print', 'Comic Sans MS', cursive",
+    "700 {s}px sans-serif",
+    "italic 600 {s}px Georgia, serif",
+    "{s}px sans-serif"
+  ];
+  function one(list) { return list[Math.floor(Math.random() * list.length)]; }
+  function paint(img) {
+    var paper = one(papers);
+    var layout = Math.floor(Math.random() * 3);
+    var ang = Math.random() * Math.PI * 2;
+    var g = ctx.createLinearGradient(540 - Math.cos(ang) * 800, 720 - Math.sin(ang) * 900, 540 + Math.cos(ang) * 800, 720 + Math.sin(ang) * 900);
+    g.addColorStop(0, paper.a);
+    g.addColorStop(1, paper.b);
+    ctx.fillStyle = g;
     ctx.fillRect(0, 0, 1080, 1440);
-    ctx.strokeStyle = "#c9a227";
-    ctx.lineWidth = 10;
-    ctx.strokeRect(48, 48, 984, 1344);
-    if (img) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(540, 340, 168, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(img, 372, 172, 336, 336);
-      ctx.restore();
-      ctx.beginPath();
-      ctx.arc(540, 340, 168, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.fillStyle = "#e8c547";
-    ctx.font = "600 28px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(String(speaker || "").toUpperCase(), 540, 560);
-    ctx.fillStyle = "#f4efe4";
-    ctx.font = "italic 52px Georgia, serif";
-    var words = ("«" + text + "»").split(" ");
-    var lines = [], line = "", w;
-    for (i = 0; i < words.length; i++) {
-      w = words[i];
-      var tryLine = line ? line + " " + w : w;
-      if (ctx.measureText(tryLine).width > 860) { if (line) lines.push(line); line = w; }
-      else line = tryLine;
-    }
-    if (line) lines.push(line);
-    var y = 660;
-    for (i = 0; i < lines.length && i < 8; i++) { ctx.fillText(lines[i], 540, y); y += 68; }
     ctx.save();
-    ctx.translate(820, 1180);
-    ctx.rotate(-0.28);
-    ctx.beginPath();
-    ctx.arc(0, 0, 118, 0, Math.PI * 2);
-    ctx.strokeStyle = "#c43b6e";
-    ctx.lineWidth = 8;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(0, 0, 100, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fillStyle = "#c43b6e";
-    ctx.font = "700 36px sans-serif";
-    ctx.fillText("ШОТМАН", 0, 8);
-    ctx.font = "600 18px sans-serif";
-    ctx.fillText("НЕВСКИЙ", 0, 40);
+    var i;
+    if (paper.kind === "night") {
+      ctx.fillStyle = paper.mute;
+      for (i = 0; i < 48; i++) {
+        ctx.globalAlpha = 0.25 + Math.random() * 0.6;
+        var x = 40 + Math.random() * 1000, y = 40 + Math.random() * 1360;
+        ctx.fillRect(x, y, 2, 8);
+        ctx.fillRect(x - 3, y + 3, 8, 2);
+      }
+    } else if (paper.kind === "chalk") {
+      ctx.fillStyle = "#f4f7ee";
+      for (i = 0; i < 180; i++) {
+        ctx.globalAlpha = 0.05 + Math.random() * 0.18;
+        ctx.beginPath();
+        ctx.arc(Math.random() * 1080, Math.random() * 1440, 1 + Math.random() * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (paper.kind === "news") {
+      ctx.strokeStyle = "rgba(36,25,16,.18)";
+      ctx.lineWidth = 1;
+      for (var hy = 80; hy < 1400; hy += 36) { ctx.beginPath(); ctx.moveTo(70, hy); ctx.lineTo(1010, hy); ctx.stroke(); }
+    } else if (paper.kind === "rain") {
+      ctx.strokeStyle = "rgba(232,244,251,.28)";
+      ctx.lineWidth = 2;
+      for (i = 0; i < 70; i++) {
+        var rx = Math.random() * 1080, ry = Math.random() * 1440;
+        ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 18, ry + 46); ctx.stroke();
+      }
+    } else if (paper.kind === "rust") {
+      ctx.fillStyle = "rgba(90,40,16,.35)";
+      for (i = 0; i < 14; i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random() * 1080, Math.random() * 1440, 20 + Math.random() * 70, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (paper.kind === "fridge") {
+      ctx.fillStyle = "rgba(255,255,255,.35)";
+      for (i = 0; i < 8; i++) ctx.fillRect(0, Math.random() * 1440, 1080, 8 + Math.random() * 22);
+    } else if (paper.kind === "soviet") {
+      ctx.fillStyle = "rgba(248,231,196,.12)";
+      ctx.beginPath(); ctx.arc(860, 220, 180, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.strokeStyle = "rgba(244,239,228,.12)";
+      ctx.lineWidth = 2;
+      for (i = -8; i < 18; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * 90, 0); ctx.lineTo(i * 90 + 700, 1440);
+        ctx.moveTo(i * 90, 1440); ctx.lineTo(i * 90 + 700, 0);
+        ctx.stroke();
+      }
+    }
     ctx.restore();
-    ctx.fillStyle = "#a89878";
+    ctx.strokeStyle = paper.mute;
+    ctx.lineWidth = layout === 1 ? 4 : 10;
+    if (layout !== 2) ctx.strokeRect(46, 46, 988, 1348);
+    function stampAt(sx, sy) {
+      var sub = one(["НЕВСКИЙ", "ДВОР", "ОРЁТ", "147", String(new Date().getFullYear())]);
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(-0.4 + Math.random() * 0.5);
+      ctx.beginPath(); ctx.arc(0, 0, 108, 0, Math.PI * 2);
+      ctx.strokeStyle = paper.stamp; ctx.lineWidth = 7; ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 90, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = paper.stamp; ctx.textAlign = "center";
+      ctx.font = "700 32px sans-serif"; ctx.fillText("ШОТМАН", 0, 6);
+      ctx.font = "600 16px sans-serif"; ctx.fillText(sub, 0, 34);
+      ctx.restore();
+    }
+    function cover(im, x, y, size) {
+      var s = Math.max(size / im.width, size / im.height);
+      var w = im.width * s, h = im.height * s;
+      ctx.drawImage(im, x + (size - w) / 2, y + (size - h) / 2, w, h);
+    }
+    var quoteX = 540, quoteMax = 860, quoteTop = 620;
+    if (img && layout === 0) {
+      ctx.save(); ctx.beginPath(); ctx.arc(540, 330, 156, 0, Math.PI * 2); ctx.clip(); cover(img, 384, 174, 312); ctx.restore();
+      ctx.beginPath(); ctx.arc(540, 330, 156, 0, Math.PI * 2); ctx.strokeStyle = paper.mute; ctx.lineWidth = 8; ctx.stroke();
+      stampAt(820, 1180);
+    } else if (img && layout === 1) {
+      ctx.save(); ctx.translate(780, 250); ctx.rotate(-0.08);
+      ctx.fillStyle = paper.ink; ctx.fillRect(-8, -8, 236, 276);
+      ctx.beginPath(); ctx.rect(0, 0, 220, 260); ctx.clip(); cover(img, 0, 0, 220); ctx.restore();
+      quoteX = 500; quoteMax = 720; quoteTop = 560;
+      stampAt(240, 1180);
+    } else if (img) {
+      ctx.fillStyle = paper.mute; ctx.fillRect(0, 0, 86, 1440);
+      ctx.save(); ctx.beginPath(); ctx.arc(220, 360, 130, 0, Math.PI * 2); ctx.clip(); cover(img, 90, 230, 260); ctx.restore();
+      ctx.beginPath(); ctx.arc(220, 360, 130, 0, Math.PI * 2); ctx.strokeStyle = paper.ink; ctx.lineWidth = 6; ctx.stroke();
+      quoteX = 680; quoteMax = 620; quoteTop = 560;
+      stampAt(860, 1200);
+    } else {
+      stampAt(Math.random() < 0.5 ? 240 : 820, 1180);
+      quoteTop = 480;
+    }
+    ctx.fillStyle = paper.mute;
     ctx.font = "600 26px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(String(speaker || "").toUpperCase(), quoteX, quoteTop - 48);
+    var quoted = "«" + text + "»";
+    var fontTpl = one(fonts);
+    var size = text.length > 90 ? 40 : text.length > 50 ? 48 : 56;
+    var lines = [];
+    function wrap(max) {
+      var words = quoted.split(" ");
+      var out = [], line = "", w;
+      for (var n = 0; n < words.length; n++) {
+        w = words[n];
+        var tryLine = line ? line + " " + w : w;
+        if (ctx.measureText(tryLine).width > max && line) { out.push(line); line = w; }
+        else line = tryLine;
+      }
+      if (line) out.push(line);
+      return out;
+    }
+    for (; size >= 28; size -= 2) {
+      ctx.font = fontTpl.replace("{s}", String(size));
+      lines = wrap(quoteMax);
+      if (lines.length <= 8) break;
+    }
+    ctx.fillStyle = paper.ink;
+    ctx.textAlign = "center";
+    var ty = quoteTop, step = size + 16;
+    for (i = 0; i < lines.length && i < 8; i++) { ctx.fillText(lines[i], quoteX, ty); ty += step; }
+    ctx.fillStyle = paper.mute;
+    ctx.font = "600 24px sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("Жизнь Юрца", 96, 1280);
+    ctx.fillText("Жизнь Юрца", layout === 2 ? 140 : 92, 1324);
     canvas.toBlob(function (blob) {
-      if (!blob) return;
+      if (!blob) { if (done) done("fail"); return; }
       var reader = new FileReader();
       reader.onload = function () {
         var raw = String(reader.result || "");
@@ -1485,32 +1587,34 @@ function sharePostcard(text, speaker, speakerId) {
             saved = window.YurecNative.savePostcard(b64) === "ok";
           }
         } catch (e) {}
-        var note = document.getElementById("post-note");
-        if (note) note.textContent = saved ? "Лежит в галерее: Pictures/Yurec_Xuec." : "На телефоне это папка Pictures/Yurec_Xuec. С сайта файл уходит в загрузки.";
         var file = new File([blob], "shotman-otkrytka.jpg", { type: "image/jpeg" });
+        var shared = false;
         if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+          shared = true;
           navigator.share({ files: [file], title: "Открытка со Шотмана", text: text }).catch(function () {});
-          return;
+        } else if (!saved) {
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "shotman-otkrytka.jpg";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
         }
-        if (saved) return;
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement("a");
-        a.href = url;
-        a.download = "shotman-otkrytka.jpg";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        if (done) done(saved ? "gallery" : shared ? "shared" : "file");
       };
       reader.readAsDataURL(blob);
     }, "image/jpeg", 0.92);
   }
+  var ch = null, ci;
+  for (ci = 0; ci < CHARACTERS.length; ci++) if (CHARACTERS[ci].id === speakerId) ch = CHARACTERS[ci];
   if (ch && ch.photo) {
-    var img = new Image();
-    img.onload = function () { draw(img); };
-    img.onerror = function () { draw(null); };
-    img.src = photoSrc(ch.photo);
-  } else draw(null);
+    var im = new Image();
+    im.onload = function () { paint(im); };
+    im.onerror = function () { paint(null); };
+    im.src = photoSrc(ch.photo);
+  } else paint(null);
 }
 function playWalkVoice(src) {
   try { if (localStorage.getItem("yurec-sound") === "0") return; } catch (e) {}
@@ -1570,8 +1674,8 @@ function renderHome() {
         '<div class="kicker">Цитата дня</div>' +
         '<p class="quote-text">«' + esc(qd.text) + '»</p>' +
         '<p class="subtle">' + esc(qd.speaker) + " · " + CITATS.length + " в цитатнике</p></a>" +
-        '<button type="button" class="post-btn" id="post-day" data-txt="' + esc(qd.text) + '" data-who="' + esc(qd.speaker) + '" data-id="' + esc(qd.speakerId || "") + '">Открытка</button>' +
-        '<p class="subtle" id="post-note" style="text-align:center;margin-top:8px">На телефоне картинка ложится в галерею, папка Pictures/Yurec_Xuec. С сайта — в загрузки или в «поделиться».</p></div>';
+        '<button type="button" class="post-link" id="post-day" data-txt="' + esc(qd.text) + '" data-who="' + esc(qd.speaker) + '" data-id="' + esc(qd.speakerId || "") + '">Открытка</button>' +
+        '<p class="post-note" id="post-note" hidden></p></div>';
     }
   }
   if (cont && last && last.percent > 3 && last.percent < 99) {
@@ -3498,7 +3602,7 @@ function renderSettings() {
       '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
     "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.7") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.8") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -4057,7 +4161,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.7";
+  var ver = (APP && APP.version) || "1.65.8";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +
@@ -6675,7 +6779,30 @@ function gStart(fromSave) {
 function bindHome() {
   var post = document.getElementById("post-day");
   if (post) post.addEventListener("click", function () {
-    sharePostcard(post.getAttribute("data-txt") || "", post.getAttribute("data-who") || "", post.getAttribute("data-id") || "");
+    var note = document.getElementById("post-note");
+    if (post.getAttribute("data-arm") !== "1") {
+      post.setAttribute("data-arm", "1");
+      post.textContent = "Сделать";
+      if (note) {
+        note.hidden = false;
+        note.textContent = "На телефоне картинка ложится в галерею, папка Pictures/Yurec_Xuec. С сайта — в загрузки или в «поделиться».";
+      }
+      return;
+    }
+    if (post.getAttribute("data-busy") === "1") return;
+    post.setAttribute("data-busy", "1");
+    sharePostcard(post.getAttribute("data-txt") || "", post.getAttribute("data-who") || "", post.getAttribute("data-id") || "", function (how) {
+      post.setAttribute("data-busy", "0");
+      post.setAttribute("data-arm", "0");
+      post.textContent = "Открытка";
+      if (!note) return;
+      note.hidden = false;
+      note.textContent = how === "gallery"
+        ? "Лежит в галерее: Pictures/Yurec_Xuec."
+        : how === "shared"
+          ? "Ушла в «поделиться». На телефоне это папка Pictures/Yurec_Xuec."
+          : "Файл скачан. В приложении это папка Pictures/Yurec_Xuec.";
+    });
   });
   var q = $("#q");
   if (q) {

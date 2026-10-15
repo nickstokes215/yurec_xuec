@@ -1991,21 +1991,43 @@ html[data-wide="1"] .chat-log {
   line-height: 1.45;
   color: var(--color-muted);
 }
-.post-btn, .walk-go {
+.walk-go {
   display: grid;
   place-items: center;
   height: 40px;
-  margin-top: 10px;
-  width: 100%;
+  margin-top: 0;
+  width: auto;
+  flex: 1;
   border: 0;
   border-radius: 12px;
   background: #c9a227;
   color: #1a1408;
   font-size: 13px;
   font-weight: 650;
+  text-decoration: none;
 }
-.walk-go { margin-top: 0; flex: 1; text-decoration: none; }
 .walk-go.is-quiet { background: var(--color-elevated); color: var(--color-fg); }
+.post-link {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-subtle);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--color-subtle) 55%, transparent);
+}
+.post-note {
+  margin: 8px 0 0;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-muted);
+}
 .shout {
   position: fixed;
   z-index: 70;

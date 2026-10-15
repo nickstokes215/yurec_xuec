@@ -3049,10 +3049,12 @@ html[data-wide="1"] .chat-log { max-width: 720px; margin-inline: auto; width: 10
 html[data-wide="1"] .svoya-cat { font-size: 12px; min-height: 52px; }
 html[data-wide="1"] .svoya-cell { min-height: 56px; font-size: 18px; }
 .morn { margin: 14px 0 0; font-family: var(--serif); font-size: 15px; line-height: 1.45; color: var(--muted); }
-.post-btn, .walk-go { display: grid; place-items: center; height: 40px; margin-top: 10px; width: 100%; border: 0; border-radius: 12px; background: #c9a227; color: #1a1408; font-size: 13px; font-weight: 650; text-decoration: none; }
+.walk-go { display: grid; place-items: center; height: 40px; margin-top: 10px; width: 100%; border: 0; border-radius: 12px; background: #c9a227; color: #1a1408; font-size: 13px; font-weight: 650; text-decoration: none; }
 .walk-row { display: flex; gap: 8px; margin-top: 12px; }
 .walk-row .walk-go { margin-top: 0; flex: 1; }
 .walk-go.is-quiet { background: var(--elevated); color: var(--fg); }
+.post-link { display: inline-block; margin-top: 8px; padding: 0; border: 0; background: none; color: var(--subtle); font-size: 12px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.post-note { margin: 8px 0 0; text-align: left; font-size: 12px; line-height: 1.4; color: var(--muted); }
 .shout { position: fixed; z-index: 70; left: 16px; right: 16px; top: calc(4.2rem + env(safe-area-inset-top, 0px)); text-align: left; border: 0; border-radius: 16px; padding: 12px 14px; background: #1c160e; color: #f4efe4; box-shadow: 0 0 0 1px #c9a227, 0 16px 40px rgba(0,0,0,.45); }
 .shout b { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #e8c547; font-weight: 650; }
 .shout span { display: block; margin-top: 4px; font-family: var(--serif); font-size: 16px; line-height: 1.35; }
