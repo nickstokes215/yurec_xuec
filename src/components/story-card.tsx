@@ -4,9 +4,29 @@ import { APP_VERSION, formatCode, KIND_BANNERS, KIND_LABEL, type Story } from "@
 import { toggleStoryRead, useStoryRead } from "@/lib/use-read";
 import { cn } from "@/lib/utils";
 
-export function StoryCard({ story }: { story: Story }) {
-  const read = useStoryRead(story.slug);
+export function ReadPill({ slug, paper }: { slug: string; paper?: boolean }) {
+  const read = useStoryRead(slug);
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleStoryRead(slug);
+      }}
+      className={cn(
+        "rounded-full px-2.5 py-1 font-sans text-[10px] font-semibold tracking-wide",
+        read ? "bg-[#2f8f4e] text-[#e8f8ee]" : paper ? "bg-ink-muted/15 text-ink-muted" : "bg-elevated text-muted",
+      )}
+      aria-pressed={read}
+      aria-label={read ? "Снять отметку «прочитано»" : "Отметить прочитанным"}
+    >
+      {read ? "прочитано" : "не прочитано"}
+    </button>
+  );
+}
 
+export function StoryCard({ story }: { story: Story }) {
   return (
     <Link
       to="/story/$slug"
@@ -23,24 +43,7 @@ export function StoryCard({ story }: { story: Story }) {
           >
             {formatCode(story)}
           </span>
-          {story.kind === "episode" ? (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleStoryRead(story.slug);
-              }}
-              className={cn(
-                "rounded-full px-2.5 py-1 font-sans text-[10px] font-semibold tracking-wide",
-                read ? "bg-[#2f8f4e] text-[#e8f8ee]" : "bg-elevated text-muted",
-              )}
-              aria-pressed={read}
-              aria-label={read ? "Снять отметку «прочитано»" : "Отметить прочитанным"}
-            >
-              {read ? "прочитано" : "не прочитано"}
-            </button>
-          ) : null}
+          <ReadPill slug={story.slug} />
         </span>
         <span className="flex items-center gap-3 text-[11px] text-subtle">
           {story.youtubeId && (

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listBookmarks, listProgress, saveProgress, toggleBookmark } from "@/lib/library";
 import { markStoryRead, canAutoMark } from "@/lib/use-read";
-import { getStory } from "@/data/catalog";
 import { evaluateAchievements } from "@/lib/use-achievements";
 
 const BOOK_KEY = "yurec-bookmarks";
@@ -138,8 +137,7 @@ export function useBookmarks() {
 
 export function persistProgress(slug: string, percent: number, signedIn: boolean) {
   if (percent < 3) return;
-  const story = getStory(slug);
-  if (percent >= 90 && canAutoMark(slug) && (!story || story.kind === "episode")) markStoryRead(slug);
+  if (percent >= 90 && canAutoMark(slug)) markStoryRead(slug);
   const now = Date.now();
   const jump = Math.abs(percent - lastLocal.percent);
   if (

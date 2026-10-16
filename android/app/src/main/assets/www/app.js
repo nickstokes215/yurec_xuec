@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.8", buildAt: "15.10.2026, 22:00 МСК", history: [] };
+var APP = { version: "1.65.9", buildAt: "17.10.2026, 00:50 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -1177,15 +1177,15 @@ function navIco(inner) {
   return '<span class="navico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + inner + "</svg></span>";
 }
 
+function readPillHtml(slug) {
+  var read = isRead(slug);
+  return '<button type="button" class="read-pill' + (read ? "" : " off") + '" data-read-toggle="' + esc(slug) + '">' +
+    (read ? "прочитано" : "не прочитано") + "</button>";
+}
 function card(s) {
-  var read = isRead(s.slug);
-  var pill = s.kind === "episode"
-    ? '<button type="button" class="read-pill' + (read ? "" : " off") + '" data-read-toggle="' + esc(s.slug) + '">' +
-      (read ? "прочитано" : "не прочитано") + "</button>"
-    : "";
   return '<a class="card" href="#/story/' + esc(s.slug) + '">' +
     '<div class="meta"><span class="meta-left"><span class="badge' + (s.kind === "episode" ? " ep" : "") + '">' + esc(formatCode(s)) + "</span>" +
-    pill +
+    readPillHtml(s.slug) +
     "</span><span>" +
     s.minutes + " мин" + (s.youtubeId ? (s.kind === "song" ? " · музыка" : " · видео") : "") + "</span></div>" +
     "<h2>" + esc(s.title) + "</h2>" +
@@ -2044,10 +2044,8 @@ function renderStory(slug) {
     '<p class="kicker">' + esc(KIND_LABEL[s.kind] || "") + (s.date ? " · " + esc(formatRuDate(s.date)) : "") + "</p>" +
     "<h1>" + esc(s.title) + "</h1>" +
     '<p class="muted">' + s.minutes + " мин " +
-    (s.kind === "episode"
-      ? '<button type="button" class="read-pill' + (isRead(s.slug) ? "" : " off") + '" id="read-toggle">' +
-        (isRead(s.slug) ? "прочитано" : "не прочитано") + "</button>"
-      : "") + "</p>" +
+    '<button type="button" class="read-pill' + (isRead(s.slug) ? "" : " off") + '" id="read-toggle">' +
+    (isRead(s.slug) ? "прочитано" : "не прочитано") + "</button></p>" +
     links +
     findBar +
     '<div class="body" id="body" style="font-size:' + font + 'px">' + bodyHtml + "</div>" +
@@ -2146,7 +2144,9 @@ function renderMediaCard(v, i) {
     var src = v.kind === "call" ? "" : videoCover(v);
     var html = '<article class="vcard">';
     if (src) html += coverImgHtml(v, v.kind === "press" ? "scan" : "");
-    html += '<div class="pad"><div class="kicker' + (parseEpisodeCode(v.code, v.title) ? " ep" : "") + '">' + esc(mediaStamp(v)) + "</div><h2>" + esc(v.title) + "</h2>";
+    html += '<div class="pad"><div class="meta-left"><div class="kicker' + (parseEpisodeCode(v.code, v.title) ? " ep" : "") + '">' + esc(mediaStamp(v)) + "</div>" +
+      (v.storySlug ? readPillHtml(v.storySlug) : "") +
+      "</div><h2>" + esc(v.title) + "</h2>";
     if (v.caption) html += '<p class="excerpt" style="-webkit-line-clamp:6">' + esc(v.caption) + "</p>";
     html += '<div class="links">';
     if (v.telegramId) html += '<a class="btn tg" href="' + TG + "/" + v.telegramId + '">' + (v.kind === "call" ? "Слушать" : "Пост в Telegram") + "</a>";
@@ -2159,7 +2159,9 @@ function renderMediaCard(v, i) {
   var portrait = v.kind === "short" && !v.thumb;
   var html = '<article class="vcard">' +
     coverImgHtml(v, portrait ? "portrait" : "") +
-    '<div class="pad"><div class="kicker' + (parseEpisodeCode(v.code, v.title) ? " ep" : "") + '">' + esc(mediaStamp(v)) + "</div><h2>" + esc(v.title) + "</h2>" +
+    '<div class="pad"><div class="meta-left"><div class="kicker' + (parseEpisodeCode(v.code, v.title) ? " ep" : "") + '">' + esc(mediaStamp(v)) + "</div>" +
+    (v.storySlug ? readPillHtml(v.storySlug) : "") +
+    "</div><h2>" + esc(v.title) + "</h2>" +
     '<div class="links">';
   if (v.storySlug && v.kind !== "short") html += '<a class="btn tg" href="#/story/' + esc(v.storySlug) + '">' + (v.kind === "song" ? "Текст" : "Читать") + "</a>";
   else if (v.telegramId) html += '<a class="btn tg" href="' + TG + "/" + v.telegramId + '">Пост в Telegram</a>';
@@ -3602,7 +3604,7 @@ function renderSettings() {
       '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
     "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.8") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.9") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -4161,7 +4163,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.8";
+  var ver = (APP && APP.version) || "1.65.9";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +
@@ -7014,7 +7016,7 @@ function bindStory(slug) {
     lastPct = pct;
     lastWrite = now;
     try { localStorage.setItem(LAST_KEY, JSON.stringify({ slug: s.slug, percent: pct })); } catch (e) {}
-    if (pct >= 90 && s.kind === "episode") markRead(s.slug);
+    if (pct >= 90) markRead(s.slug);
   });
   bindReaderScrub(reader);
   try {
@@ -7023,12 +7025,12 @@ function bindStory(slug) {
       setTimeout(function () {
         var max = reader.scrollHeight - reader.clientHeight;
         if (max > 0) reader.scrollTop = Math.round((last.percent / 100) * max);
-        else if (s.kind === "episode") markRead(s.slug);
+        else markRead(s.slug);
       }, 80);
     } else if (reader) {
       setTimeout(function () {
         var max = reader.scrollHeight - reader.clientHeight;
-        if (max <= 0 && s.kind === "episode") markRead(s.slug);
+        if (max <= 0) markRead(s.slug);
       }, 80);
     }
   } catch (e) {}

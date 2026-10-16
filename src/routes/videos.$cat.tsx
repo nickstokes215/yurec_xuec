@@ -24,7 +24,7 @@ import {
 import { useSortMode } from "@/lib/use-sort";
 import { openZoom } from "@/lib/zoom";
 import { cn } from "@/lib/utils";
-import { OfflineBtn } from "@/components/offline-btn";
+import { ReadPill } from "@/components/story-card";
 import { offlineForVideo } from "@/lib/offline";
 
 export const Route = createFileRoute("/videos/$cat")({ component: MediaShelfRoute });
@@ -171,7 +171,10 @@ export function YoutubeCard({ v, portrait }: { v: Video; portrait?: boolean }) {
         />
       </button>
       <div className="px-4 py-3">
-        <p className={codeClass(v.code, v.title)}>{kicker}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className={codeClass(v.code, v.title)}>{kicker}</p>
+          {v.storySlug ? <ReadPill slug={v.storySlug} /> : null}
+        </div>
         <h3 className="mt-0.5 font-sans text-[15px] font-semibold leading-snug">{v.title}</h3>
         <div className="mt-2 flex items-stretch gap-2">
           {v.storySlug && v.kind !== "short" ? (
@@ -231,7 +234,10 @@ export function PhotoCard({ v }: { v: Video }) {
         </button>
       ) : null}
       <div className="px-4 py-3">
-        <p className={codeClass(v.code, v.title)}>{mediaStamp(v) || v.code}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className={codeClass(v.code, v.title)}>{mediaStamp(v) || v.code}</p>
+          {v.storySlug ? <ReadPill slug={v.storySlug} /> : null}
+        </div>
         <h3 className="mt-0.5 font-sans text-[15px] font-semibold leading-snug">{v.title}</h3>
         {v.caption ? (
           <p className="mt-2 font-serif text-[14px] leading-relaxed text-muted">{v.caption}</p>

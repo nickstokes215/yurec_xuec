@@ -17,7 +17,7 @@ import {
   type Story,
 } from "@/data/catalog";
 import { persistProgress, readLast, useBookmarks } from "@/lib/use-library";
-import { toggleStoryRead, useStoryRead } from "@/lib/use-read";
+import { ReadPill } from "@/components/story-card";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn, getReturnPath } from "@/lib/utils";
 import { findSpans, isSceneHead, richParts } from "@/lib/story-format";
@@ -168,7 +168,6 @@ function StoryPage() {
   const navigate = useNavigate();
   const { user } = useCurrentUserState();
   const { has, toggle } = useBookmarks();
-  const read = useStoryRead(slug);
   const [font, setFont] = useState<(typeof FONT_STEPS)[number]>(19);
   const { resolved, cycle } = useTheme();
   const paper = resolved === "light";
@@ -414,20 +413,7 @@ function StoryPage() {
           <span>
             {story.minutes} мин · с канала {TELEGRAM_URL.replace("https://", "")}
           </span>
-          {story.kind === "episode" ? (
-            <button
-              type="button"
-              onClick={() => toggleStoryRead(story.slug)}
-              className={cn(
-                "rounded-full px-2.5 py-1 font-sans text-[10px] font-semibold tracking-wide",
-                read ? "bg-[#2f8f4e] text-[#e8f8ee]" : paper ? "bg-ink-muted/15 text-ink-muted" : "bg-elevated text-muted",
-              )}
-              aria-pressed={read}
-              aria-label={read ? "Снять отметку «прочитано»" : "Отметить прочитанным"}
-            >
-              {read ? "прочитано" : "не прочитано"}
-            </button>
-          ) : null}
+          <ReadPill slug={story.slug} paper={paper} />
         </p>
 
         <div className="mt-4 flex flex-nowrap items-stretch gap-1.5">
