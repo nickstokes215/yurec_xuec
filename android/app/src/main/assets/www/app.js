@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.9", buildAt: "17.10.2026, 00:50 МСК", history: [] };
+var APP = { version: "1.65.10", buildAt: "18.10.2026, 01:20 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -137,6 +137,7 @@ var wipeBakAsk = false;
 var wipeChatAsk = false;
 var bakNote = "";
 var widgetNote = "";
+var notesNote = "";
 var bakErr = "";
 var OFFLINE = { items: [], cached: {}, prog: {}, err: {}, busy: "" };
 var offOpen = false;
@@ -3433,6 +3434,54 @@ function applyBackup(pack) {
   } catch (e) {}
 }
 
+function notesHint(how) {
+  if (how === "ok") return "Ушло. Три проверки: обновление, двор и игра. Настоящий стук — не чаще раза в сутки.";
+  if (how === "ask") return "Система спрашивает доступ. Разреши — и проверка сработает.";
+  if (how === "settings") return "Android больше не спрашивает. Включи уведомления в настройках системы.";
+  if (how === "denied") return "Доступ закрыт. Без него стук в дверь не доходит.";
+  if (how === "later") return "Уже спрашивали. Если отказал — включи в системе.";
+  if (how === "нет") return "Этот браузер уведомления не умеет. На телефоне — умеет.";
+  return "Не вышло. На телефоне это системный запрос.";
+}
+function notesWeb(test) {
+  if (typeof Notification === "undefined") return "нет";
+  function fire() {
+    if (!test) return "ok";
+    var lines = [
+      ["Проверка: новая сборка", "Так выглядит канал обновлений. Это диагностика, не настоящий релиз.", "/apk"],
+      ["Кроссворд стынет", "В киоске пустая сетка. Карандаш на месте.", "/"],
+      ["Помойкобол", "Бабка размялась. Один матч, и можно закрыть.", "/game/av"]
+    ];
+    for (var i = 0; i < lines.length; i++) {
+      (function (line, n) {
+        setTimeout(function () {
+          try {
+            var note = new Notification(line[0], { body: line[1], tag: "yurec-test-" + n });
+            note.onclick = function () { note.close(); location.hash = "#" + line[2]; };
+          } catch (e) {}
+        }, n * 500);
+      })(lines[i], i);
+    }
+    return "ok";
+  }
+  if (Notification.permission === "granted") return fire();
+  if (Notification.permission === "denied") return "denied";
+  try {
+    Notification.requestPermission().then(function (perm) {
+      notesNote = notesHint(perm === "granted" ? fire() : "denied");
+      paint();
+    });
+  } catch (e) { return "fail"; }
+  return "ask";
+}
+function notesRun(test) {
+  var native = window.YurecNative;
+  try {
+    if (test && native && typeof native.notesTest === "function") return String(native.notesTest() || "ok");
+    if (!test && native && typeof native.notesAsk === "function") return String(native.notesAsk() || "ok");
+  } catch (e) { return "fail"; }
+  return notesWeb(test);
+}
 function renderSettings() {
   var choice = readTheme();
   var booksOn = showBookNav();
@@ -3573,6 +3622,13 @@ function renderSettings() {
       '<button type="button" class="btn wide tg" id="bug-open">Сообщить о баге</button>' +
     "</section>" +
     '<section class="set-card">' +
+      '<p class="set-head">' + setIco('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>') + "Уведомления</p>" +
+      '<p class="subtle">При запуске телефон спрашивает доступ. Два канала: новая сборка, когда она правда вышла, и один стук в сутки — то про двор, то про игру. Не чаще раза в день. Кнопка ниже гонит проверку сразу, это диагностика.</p>' +
+      '<button type="button" class="btn wide off" id="notes-ask">Разрешить уведомления</button>' +
+      '<button type="button" class="btn wide gold" id="notes-test" style="margin-top:8px">Проверить уведомления</button>' +
+      (notesNote ? '<p class="bak-note">' + esc(notesNote) + "</p>" : "") +
+    "</section>" +
+    '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>') + "Скачать и поставить</p>" +
       '<p class="subtle">Новая сборка: Android — APK, iPhone — Safari или IPA, Windows — EXE, Ubuntu — DEB, компьютер — веб. Два места, откуда брать файл. Все версии — на GitHub Releases.</p>' +
       '<a class="btn wide tg" href="' + TG_UPDATE_URL + '">Скачать из Telegram</a>' +
@@ -3604,7 +3660,7 @@ function renderSettings() {
       '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
     "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.9") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.10") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -3882,6 +3938,14 @@ function bindSettings() {
   on($("#ai-pin"), "click", function () {
     var how = pinChatShortcut();
     chatNote = how === "ok" ? "Android спросит: добавить ярлык «Юрец AI»." : (how === "need" ? "Разреши ярлыки и нажми ещё раз." : "Ярлык ставится в телефонной сборке.");
+    paint();
+  });
+  on($("#notes-ask"), "click", function () {
+    notesNote = notesHint(notesRun(false));
+    paint();
+  });
+  on($("#notes-test"), "click", function () {
+    notesNote = notesHint(notesRun(true));
     paint();
   });
   on($("#widget-pin"), "click", function () {
@@ -4163,7 +4227,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.9";
+  var ver = (APP && APP.version) || "1.65.10";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +

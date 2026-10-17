@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
+  Bell,
   Bug,
   BookOpen,
   BookCheck,
@@ -35,6 +36,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { APP_VERSION, GITHUB_APK_URL } from "@/data/catalog";
+import { notesAsk, notesHint, notesTest } from "@/lib/notes";
 import { useTheme, type ThemeChoice } from "@/lib/use-theme";
 import {
   DEV_CHAT_URL,
@@ -115,6 +117,7 @@ function SettingsPage() {
   const [bakErr, setBakErr] = useState("");
   const [bakAsk, setBakAsk] = useState(false);
   const [wipeChat, setWipeChat] = useState(false);
+  const [notesMsg, setNotesMsg] = useState("");
   const [aiNote, setAiNote] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -725,6 +728,31 @@ function SettingsPage() {
         action="Сообщить о баге"
         onClick={() => setBugOpen(true)}
       />
+      <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+        <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
+          <Bell className="size-3.5" />
+          Уведомления
+        </p>
+        <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
+          При запуске телефон спрашивает доступ. Два канала: новая сборка, когда она правда вышла, и один стук в сутки — то про двор, то про игру. Не чаще раза в день. Кнопка ниже гонит проверку сразу, это диагностика.
+        </p>
+        <button
+          type="button"
+          onClick={() => void notesAsk().then((how) => setNotesMsg(notesHint(how)))}
+          className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
+        >
+          Разрешить уведомления
+        </button>
+        <button
+          type="button"
+          onClick={() => void notesTest().then((how) => setNotesMsg(notesHint(how)))}
+          className="mt-2 flex h-11 w-full items-center justify-center rounded-xl bg-gold px-4 text-sm font-medium text-gold-fg"
+        >
+          Проверить уведомления
+        </button>
+        {notesMsg ? <p className="mt-2 text-center text-[12px] text-gold">{notesMsg}</p> : null}
+      </section>
+
       <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
           <Download className="size-3.5" />

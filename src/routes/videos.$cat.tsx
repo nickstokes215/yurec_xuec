@@ -25,6 +25,7 @@ import { useSortMode } from "@/lib/use-sort";
 import { openZoom } from "@/lib/zoom";
 import { cn } from "@/lib/utils";
 import { ReadPill } from "@/components/story-card";
+import { OfflineBtn } from "@/components/offline-btn";
 import { offlineForVideo } from "@/lib/offline";
 
 export const Route = createFileRoute("/videos/$cat")({ component: MediaShelfRoute });
