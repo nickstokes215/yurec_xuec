@@ -25,13 +25,12 @@ import { PaidGate } from "@/components/paid-gate";
 import { OfflineBtn } from "@/components/offline-btn";
 import { offlineForStory } from "@/lib/offline";
 import { useTheme } from "@/lib/use-theme";
+import { FONT_DEFAULT, setReaderFont, useReaderFont } from "@/lib/use-font";
 import { useReaderScrub } from "@/lib/use-settings";
 
 export const Route = createFileRoute("/story/$slug")({
   component: StoryPage,
 });
-
-const FONT_STEPS = [17, 19, 21] as const;
 
 function HighlightText({
   text,
@@ -168,7 +167,7 @@ function StoryPage() {
   const navigate = useNavigate();
   const { user } = useCurrentUserState();
   const { has, toggle } = useBookmarks();
-  const [font, setFont] = useState<(typeof FONT_STEPS)[number]>(19);
+  const { size: font } = useReaderFont();
   const { resolved, cycle } = useTheme();
   const paper = resolved === "light";
   const scrub = useReaderScrub();
@@ -177,17 +176,6 @@ function StoryPage() {
   const [findI, setFindI] = useState(0);
   const [showTop, setShowTop] = useState(false);
   const scroller = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    try {
-      const f = Number(localStorage.getItem("yurec-font"));
-      if (FONT_STEPS.includes(f as (typeof FONT_STEPS)[number])) {
-        setFont(f as (typeof FONT_STEPS)[number]);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
 
   useEffect(() => {
     setFindQ("");
@@ -287,15 +275,8 @@ function StoryPage() {
     persistProgress(story.slug, pct, Boolean(user));
   }
 
-  function cycleFont() {
-    const i = FONT_STEPS.indexOf(font);
-    const next = FONT_STEPS[(i + 1) % FONT_STEPS.length];
-    setFont(next);
-    try {
-      localStorage.setItem("yurec-font", String(next));
-    } catch {
-      /* ignore */
-    }
+  function resetFont() {
+    setReaderFont(FONT_DEFAULT, "reset");
   }
 
   if (!story) {
@@ -382,7 +363,7 @@ function StoryPage() {
           </p>
           <p className="truncate text-sm font-semibold">{story.title}</p>
         </div>
-        <button type="button" onClick={cycleFont} className="grid size-11 place-items-center rounded-md" aria-label="Размер шрифта">
+        <button type="button" onClick={resetFont} className="grid size-11 place-items-center rounded-md" aria-label="Сбросить размер текста">
           <span className="text-[15px] font-semibold leading-none tracking-tight">A±</span>
         </button>
         <button
@@ -670,7 +651,7 @@ function SmsThread({
                   "max-w-[92%] rounded-tr-2xl rounded-br-2xl rounded-bl-2xl px-3.5 py-2.5 leading-snug",
                   paper ? "bg-ink/10 text-ink" : "bg-elevated text-fg",
                 )}
-                style={{ fontSize: Math.max(15, font - 2) }}
+                style={{ fontSize: Math.max(8, font - 2) }}
               >
                 <HighlightText text={m.text} query={query} from={from} current={current} />
               </p>

@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.10", buildAt: "18.10.2026, 01:20 МСК", history: [] };
+var APP = { version: "1.65.11", buildAt: "19.10.2026, 17:30 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -1977,6 +1977,29 @@ function applyStoryFind() {
   }
 }
 
+function readFontSize() {
+  var n = 19;
+  try { n = Number(localStorage.getItem(FONT_KEY) || 19); } catch (e) {}
+  if (!(n >= 8 && n <= 32)) n = 19;
+  return Math.round(n);
+}
+
+function readFontSource() {
+  var s = "reset";
+  try { s = localStorage.getItem("yurec-font-src") || "reset"; } catch (e) {}
+  if (s !== "slider" && s !== "keys") s = "reset";
+  return s;
+}
+
+function writeFontSize(n, src) {
+  var next = src === "reset" ? 19 : Math.max(8, Math.min(32, Math.round(Number(n) || 19)));
+  try {
+    localStorage.setItem(FONT_KEY, String(next));
+    localStorage.setItem("yurec-font-src", src === "slider" || src === "keys" ? src : "reset");
+  } catch (e) {}
+  return next;
+}
+
 function renderStory(slug) {
   var s = bySlug(slug);
   if (!s) return shell('<p class="empty">Этого рассказа нет. <a href="#/">Назад</a></p>', "home");
@@ -1989,8 +2012,7 @@ function renderStory(slug) {
   var saved = books().indexOf(s.slug) !== -1;
   var paper = resolveTheme() === "light";
   var scrubOn = showScrub();
-  var font = 19;
-  try { font = Number(localStorage.getItem(FONT_KEY) || 19); } catch (e) {}
+  var font = readFontSize();
   var bodyHtml = storyBodyHtml(s, storyFind.q, storyFind.i);
   var findStat = "";
   var qshow = String(storyFind.q || "").replace(/^\s+|\s+$/g, "");
@@ -3346,6 +3368,23 @@ function themeBtnHtml(id, label) {
   return '<button type="button" class="theme-btn theme-' + id + (on ? " on" : "") + '" data-theme-set="' + id + '">' +
     (id === "light" ? iconSun() : iconMoon()) + "<span>" + label + "</span></button>";
 }
+
+function fontCardHtml() {
+  var n = readFontSize();
+  var src = readFontSource();
+  var who = src === "slider" ? "шкала" : src === "keys" ? "число" : "сброс A±";
+  return '<section class="set-card">' +
+    '<p class="set-head">' + setIco('<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>') + "Размер текста</p>" +
+    '<p class="subtle">От 8 до 32. Число руками или шкала. Чего коснулся последним — то и стоит. Кнопка A± в рассказе возвращает 19.</p>' +
+    '<div class="font-row">' +
+      '<input type="number" id="font-num" min="8" max="32" inputmode="numeric" value="' + n + '" aria-label="Размер текста числом" />' +
+      '<input type="range" id="font-range" min="8" max="32" value="' + n + '" aria-label="Шкала размера текста" />' +
+    "</div>" +
+    '<p class="font-sample" id="font-sample" style="font-size:' + n + 'px">Юрец орёт этим размером.</p>' +
+    '<p class="subtle" id="font-who" style="text-align:center;margin-top:6px">Сейчас ' + n + ". Последним было: " + who + ".</p>" +
+  "</section>";
+}
+
 function nameBtnHtml() {
   var cur = readAppName();
   var ids = [
@@ -3507,6 +3546,7 @@ function renderSettings() {
       "</div>" +
       '<button type="button" class="btn wide' + (choice === "system" ? " on-sys" : " ghost") + '" id="theme-system">Задано системой</button>' +
     "</section>" +
+    fontCardHtml() +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>') + "Обучение</p>" +
       '<p class="subtle">Первый запуск сам водит по двору. Потом больше не лезет. Если хочешь ещё раз — кнопка ниже.</p>' +
@@ -3660,7 +3700,7 @@ function renderSettings() {
       '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
     "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.10") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.11") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -3911,6 +3951,41 @@ function openAdminCheatModal() {
   lockModal(true);
   window.setTimeout(function () { if (inp) inp.focus(); }, 50);
 }
+function bindFontCard() {
+  var num = $("#font-num");
+  var range = $("#font-range");
+  var sample = $("#font-sample");
+  var who = $("#font-who");
+  if (!num || !range) return;
+  function paintLive(n, src) {
+    if (sample) sample.style.fontSize = n + "px";
+    if (who) {
+      var label = src === "slider" ? "шкала" : src === "keys" ? "число" : "сброс A±";
+      who.textContent = "Сейчас " + n + ". Последним было: " + label + ".";
+    }
+  }
+  range.addEventListener("input", function () {
+    var n = writeFontSize(range.value, "slider");
+    num.value = String(n);
+    paintLive(n, "slider");
+  });
+  num.addEventListener("input", function () {
+    var raw = String(num.value || "");
+    if (!/^\d+$/.test(raw)) return;
+    var n = Number(raw);
+    if (n < 8 || n > 32) return;
+    writeFontSize(n, "keys");
+    range.value = String(n);
+    paintLive(n, "keys");
+  });
+  num.addEventListener("change", function () {
+    var n = writeFontSize(num.value, "keys");
+    num.value = String(n);
+    range.value = String(n);
+    paintLive(n, "keys");
+  });
+}
+
 function bindSettings() {
   var i, btns = document.querySelectorAll("[data-theme-set]");
   for (i = 0; i < btns.length; i++) {
@@ -3920,6 +3995,7 @@ function bindSettings() {
     });
   }
   on($("#theme-system"), "click", function () { setTheme("system"); paint(); });
+  bindFontCard();
   on($("#tour-again"), "click", function () {
     go("/");
     window.setTimeout(function () { startTour(true); }, 80);
@@ -4227,7 +4303,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.10";
+  var ver = (APP && APP.version) || "1.65.11";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +
@@ -7043,11 +7119,7 @@ function bindStory(slug) {
   });
   on($("#back"), "click", function () { go(state.returnTo || "/"); });
   on($("#font"), "click", function () {
-    var steps = [17, 19, 21];
-    var cur = 19;
-    try { cur = Number(localStorage.getItem(FONT_KEY) || 19); } catch (e) {}
-    var next = steps[(Math.max(0, steps.indexOf(cur)) + 1) % steps.length];
-    try { localStorage.setItem(FONT_KEY, String(next)); } catch (e) {}
+    var next = writeFontSize(19, "reset");
     var body = $("#body");
     if (body) body.style.fontSize = next + "px";
     if (window._yurecScrubLayout) window._yurecScrubLayout();

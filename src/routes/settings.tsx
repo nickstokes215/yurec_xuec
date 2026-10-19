@@ -38,6 +38,7 @@ import {
 import { APP_VERSION, GITHUB_APK_URL } from "@/data/catalog";
 import { notesAsk, notesHint, notesTest } from "@/lib/notes";
 import { useTheme, type ThemeChoice } from "@/lib/use-theme";
+import { FONT_DEFAULT, FONT_MAX, FONT_MIN, setReaderFont, useReaderFont, type FontSource } from "@/lib/use-font";
 import {
   DEV_CHAT_URL,
   STUDIO_URL,
@@ -154,6 +155,8 @@ function SettingsPage() {
           Задано системой
         </button>
       </section>
+
+      <FontSizeCard />
 
       <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
@@ -865,6 +868,78 @@ function SettingsPage() {
       {devOpen ? <DevModal onClose={() => setDevOpen(false)} /> : null}
       {cheatOpen ? <CheatModal onClose={() => setCheatOpen(false)} /> : null}
     </main>
+  );
+}
+
+function FontSizeCard() {
+  const { size, source } = useReaderFont();
+  const [draft, setDraft] = useState(String(size));
+  const [touched, setTouched] = useState<FontSource>(source);
+
+  useEffect(() => {
+    setDraft(String(size));
+    setTouched(source);
+  }, [size, source]);
+
+  function apply(raw: string, src: FontSource) {
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return;
+    setReaderFont(n, src);
+    setTouched(src);
+  }
+
+  return (
+    <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+      <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
+        <Type className="size-3.5" />
+        Размер текста
+      </p>
+      <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
+        От {FONT_MIN} до {FONT_MAX}. Число руками или шкала. Чего коснулся последним — то и стоит. Кнопка A± в рассказе возвращает {FONT_DEFAULT}.
+      </p>
+      <div className="mt-3 flex items-center gap-3">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={FONT_MIN}
+          max={FONT_MAX}
+          value={draft}
+          aria-label="Размер текста числом"
+          onChange={(e) => {
+            const raw = e.target.value;
+            setDraft(raw);
+            setTouched("keys");
+            const n = Number(raw);
+            if (Number.isInteger(n) && n >= FONT_MIN && n <= FONT_MAX) apply(raw, "keys");
+          }}
+          onBlur={() => {
+            const n = Number(draft);
+            const next = Number.isFinite(n)
+              ? Math.max(FONT_MIN, Math.min(FONT_MAX, Math.round(n)))
+              : FONT_DEFAULT;
+            setReaderFont(next, "keys");
+            setDraft(String(next));
+            setTouched("keys");
+          }}
+          className="h-11 w-[4.5rem] rounded-xl bg-elevated text-center text-base font-semibold"
+        />
+        <input
+          type="range"
+          min={FONT_MIN}
+          max={FONT_MAX}
+          value={size}
+          aria-label="Шкала размера текста"
+          onChange={(e) => apply(e.target.value, "slider")}
+          className="h-11 min-w-0 flex-1 accent-[#c9a227]"
+        />
+      </div>
+      <p className="mt-3 text-center font-serif leading-snug" style={{ fontSize: size }}>
+        Юрец орёт этим размером.
+      </p>
+      <p className="mt-1 text-center text-[11px] text-subtle">
+        Сейчас {size}. Последним было: {touched === "slider" ? "шкала" : touched === "keys" ? "число" : "сброс A±"}.
+      </p>
+    </section>
   );
 }
 
