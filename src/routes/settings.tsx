@@ -84,7 +84,8 @@ import {
 } from "@/lib/yurec-chat-store";
 import { cn } from "@/lib/utils";
 import { startTour } from "@/lib/use-tour";
-import { applyAdminCheat, CHEAT_MSG, type CheatKind } from "@/lib/use-cheat";
+import { applyAdminCheat, CHEAT_BOOK, CHEAT_MSG, type CheatKind } from "@/lib/use-cheat";
+import { playFireworks } from "@/components/fireworks";
 
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
@@ -111,6 +112,7 @@ function SettingsPage() {
   const [bugOpen, setBugOpen] = useState(false);
   const [devOpen, setDevOpen] = useState(false);
   const [cheatOpen, setCheatOpen] = useState(false);
+  const [bookOpen, setBookOpen] = useState(false);
   const [wipeRead, setWipeRead] = useState(false);
   const [wipeChar, setWipeChar] = useState(false);
   const [wipeGames, setWipeGames] = useState(false);
@@ -842,15 +844,29 @@ function SettingsPage() {
         action="Позвонить"
         onClick={() => (dev.on ? openKingDial() : setDevOpen(true))}
       />
-      <SettingsCard
-        tone="gold"
-        icon={<KeyRound className="size-4" />}
-        title="Чит-коды"
-        titleIcon={<KeyRound className="size-3.5" />}
-        text="Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит."
-        action="Ввести код"
-        onClick={() => setCheatOpen(true)}
-      />
+      <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+        <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
+          <KeyRound className="size-3.5" />
+          Чит-коды
+        </p>
+        <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
+          Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит. «Легенда» — список слов, если забудешь.
+        </p>
+        <button
+          type="button"
+          onClick={() => setCheatOpen(true)}
+          className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-gold px-4 text-sm font-medium text-gold-fg"
+        >
+          Ввести код
+        </button>
+        <button
+          type="button"
+          onClick={() => setBookOpen(true)}
+          className="mt-2 flex h-11 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
+        >
+          Легенда
+        </button>
+      </section>
 
       <p className="mt-8 text-center text-[12px] text-subtle">
         Версия {APP_VERSION}
@@ -866,7 +882,16 @@ function SettingsPage() {
 
       {bugOpen ? <BugModal onClose={() => setBugOpen(false)} /> : null}
       {devOpen ? <DevModal onClose={() => setDevOpen(false)} /> : null}
-      {cheatOpen ? <CheatModal onClose={() => setCheatOpen(false)} /> : null}
+      {cheatOpen ? (
+        <CheatModal
+          onClose={() => setCheatOpen(false)}
+          onRaven={() => {
+            setCheatOpen(false);
+            void navigate({ to: "/zashkvary" });
+          }}
+        />
+      ) : null}
+      {bookOpen ? <CheatBookModal onClose={() => setBookOpen(false)} /> : null}
     </main>
   );
 }
@@ -1168,25 +1193,31 @@ function DevModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function CheatModal({ onClose }: { onClose: () => void }) {
+function CheatModal({ onClose, onRaven }: { onClose: () => void; onRaven: () => void }) {
   const [value, setValue] = useState("");
   const [err, setErr] = useState(false);
   const [ok, setOk] = useState<CheatKind | null>(null);
   useBodyLock(true);
 
   function submit() {
+    if (ok === "raven") {
+      onRaven();
+      return;
+    }
     const kind = applyAdminCheat(value);
     if (!kind) {
       setErr(true);
       setOk(null);
       return;
     }
-    setErr(false);
-    setOk(kind);
-    setValue("");
-    if (kind === "joke") {
-      onClose();
+    if (kind === "raven") {
+      setErr(false);
+      setOk("raven");
+      setValue("");
+      return;
     }
+    playFireworks();
+    onClose();
   }
 
   return (
@@ -1231,10 +1262,40 @@ function CheatModal({ onClose }: { onClose: () => void }) {
             Закрыть
           </button>
           <button type="submit" className="h-11 flex-1 rounded-xl bg-gold text-sm font-medium text-gold-fg">
-            Открыть
+            {ok === "raven" ? "ОК" : "Открыть"}
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function CheatBookModal({ onClose }: { onClose: () => void }) {
+  useBodyLock(true);
+  return (
+    <div
+      className="fixed inset-0 z-[85] grid place-items-center bg-void/80 px-6"
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-[340px] rounded-2xl bg-surface p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
+        <p className="text-center font-sans text-[15px] font-semibold leading-snug">Легенда</p>
+        <p className="mt-2 text-center text-[12px] leading-relaxed text-subtle">
+          Слова, которые принимает окно читов. Регистр не важен.
+        </p>
+        <ul className="mt-3 flex flex-col gap-2">
+          {CHEAT_BOOK.map((row) => (
+            <li key={row.code} className="rounded-xl bg-elevated px-3 py-2">
+              <p className="font-sans text-[14px] font-semibold">{row.code}</p>
+              <p className="mt-0.5 text-[12px] leading-snug text-subtle">{row.what}</p>
+            </li>
+          ))}
+        </ul>
+        <button type="button" onClick={onClose} className="mt-4 h-11 w-full rounded-xl bg-elevated text-sm font-medium">
+          Закрыть
+        </button>
+      </div>
     </div>
   );
 }

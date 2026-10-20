@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.11", buildAt: "19.10.2026, 17:30 МСК", history: [] };
+var APP = { version: "1.65.12", buildAt: "21.10.2026, 00:40 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -3697,10 +3697,11 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M21 2l-2 2m-7.6 7.6L3 21l7.4-8.4M15 9l6-6"/><circle cx="9" cy="9" r="2"/>') + "Чит-коды</p>" +
-      '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит.</p>' +
+      '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит. «Легенда» — список слов, если забудешь.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
+      '<button type="button" class="btn wide ghost" id="cheat-book" style="margin-top:8px">Легенда</button>' +
     "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.11") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.12") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -3838,11 +3839,19 @@ function openDevModal() {
 }
 var ADMIN_CHEAT_MSG = {
   joke: "Гоша каркнул. И всё. Двор ржёт.",
-  raven: "Все зашквары открыты до перезахода. Честные медали на месте.",
+  raven: "Все зашквары открыты до перезахода. Честные медали на месте. Жми ОК — откроются зашквары.",
   hack: "Уровни открыты. Даже бабка вышла из бака.",
   paid: "Лицензия стоит. Двор твой.",
   dev: "Режим разработчика. Студия и чат открываются без спроса."
 };
+var CHEAT_BOOK = [
+  ["хакер", "Открывает уровни игр."],
+  ["легенда", "Включает лицензию."],
+  ["император", "Режим разработчика."],
+  ["ворон", "Все зашквары до перезахода. Честные медали не трогает."],
+  ["РЕВЭЛ", "Шутка. Ворон на весь экран и карканье. Больше ничего."]
+];
+var adminRavenOk = false;
 function unlockAllPlay() {
   try {
     localStorage.setItem("yurec-av-all", "1");
@@ -3906,6 +3915,14 @@ function applyAdminCheat(raw) {
   }
   return false;
 }
+function closeAdminCheat(keepLock) {
+  var el = document.getElementById("admin-cheat-modal");
+  if (el) el.style.display = "none";
+  adminRavenOk = false;
+  var btn = document.getElementById("admin-cheat-enter");
+  if (btn) btn.textContent = "Открыть";
+  if (!keepLock) lockModal(false);
+}
 function openAdminCheatModal() {
   var el = document.getElementById("admin-cheat-modal");
   if (!el) {
@@ -3920,10 +3937,15 @@ function openAdminCheatModal() {
       '<div class="row"><button type="button" class="btn danger" id="admin-cheat-cancel">Закрыть</button>' +
       '<button type="submit" class="btn gold" id="admin-cheat-enter">Открыть</button></div></form>';
     document.body.appendChild(el);
-    el.addEventListener("click", function (e) { if (e.target === el) { el.style.display = "none"; lockModal(false); } });
-    document.getElementById("admin-cheat-cancel").addEventListener("click", function () { el.style.display = "none"; lockModal(false); });
+    el.addEventListener("click", function (e) { if (e.target === el) closeAdminCheat(false); });
+    document.getElementById("admin-cheat-cancel").addEventListener("click", function () { closeAdminCheat(false); });
     el.querySelector("form").addEventListener("submit", function (e) {
       e.preventDefault();
+      if (adminRavenOk) {
+        closeAdminCheat(false);
+        go("/zashkvary");
+        return;
+      }
       var inp = document.getElementById("admin-cheat-key");
       var v = (inp && inp.value) || "";
       var kind = applyAdminCheat(v);
@@ -3933,23 +3955,56 @@ function openAdminCheatModal() {
         return;
       }
       if (inp) inp.value = "";
-      if (h) { h.textContent = ADMIN_CHEAT_MSG[kind] || "Готово."; h.className = "hint"; }
-      if (kind === "joke") {
-        el.style.display = "none";
-        lockModal(false);
-      } else if (kind === "dev" || kind === "paid") {
-        try { burstFireworks(); } catch (err) {}
-        try { paint(); } catch (err2) {}
+      if (kind === "raven") {
+        adminRavenOk = true;
+        if (h) { h.textContent = ADMIN_CHEAT_MSG.raven; h.className = "hint"; }
+        var enter = document.getElementById("admin-cheat-enter");
+        if (enter) enter.textContent = "ОК";
+        return;
       }
+      if (h) { h.textContent = ADMIN_CHEAT_MSG[kind] || "Готово."; h.className = "hint"; }
+      closeAdminCheat(kind === "joke");
+      try { burstFireworks(); } catch (err) {}
+      if (kind !== "joke") { try { paint(); } catch (err2) {} }
     });
   }
   var inp = document.getElementById("admin-cheat-key");
   if (inp) inp.value = "";
+  adminRavenOk = false;
+  var enter = document.getElementById("admin-cheat-enter");
+  if (enter) enter.textContent = "Открыть";
   var err = document.getElementById("admin-cheat-err");
   if (err) { err.className = "hint"; err.textContent = "Одно поле на все слова."; }
   el.style.display = "flex";
   lockModal(true);
   window.setTimeout(function () { if (inp) inp.focus(); }, 50);
+}
+function openCheatBook() {
+  var el = document.getElementById("cheat-book-modal");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "cheat-book-modal";
+    el.className = "modal";
+    var rows = "";
+    var i;
+    for (i = 0; i < CHEAT_BOOK.length; i++) {
+      rows += '<p class="ttl" style="font-size:15px;margin:12px 0 0">' + esc(CHEAT_BOOK[i][0]) + "</p>" +
+        '<p class="hint" style="margin-top:2px">' + esc(CHEAT_BOOK[i][1]) + "</p>";
+    }
+    el.innerHTML = '<div class="box">' +
+      '<p class="ttl">Легенда</p>' +
+      '<p class="hint">Слова, которые принимает окно читов. Регистр не важен.</p>' +
+      rows +
+      '<button type="button" class="btn wide ghost" id="cheat-book-close" style="margin-top:14px">Закрыть</button></div>';
+    document.body.appendChild(el);
+    el.addEventListener("click", function (e) { if (e.target === el) { el.style.display = "none"; lockModal(false); } });
+    document.getElementById("cheat-book-close").addEventListener("click", function () {
+      el.style.display = "none";
+      lockModal(false);
+    });
+  }
+  el.style.display = "flex";
+  lockModal(true);
 }
 function bindFontCard() {
   var num = $("#font-num");
@@ -4135,6 +4190,7 @@ function bindSettings() {
     else openDevModal();
   });
   on($("#cheat-admin"), "click", function () { openAdminCheatModal(); });
+  on($("#cheat-book"), "click", function () { openCheatBook(); });
 }
 
 function collectPassport() {
@@ -4303,7 +4359,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.11";
+  var ver = (APP && APP.version) || "1.65.12";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +
@@ -7915,10 +7971,15 @@ function yurecBack() {
     cheat.style.display = "none";
     return true;
   }
+  var book = document.getElementById("cheat-book-modal");
+  if (book && book.style.display === "flex") {
+    book.style.display = "none";
+    lockModal(false);
+    return true;
+  }
   var adm = document.getElementById("admin-cheat-modal");
   if (adm && adm.style.display === "flex") {
-    adm.style.display = "none";
-    lockModal(false);
+    closeAdminCheat(false);
     return true;
   }
   var paid = document.getElementById("paid-modal");
