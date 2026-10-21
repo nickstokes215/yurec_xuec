@@ -113,6 +113,7 @@ function SettingsPage() {
   const [devOpen, setDevOpen] = useState(false);
   const [cheatOpen, setCheatOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
+  const [lockOpen, setLockOpen] = useState(false);
   const [wipeRead, setWipeRead] = useState(false);
   const [wipeChar, setWipeChar] = useState(false);
   const [wipeGames, setWipeGames] = useState(false);
@@ -872,14 +873,13 @@ function SettingsPage() {
         action="Позвонить"
         onClick={() => (dev.on ? openKingDial() : setDevOpen(true))}
       />
-      {dev.on ? (
       <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
           <KeyRound className="size-3.5" />
           Чит-коды
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит. «Легенда» — список слов, если забудешь.
+          Одно поле на все слова двора. Регистр не важен. «Легенда» — список слов, но только после кода разработчика.
         </p>
         <button
           type="button"
@@ -890,13 +890,12 @@ function SettingsPage() {
         </button>
         <button
           type="button"
-          onClick={() => setBookOpen(true)}
+          onClick={() => (dev.on ? setBookOpen(true) : setLockOpen(true))}
           className="mt-2 flex h-11 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
         >
           Легенда
         </button>
       </section>
-      ) : null}
 
       <p className="mt-8 text-center text-[12px] text-subtle">
         Версия {APP_VERSION}
@@ -912,12 +911,21 @@ function SettingsPage() {
 
       {bugOpen ? <BugModal onClose={() => setBugOpen(false)} /> : null}
       {devOpen ? <DevModal onClose={() => setDevOpen(false)} /> : null}
-      {dev.on && cheatOpen ? (
+      {cheatOpen ? (
         <CheatModal
           onClose={() => setCheatOpen(false)}
           onRaven={() => {
             setCheatOpen(false);
             void navigate({ to: "/zashkvary" });
+          }}
+        />
+      ) : null}
+      {lockOpen ? (
+        <LegendLock
+          onClose={() => setLockOpen(false)}
+          onOpen={() => {
+            setLockOpen(false);
+            setBookOpen(true);
           }}
         />
       ) : null}
@@ -1293,6 +1301,60 @@ function CheatModal({ onClose, onRaven }: { onClose: () => void; onRaven: () => 
           </button>
           <button type="submit" className="h-11 flex-1 rounded-xl bg-gold text-sm font-medium text-gold-fg">
             {ok === "raven" ? "ОК" : "Открыть"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function LegendLock({ onClose, onOpen }: { onClose: () => void; onOpen: () => void }) {
+  const { unlock } = useDeveloper();
+  const [value, setValue] = useState("");
+  const [err, setErr] = useState(false);
+  useBodyLock(true);
+  return (
+    <div
+      className="fixed inset-0 z-[85] grid place-items-center bg-void/80 px-6"
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <form
+        className="w-full max-w-[340px] rounded-2xl bg-surface p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!unlock(value)) {
+            setErr(true);
+            return;
+          }
+          onOpen();
+        }}
+      >
+        <p className="text-center font-sans text-[15px] font-semibold leading-snug">Легенда</p>
+        <p className="mt-2 text-center text-[12px] leading-relaxed text-subtle">
+          Список слов закрыт. Сначала код разработчика.
+        </p>
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setErr(false);
+          }}
+          className="mt-4 h-12 w-full rounded-xl bg-elevated px-3 text-center text-sm text-fg shadow-[0_0_0_1px_rgba(255,255,255,0.06)] focus:outline-2 focus:outline-offset-2 focus:outline-accent"
+          placeholder="код разработчика"
+          autoComplete="off"
+        />
+        <p className={"mt-2 text-center text-[12px] " + (err ? "text-danger" : "text-subtle")}>
+          {err ? "Не тот код. Список не откроется." : "Без этого слова легенды нет."}
+        </p>
+        <div className="mt-4 flex gap-2">
+          <button type="button" onClick={onClose} className="h-11 flex-1 rounded-xl bg-danger text-sm font-medium text-danger-fg">
+            Закрыть
+          </button>
+          <button type="submit" className="h-11 flex-1 rounded-xl bg-gold text-sm font-medium text-gold-fg">
+            Открыть
           </button>
         </div>
       </form>
