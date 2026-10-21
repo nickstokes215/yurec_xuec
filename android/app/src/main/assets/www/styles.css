@@ -2132,8 +2132,9 @@ html.av-nodock [data-app-dock] {
 .av-head {
   flex-shrink: 0;
   display: flex;
-  justify-content: center;
-  padding: 0 2.8rem 0.2rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.35rem 0.2rem;
 }
 .av-head .av-title {
   margin: 0;
@@ -2149,6 +2150,32 @@ html.av-nodock [data-app-dock] {
   line-height: 1.1;
   cursor: pointer;
 }
+.av-pause {
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--elevated, #1c1c20);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 650;
+}
+.av-pause[hidden] { display: none !important; }
+.av-pause-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 5, 8, 0.62);
+  color: #f4e4a1;
+  font-family: var(--sans);
+  font-size: 28px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+.av-pause-veil[hidden] { display: none !important; }
 .av-stage {
   position: relative;
   flex: 1;

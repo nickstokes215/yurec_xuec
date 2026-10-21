@@ -320,13 +320,19 @@
 
     var head = document.createElement("div");
     head.className = "av-head";
-    head.innerHTML = '<button type="button" class="av-title">Помойкобол</button>';
+    head.innerHTML = '<button type="button" class="av-title">Помойкобол</button><button type="button" class="av-pause" hidden>Пауза</button>';
+    var pauseBtn = head.querySelector(".av-pause");
 
     var wrap = document.createElement("div");
     wrap.className = "av-stage";
     var canvas = document.createElement("canvas");
     canvas.setAttribute("aria-label", "Помойкобол");
     wrap.appendChild(canvas);
+    var pauseVeil = document.createElement("div");
+    pauseVeil.className = "av-pause-veil";
+    pauseVeil.hidden = true;
+    pauseVeil.textContent = "Пауза";
+    wrap.appendChild(pauseVeil);
 
     var hud = document.createElement("div");
     hud.className = "av-hud";
@@ -658,6 +664,7 @@
     var bannerLinesCache = [];
     var raf = 0;
     var running = true;
+    var paused = false;
     var phase = "menu";
     var diffId = "povar";
     var cfg = DIFFS.povar;
@@ -894,6 +901,22 @@
       beep(serveFor === "yurec" ? 220 : 160, 0.07, 0.03);
     }
 
+    function syncPause() {
+      var live = phase !== "menu" && phase !== "over";
+      if (!live) paused = false;
+      if (pauseBtn) {
+        pauseBtn.hidden = !live;
+        pauseBtn.textContent = paused ? "Дальше" : "Пауза";
+      }
+      if (pauseVeil) pauseVeil.hidden = !paused;
+    }
+    function setPause(on) {
+      paused = !!on && phase !== "menu" && phase !== "over";
+      if (!paused) { last = 0; acc = 0; }
+      syncPause();
+      if (!paused && phase !== "menu" && phase !== "over" && !raf) raf = requestAnimationFrame(loop);
+    }
+
     function startMatch(id) {
       unlockAudio();
       diffId = id;
@@ -958,6 +981,7 @@
       cheatModal.hidden = true;
       confirmEl.hidden = true;
       hud.hidden = false;
+      syncPause();
       paintHud();
       resetBall("yurec");
       last = 0;
@@ -1053,6 +1077,7 @@
 
     function finish() {
       phase = "over";
+      syncPause();
       shotBtn.hidden = true;
       gods.hidden = true;
       var win = scoreY >= matchGoal();
@@ -1235,6 +1260,7 @@
       cheatModal.hidden = true;
       confirmEl.hidden = true;
       hud.hidden = true;
+      syncPause();
       shotBtn.hidden = true;
       gods.hidden = true;
       paintDiffs();
@@ -2341,6 +2367,12 @@
         raf = 0;
         return;
       }
+      if (paused) {
+        last = 0;
+        acc = 0;
+        raf = requestAnimationFrame(loop);
+        return;
+      }
       if (phase === "menu" || phase === "over") {
         raf = 0;
         return;
@@ -2386,6 +2418,7 @@
     }
 
     function onDown(e) {
+      if (paused) return;
       unlockAudio();
       if (e.cancelable) e.preventDefault();
       pointerX = eventX(e);
@@ -2407,6 +2440,11 @@
     }
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
+    if (pauseBtn) pauseBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      setPause(!paused);
+    });
     canvas.style.touchAction = "none";
     shotBtn.addEventListener("pointerdown", function (e) {
       e.preventDefault();

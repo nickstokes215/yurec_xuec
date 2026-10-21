@@ -454,7 +454,8 @@
 
     var head = document.createElement("div");
     head.className = "av-head";
-    head.innerHTML = '<button type="button" class="av-title">Алконоид</button>';
+    head.innerHTML = '<button type="button" class="av-title">Алконоид</button><button type="button" class="av-pause" hidden>Пауза</button>';
+    var pauseBtn = head.querySelector(".av-pause");
     var titleTaps = 0;
     var titleTapAt = 0;
     var pendingVodka = false;
@@ -464,6 +465,11 @@
     var canvas = document.createElement("canvas");
     canvas.setAttribute("aria-label", "Алконоид");
     wrap.appendChild(canvas);
+    var pauseVeil = document.createElement("div");
+    pauseVeil.className = "av-pause-veil";
+    pauseVeil.hidden = true;
+    pauseVeil.textContent = "Пауза";
+    wrap.appendChild(pauseVeil);
 
     var hud = document.createElement("div");
     hud.className = "av-hud ark-hud";
@@ -710,7 +716,7 @@
     });
 
     var dpr = 1, lastCssW = 0, lastCssH = 0, lastDpr = 0;
-    var raf = 0, running = true, phase = "menu";
+    var raf = 0, running = true, paused = false, phase = "menu";
     var levelId = "flat", cfg = LEVELS.flat;
     var last = 0, acc = 0;
     var paddle = { x: W / 2, y: H - 62, w: 118, h: 56, fly: 0 };
@@ -878,6 +884,22 @@
       beep(520, 0.08, 0.05);
     }
 
+    function syncPause() {
+      var live = phase !== "menu" && phase !== "over";
+      if (!live) paused = false;
+      if (pauseBtn) {
+        pauseBtn.hidden = !live;
+        pauseBtn.textContent = paused ? "Дальше" : "Пауза";
+      }
+      if (pauseVeil) pauseVeil.hidden = !paused;
+    }
+    function setPause(on) {
+      paused = !!on && phase !== "menu" && phase !== "over";
+      if (!paused) { last = 0; acc = 0; }
+      syncPause();
+      if (!paused && phase !== "menu" && phase !== "over" && !raf) raf = requestAnimationFrame(loop);
+    }
+
     function startLevel(id) {
       unlockAudio();
       levelId = id;
@@ -932,6 +954,7 @@
       manual.hidden = true;
       cheatModal.hidden = true;
       hud.hidden = false;
+      syncPause();
       resetServe();
       if (vodkaT > 0) say("ВОДКА! Щит " + Math.round(vodkaT) + " с. Мяч не падает.", 3.2);
       else say(cfg.label);
@@ -1002,6 +1025,7 @@
       menu.hidden = false;
       end.hidden = true;
       hud.hidden = true;
+      syncPause();
       shotBtn.hidden = true;
       kitEl.hidden = true;
       paintDiffs();
@@ -1010,6 +1034,7 @@
     function finish(won) {
       if (phase === "over" || phase === "menu") return;
       phase = "over";
+      syncPause();
       shotBtn.hidden = true;
       kitEl.hidden = true;
       if (won) {
@@ -2073,6 +2098,11 @@
     function loop(ts) {
       if (!running) return;
       raf = requestAnimationFrame(loop);
+      if (paused) {
+        last = 0;
+        acc = 0;
+        return;
+      }
       if (phase === "menu") { layout(); return; }
       if (!last) last = ts;
       var dt = Math.min(0.032, (ts - last) / 1000);
@@ -2092,6 +2122,7 @@
       return clamp((e.clientY - rect.top) * (H / rect.height), 0, H);
     }
     function onDown(e) {
+      if (paused) return;
       unlockAudio();
       if (e.cancelable) e.preventDefault();
       pointerX = eventX(e);
@@ -2109,6 +2140,11 @@
     }
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
+    if (pauseBtn) pauseBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      setPause(!paused);
+    });
     canvas.style.touchAction = "none";
     shotBtn.addEventListener("click", function (e) {
       e.preventDefault(); e.stopPropagation();

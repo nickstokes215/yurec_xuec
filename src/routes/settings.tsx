@@ -36,7 +36,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import { APP_VERSION, GITHUB_APK_URL } from "@/data/catalog";
-import { notesAsk, notesHint, notesTest } from "@/lib/notes";
+import { notesAsk, notesHint, notesTest, readNotesClock, setNotesClock } from "@/lib/notes";
 import { useTheme, type ThemeChoice } from "@/lib/use-theme";
 import { FONT_DEFAULT, FONT_MAX, FONT_MIN, setReaderFont, useReaderFont, type FontSource } from "@/lib/use-font";
 import {
@@ -121,6 +121,7 @@ function SettingsPage() {
   const [bakAsk, setBakAsk] = useState(false);
   const [wipeChat, setWipeChat] = useState(false);
   const [notesMsg, setNotesMsg] = useState("");
+  const [notesClock, setNotesClockUi] = useState(readNotesClock);
   const [aiNote, setAiNote] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -739,8 +740,35 @@ function SettingsPage() {
           Уведомления
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          При запуске телефон спрашивает доступ. Два канала: новая сборка, когда она правда вышла, и один стук в сутки — то про двор, то про игру. Не чаще раза в день. Кнопка ниже гонит проверку сразу, это диагностика.
+          При запуске телефон спрашивает доступ. Два канала: новая сборка, когда она правда вышла, и один стук в сутки — то про двор, то про игру. Своё время необязательно: выключишь — стук через сутки после прошлого.
         </p>
+        <label className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-elevated px-3 py-2">
+          <span className="text-sm">Своё время</span>
+          <input
+            type="checkbox"
+            checked={notesClock.length > 0}
+            onChange={(e) => {
+              const next = e.target.checked ? notesClock || "09:00" : "";
+              setNotesClockUi(next);
+              setNotesClock(next);
+            }}
+            className="size-5 accent-[var(--color-gold,#c9a227)]"
+          />
+        </label>
+        <label className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-elevated px-3 py-2">
+          <span className="text-sm text-subtle">Когда стучать</span>
+          <input
+            type="time"
+            value={notesClock || "09:00"}
+            disabled={notesClock.length === 0}
+            onChange={(e) => {
+              const next = e.target.value || "09:00";
+              setNotesClockUi(next);
+              setNotesClock(next);
+            }}
+            className="h-10 rounded-lg bg-surface px-2 text-sm text-fg disabled:opacity-40"
+          />
+        </label>
         <button
           type="button"
           onClick={() => void notesAsk().then((how) => setNotesMsg(notesHint(how)))}
@@ -844,6 +872,7 @@ function SettingsPage() {
         action="Позвонить"
         onClick={() => (dev.on ? openKingDial() : setDevOpen(true))}
       />
+      {dev.on ? (
       <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
           <KeyRound className="size-3.5" />
@@ -867,6 +896,7 @@ function SettingsPage() {
           Легенда
         </button>
       </section>
+      ) : null}
 
       <p className="mt-8 text-center text-[12px] text-subtle">
         Версия {APP_VERSION}
@@ -882,7 +912,7 @@ function SettingsPage() {
 
       {bugOpen ? <BugModal onClose={() => setBugOpen(false)} /> : null}
       {devOpen ? <DevModal onClose={() => setDevOpen(false)} /> : null}
-      {cheatOpen ? (
+      {dev.on && cheatOpen ? (
         <CheatModal
           onClose={() => setCheatOpen(false)}
           onRaven={() => {
@@ -891,7 +921,7 @@ function SettingsPage() {
           }}
         />
       ) : null}
-      {bookOpen ? <CheatBookModal onClose={() => setBookOpen(false)} /> : null}
+      {dev.on && bookOpen ? <CheatBookModal onClose={() => setBookOpen(false)} /> : null}
     </main>
   );
 }

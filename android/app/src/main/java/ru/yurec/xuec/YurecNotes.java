@@ -123,12 +123,12 @@ public class YurecNotes {
         ensureChannels(ctx);
         SharedPreferences p = prefs(ctx);
         long now = System.currentTimeMillis();
-        long since = p.getLong("since", 0L);
-        if (since == 0L) {
-            p.edit().putLong("since", now).apply();
-            schedule(ctx, now + DAY);
+        if (p.getLong("since", 0L) == 0L) p.edit().putLong("since", now).apply();
+        if (p.getInt("clock", -1) >= 0) {
+            schedule(ctx, nextWhen(ctx));
             return;
         }
+        long since = p.getLong("since", 0L);
         long last = p.getLong("last", 0L);
         long mark = Math.max(since, last);
         if (now - mark >= DAY) {
@@ -138,6 +138,35 @@ public class YurecNotes {
             return;
         }
         schedule(ctx, mark + DAY);
+    }
+
+    /** Минуты от полуночи, 0–1439. Меньше нуля — своего времени нет, стук раз в сутки как раньше. */
+    public static String setClock(Context ctx, int minutes) {
+        if (ctx == null) return "fail";
+        if (minutes < 0 || minutes > 1439) minutes = -1;
+        prefs(ctx).edit().putInt("clock", minutes).apply();
+        if (canPost(ctx)) schedule(ctx, nextWhen(ctx));
+        return minutes < 0 ? "off" : "ok";
+    }
+
+    private static long nextWhen(Context ctx) {
+        long now = System.currentTimeMillis();
+        int clock = prefs(ctx).getInt("clock", -1);
+        if (clock < 0 || clock > 1439) {
+            long last = prefs(ctx).getLong("last", 0L);
+            long since = prefs(ctx).getLong("since", 0L);
+            long mark = Math.max(last, since);
+            long when = mark <= 0L ? now + DAY : mark + DAY;
+            if (when < now + 60000L) when = now + 60000L;
+            return when;
+        }
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        c.set(Calendar.HOUR_OF_DAY, clock / 60);
+        c.set(Calendar.MINUTE, clock % 60);
+        if (c.getTimeInMillis() <= now + 60000L) c.add(Calendar.DAY_OF_YEAR, 1);
+        return c.getTimeInMillis();
     }
 
     private static void postDaily(Context ctx) {
@@ -231,7 +260,9 @@ public class YurecNotes {
         try {
             AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
             if (am == null) return;
-            if (when < System.currentTimeMillis() + 60000L) when = System.currentTimeMillis() + DAY;
+            if (when < System.currentTimeMillis() + 60000L && prefs(ctx).getInt("clock", -1) < 0) {
+                when = System.currentTimeMillis() + DAY;
+            }
             PendingIntent pi = dailyIntent(ctx);
             am.cancel(pi);
             if (Build.VERSION.SDK_INT >= 23) {
@@ -326,7 +357,7 @@ public class YurecNotes {
             ensureChannels(ctx);
             postDaily(ctx);
             prefs(ctx).edit().putLong("last", System.currentTimeMillis()).apply();
-            schedule(ctx, System.currentTimeMillis() + DAY);
+            schedule(ctx, nextWhen(ctx));
         }
     }
 
@@ -336,10 +367,7 @@ public class YurecNotes {
             if (intent == null) return;
             if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
             if (!canPost(ctx)) return;
-            long last = prefs(ctx).getLong("last", 0L);
-            long since = prefs(ctx).getLong("since", 0L);
-            long mark = Math.max(last, since);
-            long when = mark <= 0L ? System.currentTimeMillis() + DAY : mark + DAY;
+            long when = nextWhen(ctx);
             if (when < System.currentTimeMillis() + 60000L) when = System.currentTimeMillis() + 60000L;
             schedule(ctx, when);
         }

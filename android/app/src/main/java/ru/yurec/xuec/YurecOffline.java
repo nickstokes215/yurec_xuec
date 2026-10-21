@@ -785,6 +785,21 @@ public class YurecOffline {
         return QuoteWidget.hours(ctx);
     }
 
+    @JavascriptInterface
+    public String notesAsk() {
+        return YurecNotes.ask(YurecNotes.activity(), true);
+    }
+
+    @JavascriptInterface
+    public String notesClock(int minutes) {
+        return YurecNotes.setClock(ctx, minutes);
+    }
+
+    @JavascriptInterface
+    public String notesTest() {
+        return YurecNotes.test(ctx);
+    }
+
     private IconCompat chatShortcutIcon() {
         try {
             InputStream in = ctx.getAssets().open("www/covers/chat.jpg");

@@ -26,6 +26,7 @@ const LINES: Line[] = [
 type Native = {
   notesAsk?: () => string;
   notesTest?: () => string;
+  notesClock?: (minutes: number) => string;
 };
 
 function bridge(): Native | null {
@@ -33,6 +34,61 @@ function bridge(): Native | null {
   return n || null;
 }
 
+const CLOCK_KEY = "yurec-notes-clock";
+let clockTimer = 0;
+
+export function readNotesClock(): string {
+  try {
+    const v = localStorage.getItem(CLOCK_KEY) || "";
+    return /^\d{2}:\d{2}$/.test(v) ? v : "";
+  } catch {
+    return "";
+  }
+}
+
+export function notesMinutes(hhmm: string): number {
+  const m = /^(\d{2}):(\d{2})$/.exec(hhmm);
+  if (!m) return -1;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59) return -1;
+  return h * 60 + min;
+}
+
+export function setNotesClock(hhmm: string) {
+  const mins = notesMinutes(hhmm);
+  try {
+    if (mins < 0) localStorage.removeItem(CLOCK_KEY);
+    else localStorage.setItem(CLOCK_KEY, hhmm);
+  } catch {
+    /* память закрыта */
+  }
+  const native = bridge();
+  if (native && typeof native.notesClock === "function") {
+    try {
+      native.notesClock(mins);
+    } catch {
+      /* мост молчит */
+    }
+  }
+  armWebClock();
+}
+
+function armWebClock() {
+  if (clockTimer) window.clearTimeout(clockTimer);
+  clockTimer = 0;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  const mins = notesMinutes(readNotesClock());
+  if (mins < 0) return;
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  let wait = mins - cur;
+  if (wait <= 0) wait += 24 * 60;
+  clockTimer = window.setTimeout(() => {
+    maybeDailyWeb();
+    armWebClock();
+  }, wait * 60 * 1000);
+}
 function dayLine(): Line {
   const t = new Date();
   const idx = (t.getFullYear() * 366 + Math.floor((t.getTime() - Date.UTC(t.getFullYear(), 0, 0)) / 86400000)) % LINES.length;
@@ -50,26 +106,53 @@ function show(line: Line, tag: string) {
 
 export async function notesBoot() {
   const native = bridge();
-  if (native && typeof native.notesAsk === "function") return;
+  if (native && typeof native.notesAsk === "function") {
+    if (typeof native.notesClock === "function") {
+      try {
+        native.notesClock(notesMinutes(readNotesClock()));
+      } catch {
+        /* мост молчит */
+      }
+    }
+    return;
+  }
   if (typeof Notification === "undefined") return;
   try {
     if (localStorage.getItem(ASKED) === "1") {
-      if (Notification.permission === "granted") maybeDailyWeb();
+      if (Notification.permission === "granted") {
+        maybeDailyWeb();
+        armWebClock();
+      }
       return;
     }
     localStorage.setItem(ASKED, "1");
     const perm = await Notification.requestPermission();
-    if (perm === "granted") localStorage.setItem(AT, String(Date.now()));
+    if (perm === "granted") {
+      localStorage.setItem(AT, String(Date.now()));
+      armWebClock();
+    }
   } catch {
     /* браузер не дал */
   }
 }
 
 function maybeDailyWeb() {
+  const mins = notesMinutes(readNotesClock());
+  const now = Date.now();
   const last = Number(localStorage.getItem(AT) || "0");
-  if (!last || Date.now() - last < DAY) return;
+  if (mins >= 0) {
+    const d = new Date();
+    const cur = d.getHours() * 60 + d.getMinutes();
+    if (cur < mins) return;
+    const slot = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(mins / 60), mins % 60).getTime();
+    if (last >= slot) return;
+    show(dayLine(), "yurec-daily");
+    localStorage.setItem(AT, String(now));
+    return;
+  }
+  if (!last || now - last < DAY) return;
   show(dayLine(), "yurec-daily");
-  localStorage.setItem(AT, String(Date.now()));
+  localStorage.setItem(AT, String(now));
 }
 
 export async function notesAsk(): Promise<string> {
@@ -87,6 +170,7 @@ export async function notesAsk(): Promise<string> {
     const perm = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
     if (perm === "granted") {
       if (!localStorage.getItem(AT)) localStorage.setItem(AT, String(Date.now()));
+      armWebClock();
       return "ok";
     }
     return "denied";

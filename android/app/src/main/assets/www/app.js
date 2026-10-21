@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.12", buildAt: "21.10.2026, 00:40 МСК", history: [] };
+var APP = { version: "1.65.13", buildAt: "22.10.2026, 02:00 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -3521,6 +3521,30 @@ function notesRun(test) {
   } catch (e) { return "fail"; }
   return notesWeb(test);
 }
+var NOTES_CLOCK_KEY = "yurec-notes-clock";
+function readNotesClock() {
+  try {
+    var v = localStorage.getItem(NOTES_CLOCK_KEY) || "";
+    return /^\d{2}:\d{2}$/.test(v) ? v : "";
+  } catch (e) { return ""; }
+}
+function notesClockMinutes(hhmm) {
+  var m = /^(\d{2}):(\d{2})$/.exec(hhmm || "");
+  if (!m) return -1;
+  var h = +m[1], min = +m[2];
+  if (h > 23 || min > 59) return -1;
+  return h * 60 + min;
+}
+function setNotesClock(hhmm) {
+  var mins = notesClockMinutes(hhmm);
+  try {
+    if (mins < 0) localStorage.removeItem(NOTES_CLOCK_KEY);
+    else localStorage.setItem(NOTES_CLOCK_KEY, hhmm);
+  } catch (e) {}
+  try {
+    if (window.YurecNative && typeof window.YurecNative.notesClock === "function") window.YurecNative.notesClock(mins);
+  } catch (e2) {}
+}
 function renderSettings() {
   var choice = readTheme();
   var booksOn = showBookNav();
@@ -3663,7 +3687,10 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>') + "Уведомления</p>" +
-      '<p class="subtle">При запуске телефон спрашивает доступ. Два канала: новая сборка, когда она правда вышла, и один стук в сутки — то про двор, то про игру. Не чаще раза в день. Кнопка ниже гонит проверку сразу, это диагностика.</p>' +
+      '<p class="subtle">При запуске телефон спрашивает доступ. Два канала: новая сборка, когда она правда вышла, и один стук в сутки — то про двор, то про игру. Своё время необязательно: выключишь — стук через сутки после прошлого.</p>' +
+      '<button type="button" class="set-switch" id="notes-clock-on" role="switch" aria-checked="' + (readNotesClock() ? "true" : "false") + '">' +
+        '<span>Своё время</span><span class="pill' + (readNotesClock() ? " on" : "") + '">' + (readNotesClock() ? "включено" : "выключено") + "</span></button>" +
+      '<div class="font-row" style="margin-top:8px"><span>Когда стучать</span><input type="time" id="notes-clock" value="' + (readNotesClock() || "09:00") + '"' + (readNotesClock() ? "" : " disabled") + " /></div>" +
       '<button type="button" class="btn wide off" id="notes-ask">Разрешить уведомления</button>' +
       '<button type="button" class="btn wide gold" id="notes-test" style="margin-top:8px">Проверить уведомления</button>' +
       (notesNote ? '<p class="bak-note">' + esc(notesNote) + "</p>" : "") +
@@ -3695,13 +3722,14 @@ function renderSettings() {
       '<p class="subtle">Позвонить помойному королю. Короткий набор, как его зовут. Живой номер в приложении не лежит.</p>' +
       '<button type="button" class="btn wide call" id="king-call">Позвонить</button>' +
     "</section>" +
+    (isDev() ?
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M21 2l-2 2m-7.6 7.6L3 21l7.4-8.4M15 9l6-6"/><circle cx="9" cy="9" r="2"/>') + "Чит-коды</p>" +
-      '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит. «Легенда» — список слов, если забудешь.</p>' +
+      '<p class="subtle">Одно поле на все слова двора. Регистр не важен. Чужое слово Гоша проглотит и молчит. «Легенда» — список слов, если забудешь. Видно только после кода разработчика.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
       '<button type="button" class="btn wide ghost" id="cheat-book" style="margin-top:8px">Легенда</button>' +
-    "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.12") +
+    "</section>" : "") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.13") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -3924,6 +3952,7 @@ function closeAdminCheat(keepLock) {
   if (!keepLock) lockModal(false);
 }
 function openAdminCheatModal() {
+  if (!isDev()) return;
   var el = document.getElementById("admin-cheat-modal");
   if (!el) {
     el = document.createElement("div");
@@ -3980,6 +4009,7 @@ function openAdminCheatModal() {
   window.setTimeout(function () { if (inp) inp.focus(); }, 50);
 }
 function openCheatBook() {
+  if (!isDev()) return;
   var el = document.getElementById("cheat-book-modal");
   if (!el) {
     el = document.createElement("div");
@@ -4078,6 +4108,16 @@ function bindSettings() {
   on($("#notes-test"), "click", function () {
     notesNote = notesHint(notesRun(true));
     paint();
+  });
+  on($("#notes-clock-on"), "click", function () {
+    var cur = readNotesClock();
+    var field = document.getElementById("notes-clock");
+    setNotesClock(cur ? "" : ((field && field.value) || "09:00"));
+    paint();
+  });
+  on($("#notes-clock"), "change", function (e) {
+    var v = (e.target && e.target.value) || "09:00";
+    setNotesClock(v);
   });
   on($("#widget-pin"), "click", function () {
     var how = pinQuoteWidget();
@@ -4359,7 +4399,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.12";
+  var ver = (APP && APP.version) || "1.65.13";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +
@@ -8107,6 +8147,7 @@ function boot() {
     gStats = gFresh();
   }
   applyTheme();
+  setNotesClock(readNotesClock());
   syncWideLayout();
   try {
     window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () {
