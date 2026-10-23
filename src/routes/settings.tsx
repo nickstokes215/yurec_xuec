@@ -873,13 +873,14 @@ function SettingsPage() {
         action="Позвонить"
         onClick={() => (dev.on ? openKingDial() : setDevOpen(true))}
       />
+      {dev.on ? (
       <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
           <KeyRound className="size-3.5" />
           Чит-коды
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          Одно поле на все слова двора. Регистр не важен. «Легенда» — список слов, но только после кода разработчика.
+          Одно поле на все слова двора. Регистр не важен. «Легенда» — список слов. Без кода разработчика этого блока нет.
         </p>
         <button
           type="button"
@@ -890,12 +891,13 @@ function SettingsPage() {
         </button>
         <button
           type="button"
-          onClick={() => (dev.on ? setBookOpen(true) : setLockOpen(true))}
+          onClick={() => setBookOpen(true)}
           className="mt-2 flex h-11 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
         >
           Легенда
         </button>
       </section>
+      ) : null}
 
       <p className="mt-8 text-center text-[12px] text-subtle">
         Версия {APP_VERSION}
@@ -911,7 +913,7 @@ function SettingsPage() {
 
       {bugOpen ? <BugModal onClose={() => setBugOpen(false)} /> : null}
       {devOpen ? <DevModal onClose={() => setDevOpen(false)} /> : null}
-      {cheatOpen ? (
+      {dev.on && cheatOpen ? (
         <CheatModal
           onClose={() => setCheatOpen(false)}
           onRaven={() => {

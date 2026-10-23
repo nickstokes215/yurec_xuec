@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.14", buildAt: "22.10.2026, 02:10 МСК", history: [] };
+var APP = { version: "1.65.15", buildAt: "22.10.2026, 02:10 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -3722,13 +3722,14 @@ function renderSettings() {
       '<p class="subtle">Позвонить помойному королю. Короткий набор, как его зовут. Живой номер в приложении не лежит.</p>' +
       '<button type="button" class="btn wide call" id="king-call">Позвонить</button>' +
     "</section>" +
+    (isDev() ?
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M21 2l-2 2m-7.6 7.6L3 21l7.4-8.4M15 9l6-6"/><circle cx="9" cy="9" r="2"/>') + "Чит-коды</p>" +
-      '<p class="subtle">Одно поле на все слова двора. Регистр не важен. «Легенда» — список слов, но только после кода разработчика.</p>' +
+      '<p class="subtle">Одно поле на все слова двора. Регистр не важен. «Легенда» — список слов. Без кода разработчика этого блока нет.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
       '<button type="button" class="btn wide ghost" id="cheat-book" style="margin-top:8px">Легенда</button>' +
-    "</section>" +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.14") +
+    "</section>" : "") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.15") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -3951,6 +3952,7 @@ function closeAdminCheat(keepLock) {
   if (!keepLock) lockModal(false);
 }
 function openAdminCheatModal() {
+  if (!isDev()) return;
   var el = document.getElementById("admin-cheat-modal");
   if (!el) {
     el = document.createElement("div");
@@ -4442,7 +4444,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.14";
+  var ver = (APP && APP.version) || "1.65.15";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +

@@ -220,9 +220,15 @@ public class MainActivity extends Activity {
         });
 
         webView.loadUrl(bootHash(getIntent()));
+        YurecNotes.onLaunch(this);
     }
 
     private String bootHash(Intent intent) {
+        String route = intent == null ? null : intent.getStringExtra("route");
+        if ("route".equals(intent == null ? null : intent.getStringExtra("open")) && route != null) {
+            String safe = YurecNotes.safeRoute(route);
+            return HOME + "#" + safe;
+        }
         if (wantsOpen(intent, "chat", "ru.yurec.xuec.CHAT")) return HOME + "#/chat";
         if (wantsOpen(intent, "citats", "ru.yurec.xuec.CITATS")) return HOME + "#/citats";
         return HOME;
@@ -244,7 +250,11 @@ public class MainActivity extends Activity {
         setIntent(intent);
         if (webView == null) return;
         String js = null;
-        if (wantsOpen(intent, "chat", "ru.yurec.xuec.CHAT")) {
+        String route = intent.getStringExtra("route");
+        if ("route".equals(intent.getStringExtra("open")) && route != null) {
+            String safe = YurecNotes.safeRoute(route);
+            js = "(function(){try{location.hash='#" + safe + "';if(window.paint)window.paint();}catch(e){}})()";
+        } else if (wantsOpen(intent, "chat", "ru.yurec.xuec.CHAT")) {
             js = "(function(){try{location.hash='#/chat';if(window.paint)window.paint();}catch(e){}})()";
         } else if (wantsOpen(intent, "citats", "ru.yurec.xuec.CITATS")) {
             js = "(function(){try{location.hash='#/citats';if(window.paint)window.paint();}catch(e){}})()";
@@ -418,6 +428,10 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == YurecNotes.REQ_NOTES) {
+            YurecNotes.onPermission(this, requestCode, grantResults);
+            return;
+        }
         if (requestCode == YurecOffline.REQ_STORAGE && offline != null) {
             offline.flushBackup();
         }
