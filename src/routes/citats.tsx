@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CITATS, CITATS_COVER, CITATS_PITCH } from "@/data/citats";
+import { useState } from "react";
+import { CITATS, CITATS_COVER, CITATS_PITCH, type Citat } from "@/data/citats";
 import { formatCode, getStory } from "@/data/catalog";
 import { openZoom } from "@/lib/zoom";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,19 @@ const SPEAKER_TONE: Record<string, string> = {
   batya: "bg-mv text-fg",
 };
 
+function shuffleCitats(list: Citat[]) {
+  const rows = list.slice();
+  for (let i = rows.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = rows[i]!;
+    rows[i] = rows[j]!;
+    rows[j] = tmp;
+  }
+  return rows;
+}
+
 function CitatsPage() {
+  const [rows] = useState(() => shuffleCitats(CITATS));
   return (
     <main className="px-4 pt-4 pb-10 wide:px-6">
       <button
@@ -39,7 +52,7 @@ function CitatsPage() {
       <p className="mt-2 font-serif text-[16px] leading-relaxed text-muted">{CITATS_PITCH}</p>
       <p className="mt-4 text-center text-[12px] tabular-nums text-subtle">{CITATS.length} цитат</p>
       <ul className="citat-board mt-4">
-        {CITATS.map((c) => {
+        {rows.map((c) => {
           const story = getStory(c.slug);
           if (!story) return null;
           return (

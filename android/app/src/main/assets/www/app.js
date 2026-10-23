@@ -81,7 +81,7 @@ if (!Array.prototype.find) {
   };
 }
 
-var APP = { version: "1.65.15", buildAt: "22.10.2026, 02:10 МСК", history: [] };
+var APP = { version: "1.65.16", buildAt: "22.10.2026, 02:10 МСК", history: [] };
 function syncWideLayout(forced) {
   var w = typeof forced === "number" ? forced : 0;
   if (!w) {
@@ -2872,7 +2872,21 @@ function citatTone(id) {
   return "";
 }
 
+var citatOrder = null;
+function freshCitatOrder() {
+  var ids = [];
+  var i, j, t;
+  for (i = 0; i < CITATS.length; i++) ids.push(i);
+  for (i = ids.length - 1; i > 0; i--) {
+    j = Math.floor(Math.random() * (i + 1));
+    t = ids[i];
+    ids[i] = ids[j];
+    ids[j] = t;
+  }
+  citatOrder = ids;
+}
 function renderCitats() {
+  if (!citatOrder || citatOrder.length !== CITATS.length) freshCitatOrder();
   var html = '<button type="button" class="citat-cover" data-zoom="covers/citats.jpg" aria-label="Открыть обложку: Зашквары Юрца">' +
     '<img src="covers/citats.jpg" alt="Юрец читает книгу «Зашквары Юрца»" /></button>' +
     '<p class="kicker" style="margin-top:20px">Цитатник</p>' +
@@ -2880,9 +2894,11 @@ function renderCitats() {
     '<p class="muted" style="font-family:var(--serif);font-size:16px;line-height:1.6;margin-top:8px">Самые громкие фразы двора: ор, зашквар и тосты за РЕВЭЛ. Нажми цитату — откроется рассказ, откуда ор.</p>' +
     '<p class="subtle" style="text-align:center;margin-top:16px">' + CITATS.length + " цитат</p>";
   html += '<div class="citat-board">';
-  var i, c, st;
-  for (i = 0; i < CITATS.length; i++) {
+  var n, i, c, st;
+  for (n = 0; n < citatOrder.length; n++) {
+    i = citatOrder[n];
     c = CITATS[i];
+    if (!c) continue;
     st = bySlug(c.slug);
     if (!st) continue;
     html += '<a class="citat" href="#/story/' + esc(c.slug) + '">' +
@@ -3729,7 +3745,7 @@ function renderSettings() {
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
       '<button type="button" class="btn wide ghost" id="cheat-book" style="margin-top:8px">Легенда</button>' +
     "</section>" : "") +
-    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.15") +
+    '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.16") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
     '<a class="btn wide gold" href="#/about" style="margin-top:16px;height:56px;font-size:16px">О приложении</a>';
   return shell(html, "about");
@@ -4444,7 +4460,7 @@ function renderIdeas() {
 }
 
 function renderApk() {
-  var ver = (APP && APP.version) || "1.65.15";
+  var ver = (APP && APP.version) || "1.65.16";
   var html = '<a class="back" href="#/settings">← Назад в Настройки</a>' +
     '<p class="kicker" style="margin-top:16px">Установка</p>' +
     '<h2 style="font-size:28px;margin-top:4px">Поставить сборник</h2>' +
@@ -7525,6 +7541,7 @@ function paint() {
   var onCharList = r === "/characters" || r === "/characters/";
   if (!onCharList) qReset();
   var same = r === lastRoute;
+  if ((r === "/citats" || r === "/citats/") && !same) citatOrder = null;
   var chipsNow = document.querySelector(".chips");
   if (chipsNow) chipMap[lastRoute] = chipsNow.scrollLeft;
   if (!same) {

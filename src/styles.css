@@ -997,11 +997,13 @@ html.av-nodock .dock-inner {
   flex-direction: column;
 }
 .av-head {
+  position: relative;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 0.35rem 0.2rem;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 4.6rem 0.2rem;
 }
 .av-head .av-title {
   margin: 0;
@@ -1018,6 +1020,10 @@ html.av-nodock .dock-inner {
   cursor: pointer;
 }
 .av-pause {
+  position: absolute;
+  right: 0.15rem;
+  top: 50%;
+  transform: translateY(-50%);
   height: 34px;
   padding: 0 12px;
   border: 0;
