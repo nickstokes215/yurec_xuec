@@ -2136,7 +2136,7 @@ html.av-nodock [data-app-dock] {
   align-items: center;
   justify-content: center;
   min-height: 36px;
-  padding: 0 4.6rem 0.2rem;
+  padding: 0 2.8rem 0.2rem;
 }
 .av-head .av-title {
   margin: 0;
@@ -2152,20 +2152,26 @@ html.av-nodock [data-app-dock] {
   line-height: 1.1;
   cursor: pointer;
 }
-.av-pause {
+.av-stage > .av-pause,
+.av-pause-corner {
   position: absolute;
-  right: 0.15rem;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 34px;
-  padding: 0 12px;
+  top: 0.18rem;
+  right: 0.4rem;
+  z-index: 40;
+  transform: none;
+  height: 40px;
+  min-width: 88px;
+  padding: 0 14px;
   border: 0;
   border-radius: 999px;
-  background: var(--elevated, #1c1c20);
-  color: var(--fg);
+  background: #1a1408;
+  color: #f4e4a1;
+  box-shadow: 0 0 0 2px #e8c36a;
   font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  pointer-events: auto;
 }
 .av-pause[hidden] { display: none !important; }
 .av-pause-veil {
@@ -2214,15 +2220,33 @@ html.av-nodock [data-app-dock] {
 }
 .av-hud[hidden] { display: none !important; }
 .av-score {
-  min-width: 28px;
-  height: 26px;
-  padding: 0 8px;
-  display: grid;
-  place-items: center;
+  min-width: 96px;
+  height: auto;
+  min-height: 36px;
+  padding: 3px 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.05;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+.av-score i {
+  font-style: normal;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.01em;
+  opacity: 0.95;
+}
+.av-score b {
+  font-style: normal;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0;
+  opacity: 1;
 }
 .av-score-z { background: #6a9a52; color: #12200e; }
 .av-score-y { background: #c46a3a; color: #fff; }

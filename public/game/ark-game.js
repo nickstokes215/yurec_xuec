@@ -188,20 +188,20 @@
       label: "Максидом",
       sub: "отдел Светланы — добраться до неё",
       bg: ["#2a0818", "#7a2048", "#ff7ab0"],
-      speed: 355,
+      speed: 445,
       lives: 3,
-      paddleW: 98,
-      cap: 1.4,
+      paddleW: 96,
+      cap: 1.58,
       skin: "maxi",
       face: "svetlana",
       rows: [
-        "GG.......GG",
-        "G333333333G",
-        "G322222223G",
-        "G3.21112.3G",
-        "G322222223G",
-        "G333333333G",
-        "GG.2.2.2.GG"
+        "2.2.2.2.2.2",
+        ".3.1.1.1.3.",
+        "21212121212",
+        ".1.3.G.3.1.",
+        "33333333333",
+        ".2.1.1.1.2.",
+        "1.2.2.2.2.1"
       ]
     },
     yard: {
@@ -409,6 +409,28 @@
     var list = QUOTES[id] || QUOTES.flat;
     return pick(list);
   }
+  var YELL = [
+    "Я — бля, легенда!",
+    "РЕВЭЛ, кирпичи!",
+    "Купола сами выросли!",
+    "Это не шарик. Это снаряд!",
+    "Совок не умрёт, пока я бью!",
+    "Светка, я до кассы дойду!",
+    "Лысый, золото не вечное!",
+    "Граната — мой талисман!",
+    "Я один, а двор орёт за меня!",
+    "Ещё ряд — и я царь!",
+    "Кастян, смотри, как ломается!",
+    "Фольга на башке, огонь в шаре!",
+    "Юрец не тормозит!",
+    "Шотман, записывай счёт!",
+    "Бабка, морда ближе!",
+    "Я император автомата!",
+    "Плюшка, падай сюда!",
+    "Гоша, не каркай под ракетку!",
+    "Ещё чуть — и Максидом мой!",
+    "Шарик звереет. Я тоже!"
+  ];
   function capDurLabel(kind) {
     var m = CAP_META[kind];
     if (!m) return "сейчас";
@@ -454,8 +476,7 @@
 
     var head = document.createElement("div");
     head.className = "av-head";
-    head.innerHTML = '<button type="button" class="av-title">Алконоид</button><button type="button" class="av-pause" hidden>Пауза</button>';
-    var pauseBtn = head.querySelector(".av-pause");
+    head.innerHTML = '<button type="button" class="av-title">Алконоид</button>';
     var titleTaps = 0;
     var titleTapAt = 0;
     var pendingVodka = false;
@@ -465,6 +486,11 @@
     var canvas = document.createElement("canvas");
     canvas.setAttribute("aria-label", "Алконоид");
     wrap.appendChild(canvas);
+    var pauseBtn = document.createElement("button");
+    pauseBtn.type = "button";
+    pauseBtn.className = "av-pause av-pause-corner";
+    pauseBtn.hidden = true;
+    pauseBtn.textContent = "Пауза";
     var pauseVeil = document.createElement("div");
     pauseVeil.className = "av-pause-veil";
     pauseVeil.hidden = true;
@@ -522,6 +548,7 @@
       '<div class="av-diffs"></div>' +
       '<div class="av-help-rule" role="separator"><span>Помощь</span></div>' +
       '<button type="button" class="av-info">Информация</button>' +
+      '<button type="button" class="av-info av-hall-open">Таблица рекордов</button>' +
       '<div class="av-help-rule" role="separator"><span>служебный вход</span></div>' +
       '<button type="button" class="av-cheat-btn">Чит-код</button>' +
       '<button type="button" class="av-reset">Сбросить прогресс</button>' +
@@ -552,9 +579,14 @@
     wrap.appendChild(end);
     wrap.appendChild(manual);
     wrap.appendChild(cheatModal);
+    var hallEl = document.createElement("div");
+    hallEl.className = "av-manual";
+    hallEl.hidden = true;
+    wrap.appendChild(hallEl);
     host.appendChild(head);
     host.appendChild(hud);
     host.appendChild(wrap);
+    host.appendChild(pauseBtn);
     host.appendChild(shotBtn);
     host.appendChild(kitEl);
 
@@ -597,9 +629,65 @@
     }
     function paintSheet() {
       var w = winsMap();
-      var n = 0, i;
-      for (i = 0; i < CHAIN.length; i++) if ((w[CHAIN[i]] || 0) > 0) n += 1;
-      sheetEl.innerHTML = "<b>разбито " + n + " / " + CHAIN.length + "</b>";
+      var stats = statsMap();
+      var n = 0, i, hi = 0, top = 0;
+      var hall = hallRead();
+      for (i = 0; i < CHAIN.length; i++) {
+        if ((w[CHAIN[i]] || 0) > 0) n += 1;
+        if (stats[CHAIN[i]] && (stats[CHAIN[i]].hi || 0) > hi) hi = stats[CHAIN[i]].hi;
+      }
+      if (hall.length) top = hall[0].score || 0;
+      sheetEl.innerHTML = "<b>разбито " + n + " / " + CHAIN.length + "</b><span>рекорд: " + Math.max(hi, top) + "</span>";
+    }
+    function hallEsc(s) {
+      return String(s == null ? "" : s).replace(/&/g, "\u0026amp;").replace(/</g, "\u0026lt;").replace(/"/g, "\u0026quot;");
+    }
+    function hallRead() {
+      try {
+        var list = JSON.parse(localStorage.getItem("yurec-ark-hall") || "[]");
+        if (!Array.isArray(list)) return [];
+        list.sort(function (a, b) { return (b.score - a.score) || ((a.at || 0) - (b.at || 0)); });
+        return list.slice(0, 8);
+      } catch (e) { return []; }
+    }
+    function hallNick() {
+      try { return localStorage.getItem("yurec-hall-name") || "Юрец"; } catch (e) { return "Юрец"; }
+    }
+    function hallFits(points) {
+      var list = hallRead();
+      if (list.length < 8) return true;
+      return points > (list[list.length - 1].score || 0);
+    }
+    function hallPush(name, points, line) {
+      var nick = String(name || "Юрец").replace(/^\s+|\s+$/g, "").slice(0, 16) || "Юрец";
+      try { localStorage.setItem("yurec-hall-name", nick); } catch (e) {}
+      var list = hallRead();
+      list.push({ name: nick, score: points, line: line, at: Date.now() });
+      list.sort(function (a, b) { return (b.score - a.score) || ((a.at || 0) - (b.at || 0)); });
+      try { localStorage.setItem("yurec-ark-hall", JSON.stringify(list.slice(0, 8))); } catch (e2) {}
+    }
+    function openHall() {
+      var list = hallRead();
+      var html = '<p class="av-dos">C:\\SHOTMAN> hall</p><h3>Таблица</h3>';
+      if (!list.length) html += '<p class="av-lead">Пока пусто. Разбей кирпичи — очки запишутся.</p>';
+      else {
+        html += '<ol class="svoya-hall">';
+        var i;
+        for (i = 0; i < list.length; i++) {
+          html += "<li><span>" + (i + 1) + ". " + hallEsc(list[i].name) + "<br>" + hallEsc(list[i].line || "") + "</span><b>" + (list[i].score || 0) + "</b></li>";
+        }
+        html += "</ol>";
+      }
+      html += '<button type="button" class="av-menu-btn av-hall-close">Назад</button>';
+      hallEl.innerHTML = html;
+      hallEl.hidden = false;
+      menu.hidden = true;
+      end.hidden = true;
+      hallEl.querySelector(".av-hall-close").onclick = function () {
+        hallEl.hidden = true;
+        if (phase === "menu") menu.hidden = false;
+        else if (phase === "over") end.hidden = false;
+      };
     }
     function paintDiffs() {
       diffsEl.innerHTML = "";
@@ -651,6 +739,7 @@
       manual.hidden = false;
       try { manual.scrollTop = 0; } catch (e) {}
     });
+    menu.querySelector(".av-hall-open").addEventListener("click", function () { openHall(); });
     manual.querySelector(".av-manual-close").addEventListener("click", function () { manual.hidden = true; });
     cheatBtn.addEventListener("click", function () {
       confirmEl.hidden = true;
@@ -694,6 +783,7 @@
         localStorage.removeItem("yurec-ark-wins");
         localStorage.removeItem("yurec-ark-stats");
         localStorage.removeItem("yurec-ark-all");
+        localStorage.removeItem("yurec-ark-hall");
       } catch (e) {}
       try { window.dispatchEvent(new Event("yurec-ark-wins")); } catch (e2) {}
       confirmEl.hidden = true;
@@ -739,7 +829,7 @@
     var facePopX = W / 2;
     var facePopY = H * 0.38;
     var serveStuck = true;
-    var banner = "", bannerT = 0;
+    var banner = "", bannerT = 0, quipT = 11;
     var matchAt = 0;
     var boss = null;
     var helpers = [];
@@ -932,8 +1022,11 @@
       boss = null;
       buildBricks(cfg.rows);
       if (id === "maxi") {
-        enemies.push({ x: 80, y: 300, vx: 70, r: 12, kind: "bat" });
-        enemies.push({ x: 260, y: 340, vx: -80, r: 12, kind: "bat" });
+        enemies.push({ x: 48, y: 248, vx: 150, r: 11, kind: "bat" });
+        enemies.push({ x: 180, y: 300, vx: -170, r: 12, kind: "bat" });
+        enemies.push({ x: 300, y: 268, vx: 130, r: 11, kind: "bat" });
+        caps.push({ x: 110, y: 96, kind: "through", vy: 78 });
+        caps.push({ x: 250, y: 132, kind: "fast", vy: 86 });
       }
       if (id === "yard") {
         boss = { x: W / 2, y: 50, vx: 130, r: 28, hp: 12, max: 12, t: 0, kind: "ufo", spit: 1.8 };
@@ -949,6 +1042,7 @@
       }
       kitEl.hidden = id !== "kostya";
       matchAt = Date.now();
+      quipT = 8 + Math.random() * 4;
       menu.hidden = true;
       end.hidden = true;
       manual.hidden = true;
@@ -971,6 +1065,7 @@
         row.w = (row.w || 0) + 1;
         var took = Date.now() - matchAt;
         if (row.best == null || took < row.best) row.best = took;
+        if (row.hi == null || score > row.hi) row.hi = score;
         st[levelId] = row;
         localStorage.setItem("yurec-ark-stats", JSON.stringify(st));
         window.dispatchEvent(new Event("yurec-ark-wins"));
@@ -981,6 +1076,7 @@
         var st = JSON.parse(localStorage.getItem("yurec-ark-stats") || "{}");
         var row = st[levelId] || emptyRow();
         row.l = (row.l || 0) + 1;
+        if (row.hi == null || score > row.hi) row.hi = score;
         st[levelId] = row;
         localStorage.setItem("yurec-ark-stats", JSON.stringify(st));
         window.dispatchEvent(new Event("yurec-ark-wins"));
@@ -1052,19 +1148,38 @@
       if (levelId === "batya") { winTitle = "Дробовик затих!"; winLead = "Батя убрал ствол. Юрец цел. Пока."; }
       if (levelId === "kostya") { winTitle = "Юрец — легенда!"; winLead = "Костя — читер. Лысый, НЛО и Батя прикрывали. Тщетно. Юрец всё равно легенда Шотмана."; }
       var html = "<h3>" + (won ? winTitle : "Проиграл двор") + "</h3>";
-      html += '<p class="av-lead">' + (won ? winLead : "Ракетки кончились. Совок победил на этот раз.") + "</p>";
+      html += '<p class="av-lead">' + (won ? winLead : "Ракетки кончились. Совок победил на этот раз.") + " Очки: " + score + ".</p>";
+      if (hallFits(score)) {
+        html += '<form class="av-hall-ask"><p class="av-lead">В таблицу. Как подписать?</p>' +
+          '<input class="av-cheat-in av-hall-name" maxlength="16" value="' + hallEsc(hallNick()) + '" />' +
+          '<button type="submit" class="av-next">Вписать</button></form>';
+      }
       html += '<div class="ark-end-btns">';
-      if (won && next) html += '<button type="button" class="av-next">Следующий уровень</button>';
+      if (won && next) html += '<button type="button" class="av-next av-level-next">Следующий уровень</button>';
       html += '<button type="button" class="av-again">Сыграть ещё раз</button>';
+      html += '<button type="button" class="av-info av-hall-end">Таблица рекордов</button>';
       html += '<button type="button" class="av-menu-btn">Выйти из игры</button>';
       html += "</div>";
       end.innerHTML = html;
       end.hidden = false;
       if (won && next) {
-        end.querySelector(".av-next").onclick = function () { startLevel(CHAIN[CHAIN.indexOf(levelId) + 1]); };
+        end.querySelector(".av-level-next").onclick = function () { startLevel(CHAIN[CHAIN.indexOf(levelId) + 1]); };
       }
       end.querySelector(".av-again").onclick = function () { startLevel(levelId); };
       end.querySelector(".av-menu-btn").onclick = function () { goMenu(); };
+      var hallEnd = end.querySelector(".av-hall-end");
+      if (hallEnd) hallEnd.onclick = function () { openHall(); };
+      var hallForm = end.querySelector(".av-hall-ask");
+      if (hallForm) {
+        var pts = score;
+        var line = score + " · " + (cfg.label || "") + " · " + (won ? "победа" : "слив");
+        hallForm.onsubmit = function (e) {
+          e.preventDefault();
+          var inp = hallForm.querySelector(".av-hall-name");
+          hallPush(inp && inp.value, pts, line);
+          hallForm.outerHTML = '<p class="av-lead">Записано. Смотри в таблице с меню.</p>';
+        };
+      }
     }
 
     function fireLaser() {
@@ -1078,8 +1193,10 @@
       paintHud();
     }
     function laserBtnRect() {
-      var bw = 110, bh = 38;
-      return { x: paddle.x - bw / 2, y: paddle.y - 56, w: bw, h: bh };
+      var bw = 136, bh = 44;
+      var y = paddle.y - paddle.h - 86;
+      y = clamp(y, 92, H - 170);
+      return { x: clamp(paddle.x - bw / 2, 6, W - bw - 6), y: y, w: bw, h: bh };
     }
     function laserArmed() {
       return laserShots > 0 && (phase === "play" || phase === "serve") && levelId !== "kostya";
@@ -1166,8 +1283,9 @@
         facePopY = br.y + br.h / 2;
         if (Math.random() < 0.28) say(pickQuote(levelId), 3.6);
         beep(660, 0.07, 0.05);
-        if (Math.random() < 0.16) {
+        if (Math.random() < (levelId === "maxi" ? 0.48 : 0.16)) {
           var drop = Math.random() < 0.62 ? pick(CAP_BAD) : pick(CAP_GOOD);
+          if (levelId === "maxi") drop = Math.random() < 0.72 ? pick(["through", "through", "laser", "fast", "triple", "split", "grow"]) : drop;
           if (cfg.skin === "tolik") drop = Math.random() < 0.45 ? "vodka" : drop;
           if (cfg.skin === "pharm") drop = Math.random() < 0.4 ? "life" : drop;
           if (cfg.skin === "fsb") drop = Math.random() < 0.45 ? "bomb" : drop;
@@ -1207,6 +1325,13 @@
     function step(dt) {
       if (phase === "over" || phase === "menu") return;
       if (bannerT > 0) bannerT -= dt;
+      if (phase === "play" || phase === "serve") {
+        quipT -= dt;
+        if (quipT <= 0) {
+          quipT = 10 + Math.random() * 5;
+          if (bannerT < 0.35) say(pick(YELL), 2.1);
+        }
+      }
       if (paddle.fly > 0) paddle.fly = Math.max(0, paddle.fly - dt);
       if (fireball > 0) fireball = Math.max(0, fireball - dt);
       if (freeze > 0) freeze = Math.max(0, freeze - dt);

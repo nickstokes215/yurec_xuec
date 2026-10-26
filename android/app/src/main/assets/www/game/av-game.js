@@ -33,6 +33,28 @@
     "Кастян сказал: хватит.",
     "Легенда — да. Счёт — мой."
   ];
+  var YELL = [
+    "Я — бля, легенда!",
+    "РЕВЭЛ, двор!",
+    "Шаверму в лаваше, лохи!",
+    "Купола сами выросли!",
+    "Кастян, я инвестирую в крик!",
+    "Гоша, каркай, я работаю!",
+    "В бак не ссы, я ещё жив!",
+    "Фольга на башке — это наука!",
+    "Светка, я на кассе души!",
+    "Лысый, линолеум помнит меня!",
+    "Это не шарик. Это снаряд!",
+    "Я император помойки!",
+    "Ещё удар — и я царь!",
+    "Совок не умрёт!",
+    "Граната под подушкой, шарик в руках!",
+    "Юрец не тормозит. Тормозит двор!",
+    "Бабка, половник мимо!",
+    "Я не пьяный, я в полёте!",
+    "Шотман смотрит. Не опозорь!",
+    "Ещё чуть — и Олимпик мой!"
+  ];
   var DIFFS = {
     povar: {
       label: "Повар шавермы",
@@ -42,7 +64,7 @@
       scoreBg: "#b85a32",
       scoreFg: "#fff4ea",
       face: "povar",
-      ball: 240, ai: 130, err: 72, delay: 0.32, accel: 1.018, max: 420, playerR: 56, aiR: 50,
+      ball: 290, ai: 145, err: 68, delay: 0.28, accel: 1.034, max: 520, playerR: 56, aiR: 50,
       score: [
         "Бери лаваш и вали, психопат!",
         "Чеснок есть. Скидки нет. Разговор окончен.",
@@ -320,14 +342,18 @@
 
     var head = document.createElement("div");
     head.className = "av-head";
-    head.innerHTML = '<button type="button" class="av-title">Помойкобол</button><button type="button" class="av-pause" hidden>Пауза</button>';
-    var pauseBtn = head.querySelector(".av-pause");
+    head.innerHTML = '<button type="button" class="av-title">Помойкобол</button>';
 
     var wrap = document.createElement("div");
     wrap.className = "av-stage";
     var canvas = document.createElement("canvas");
     canvas.setAttribute("aria-label", "Помойкобол");
     wrap.appendChild(canvas);
+    var pauseBtn = document.createElement("button");
+    pauseBtn.type = "button";
+    pauseBtn.className = "av-pause av-pause-corner";
+    pauseBtn.hidden = true;
+    pauseBtn.textContent = "Пауза";
     var pauseVeil = document.createElement("div");
     pauseVeil.className = "av-pause-veil";
     pauseVeil.hidden = true;
@@ -336,7 +362,7 @@
 
     var hud = document.createElement("div");
     hud.className = "av-hud";
-    hud.innerHTML = '<span class="av-score av-score-z">0</span><span class="av-score av-score-y">0</span>';
+    hud.innerHTML = '<span class="av-score av-score-z"><i>сверху · соперник</i><b>0</b></span><span class="av-score av-score-y"><i>снизу · Юрец</i><b>0</b></span>';
 
     var shotBtn = document.createElement("button");
     shotBtn.type = "button";
@@ -365,6 +391,7 @@
       '<div class="av-diffs"></div>' +
       '<div class="av-help-rule" role="separator"><span>Помощь</span></div>' +
       '<button type="button" class="av-info">Информация</button>' +
+      '<button type="button" class="av-info av-hall-open">Таблица рекордов</button>' +
       '<div class="av-help-rule" role="separator"><span>служебный вход</span></div>' +
       '<button type="button" class="av-cheat-btn">Чит-код</button>' +
       '<button type="button" class="av-reset">Сбросить прогресс</button>' +
@@ -395,9 +422,14 @@
     wrap.appendChild(end);
     wrap.appendChild(manual);
     wrap.appendChild(cheatModal);
+    var hallEl = document.createElement("div");
+    hallEl.className = "av-manual";
+    hallEl.hidden = true;
+    wrap.appendChild(hallEl);
     host.appendChild(head);
     host.appendChild(hud);
     host.appendChild(wrap);
+    host.appendChild(pauseBtn);
     host.appendChild(shotBtn);
     host.appendChild(gods);
 
@@ -526,6 +558,59 @@
       if (s.pf || s.pa) extra += " · очки " + s.pf + " : " + s.pa;
       sheetEl.innerHTML = "<b>Выиграл: " + t.w + " · проиграл: " + t.l + "</b><span>" + rec + extra + "</span>";
     }
+    function hallEsc(s) {
+      return String(s == null ? "" : s).replace(/&/g, "\u0026amp;").replace(/</g, "\u0026lt;").replace(/"/g, "\u0026quot;");
+    }
+    function hallRead() {
+      try {
+        var list = JSON.parse(localStorage.getItem("yurec-av-hall") || "[]");
+        if (!Array.isArray(list)) return [];
+        list.sort(function (a, b) { return (b.score - a.score) || ((a.at || 0) - (b.at || 0)); });
+        return list.slice(0, 8);
+      } catch (e) { return []; }
+    }
+    function hallNick() {
+      try { return localStorage.getItem("yurec-hall-name") || "Юрец"; } catch (e) { return "Юрец"; }
+    }
+    function hallFits(score) {
+      var list = hallRead();
+      if (list.length < 8) return true;
+      return score > (list[list.length - 1].score || 0);
+    }
+    function hallPush(name, score, line) {
+      var nick = String(name || "Юрец").replace(/^\s+|\s+$/g, "").slice(0, 16) || "Юрец";
+      try { localStorage.setItem("yurec-hall-name", nick); } catch (e) {}
+      var list = hallRead();
+      list.push({ name: nick, score: score, line: line, at: Date.now() });
+      list.sort(function (a, b) { return (b.score - a.score) || ((a.at || 0) - (b.at || 0)); });
+      try { localStorage.setItem("yurec-av-hall", JSON.stringify(list.slice(0, 8))); } catch (e2) {}
+    }
+    function openHall() {
+      var list = hallRead();
+      var html = '<p class="av-dos">C:\\SHOTMAN> hall</p><h3>Таблица</h3>';
+      if (!list.length) html += '<p class="av-lead">Пока пусто. Доиграй бой — двор запишет счёт.</p>';
+      else {
+        html += '<ol class="svoya-hall">';
+        var i;
+        for (i = 0; i < list.length; i++) {
+          html += "<li><span>" + (i + 1) + ". " + hallEsc(list[i].name) + "<br>" + hallEsc(list[i].line || "") + "</span><b>" + (list[i].score || 0) + "</b></li>";
+        }
+        html += "</ol>";
+      }
+      html += '<button type="button" class="av-menu-btn av-hall-close">Назад</button>';
+      hallEl.innerHTML = html;
+      hallEl.hidden = false;
+      menu.hidden = true;
+      end.hidden = true;
+      hallEl.querySelector(".av-hall-close").onclick = function () {
+        hallEl.hidden = true;
+        if (phase === "menu") menu.hidden = false;
+        else if (phase === "over") end.hidden = false;
+      };
+    }
+    function matchPoints(win) {
+      return scoreY * 100 + (win ? 300 : 0) - scoreZ * 25;
+    }
     function paintDiffs() {
       diffsEl.innerHTML = "";
       var stats = loadStats();
@@ -567,6 +652,7 @@
       manual.hidden = false;
       try { manual.scrollTop = 0; } catch (e) {}
     });
+    menu.querySelector(".av-hall-open").addEventListener("click", function () { openHall(); });
     manual.querySelector(".av-manual-close").addEventListener("click", function () {
       manual.hidden = true;
     });
@@ -639,6 +725,7 @@
         localStorage.removeItem("yurec-av-batya");
         localStorage.removeItem("yurec-av-sveta");
         localStorage.removeItem("yurec-av-kostya");
+        localStorage.removeItem("yurec-av-hall");
       } catch (e) {}
       try { window.dispatchEvent(new Event("yurec-av-wins")); } catch (e2) {}
       stickyMode = false;
@@ -682,6 +769,9 @@
     var scoreZ = 0;
     var serveFor = "yurec";
     var serveT = 0;
+    var serveAng = 0;
+    var rallyT = 0;
+    var quipT = 12;
     var trauma = 0;
     var hitstop = 0;
     var particles = [];
@@ -829,23 +919,26 @@
 
     function paintHud() {
       var z = hud.querySelector(".av-score-z");
-      z.textContent = String(scoreZ);
-      hud.querySelector(".av-score-y").textContent = String(scoreY);
+      var y = hud.querySelector(".av-score-y");
+      var foe = (cfg && cfg.foe) ? cfg.foe : "соперник";
+      var me = cfg && cfg.mirror ? "Костя" : "Юрец";
+      z.innerHTML = "<i>сверху · " + foe + "</i><b>" + scoreZ + "</b>";
+      y.innerHTML = "<i>снизу · " + me + "</i><b>" + scoreY + "</b>";
       z.style.background = cfg.scoreBg;
       z.style.color = cfg.scoreFg;
-      if (shotY > 0 && (phase === "play" || phase === "serve")) {
-        shotBtn.hidden = false;
-        shotBtn.textContent = "Пали ×" + shotY;
-        shotBtn.classList.remove("av-shot-laser");
-      } else if (laserY > 0 && (phase === "play" || phase === "serve")) {
-        shotBtn.hidden = false;
-        shotBtn.textContent = "Лазер — жми";
-        shotBtn.classList.add("av-shot-laser");
-      } else {
-        shotBtn.hidden = true;
-        shotBtn.classList.remove("av-shot-laser");
-      }
+      shotBtn.hidden = true;
       gods.hidden = !(cfg.god && (phase === "play" || phase === "serve"));
+    }
+
+    function ballFloor() {
+      return cfg.ball * (1 + Math.min(0.32, rallyT * 0.012));
+    }
+    function serveVec() {
+      var tilt = clamp((yurec.x - W / 2) / (W * 0.42), -1, 1) * 0.38;
+      var ang = clamp((serveAng || 0) + tilt, -0.9, 0.9);
+      var dir = serveFor === "yurec" ? -1 : 1;
+      var sp = Math.max(cfg.ball, ballFloor());
+      return { vx: Math.sin(ang) * sp, vy: dir * Math.cos(ang) * sp };
     }
 
     function applyRadii() {
@@ -866,6 +959,7 @@
     function resetBall(who) {
       serveFor = who;
       serveT = 0;
+      serveAng = (Math.random() * 0.55 - 0.275);
       stunY = 0;
       stunZ = 0;
       yurec.dead = false;
@@ -885,14 +979,12 @@
     }
 
     function launch() {
-      var dir = serveFor === "yurec" ? -1 : 1;
-      var sp = cfg.ball;
-      var ang = (Math.random() * 0.5 - 0.25) * Math.PI;
+      var spv = serveVec();
       var b = balls[0] || makeBall(W / 2, H / 2, 0, 0);
       balls = [b];
-      b.vx = Math.sin(ang) * sp;
-      b.vy = dir * Math.cos(ang) * sp;
-      if (Math.abs(b.vy) < sp * 0.55) b.vy = dir * sp * 0.7;
+      b.vx = spv.vx;
+      b.vy = spv.vy;
+      if (Math.abs(b.vy) < cfg.ball * 0.55) b.vy = (serveFor === "yurec" ? -1 : 1) * cfg.ball * 0.72;
       phase = "play";
       lastHitter = serveFor === "yurec" ? "yurec" : "foe";
       pillSticky = false;
@@ -969,6 +1061,8 @@
       mateZU.dead = false;
       mateZU.burnT = 0;
       try { host.dataset.burn = ""; } catch (e) {}
+      rallyT = 0;
+      quipT = 8 + Math.random() * 4;
       gods.hidden = !cfg.god;
       matchAt = Date.now();
       bonus.live = false;
@@ -1017,7 +1111,7 @@
       if (!toward && Math.abs(dy) > ry * 0.4) return false;
       var off = clamp(dx / rx, -1, 1);
       var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-      sp = clamp(sp * cfg.accel + 18, cfg.ball * 0.7, cfg.max);
+      sp = clamp(sp * Math.max(cfg.accel, 1.03) + 14, ballFloor(), cfg.max);
       var dir = isTop ? 1 : -1;
       b.vy = dir * sp * (0.78 + Math.abs(off) * 0.08);
       b.vx = off * sp * 0.92 + p.vx * 0.25;
@@ -1132,14 +1226,21 @@
         (s.played ? " · боёв " + s.played : "") +
         (s.pf || s.pa ? " · очки " + s.pf + " : " + s.pa : "") +
         "</span>" +
-        '</p><button type="button" class="av-again">Сыграть ещё раз</button>' +
-        (nextId ? '<button type="button" class="av-next">Следующий уровень</button>' : "") +
+        "</p>" +
+        (hallFits(matchPoints(win))
+          ? '<form class="av-hall-ask"><p class="av-lead">В таблицу. Очки ' + matchPoints(win) + ". Как подписать?</p>" +
+            '<input class="av-cheat-in av-hall-name" maxlength="16" value="' + hallEsc(hallNick()) + '" />' +
+            '<button type="submit" class="av-next">Вписать</button></form>'
+          : "") +
+        '<button type="button" class="av-again">Сыграть ещё раз</button>' +
+        (nextId ? '<button type="button" class="av-next av-level-next">Следующий уровень</button>' : "") +
+        '<button type="button" class="av-info av-hall-end">Таблица рекордов</button>' +
         '<button type="button" class="av-menu-btn">Выйти из игры</button>';
       end.querySelector(".av-again").onclick = function () {
         end.hidden = true;
         startMatch(diffId);
       };
-      var nextBtn = end.querySelector(".av-next");
+      var nextBtn = end.querySelector(".av-level-next");
       if (nextBtn) {
         nextBtn.onclick = function () {
           end.hidden = true;
@@ -1147,6 +1248,17 @@
         };
       }
       end.querySelector(".av-menu-btn").onclick = function () { goMenu(); };
+      var hallEnd = end.querySelector(".av-hall-end");
+      if (hallEnd) hallEnd.onclick = function () { openHall(); };
+      var hallForm = end.querySelector(".av-hall-ask");
+      if (hallForm) {
+        hallForm.onsubmit = function (e) {
+          e.preventDefault();
+          var inp = hallForm.querySelector(".av-hall-name");
+          hallPush(inp && inp.value, matchPoints(win), scoreY + ":" + scoreZ + " · " + (DIFFS[diffId] ? DIFFS[diffId].label : "") + " · " + (win ? "победа" : "слив"));
+          hallForm.outerHTML = '<p class="av-lead">Записано. Смотри в таблице с меню.</p>';
+        };
+      }
       if (raf) { cancelAnimationFrame(raf); raf = 0; }
       beep(win ? 660 : 70, 0.22, 0.07);
       if (win && diffId === "sveta") burstKiss();
@@ -1620,8 +1732,8 @@
       var dir = isTop ? 1 : -1;
       var y = isTop ? 22 : H - 22;
       var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-      sp = clamp(sp * 1.02, cfg.ball * 0.7, cfg.max);
-      b.vy = dir * Math.max(sp * 0.88, 140);
+      sp = clamp(Math.max(sp * 1.03, ballFloor()), cfg.ball, cfg.max);
+      b.vy = dir * sp * 0.86;
       if (Math.abs(b.vx) < 30) b.vx += (Math.random() * 2 - 1) * 40;
       b.y = y + dir * (10 + b.r);
       lastHitter = isTop ? "foe" : "yurec";
@@ -1830,6 +1942,12 @@
       babka.squash = lerp(babka.squash, 1, 1 - Math.exp(-12 * dt));
       babka.tongue = Math.max(0, babka.tongue - dt * 2.2);
       if (bannerT > 0) bannerT -= dt;
+      if ((phase === "play" || phase === "serve") && quipT > 0) quipT -= dt;
+      if (quipT <= 0 && (phase === "play" || phase === "serve")) {
+        quipT = 10 + Math.random() * 5;
+        if (bannerT < 0.35) say(pick(YELL), 2.15);
+      }
+      if (phase === "play") rallyT += dt;
       if (laughT > 0) laughT = Math.max(0, laughT - dt);
       if (stunY > 0) stunY = Math.max(0, stunY - dt);
       if (stunZ > 0) stunZ = Math.max(0, stunZ - dt);
@@ -1966,6 +2084,12 @@
         b = balls[i];
         b.x += b.vx * dt;
         b.y += b.vy * dt;
+        var fl = ballFloor();
+        var spn = Math.hypot(b.vx, b.vy);
+        if (spn > 8 && spn < fl) {
+          b.vx *= fl / spn;
+          b.vy *= fl / spn;
+        }
         if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); beep(90, 0.03, 0.02); }
         if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx); beep(90, 0.03, 0.02); }
         hitPaddle(yurec, false, b);
@@ -2231,6 +2355,107 @@
       return courtCvs;
     }
 
+    function drawServeAim() {
+      if (phase !== "serve" || serveFor !== "yurec") return;
+      var b0 = balls[0];
+      if (!b0) return;
+      var v = serveVec();
+      var x = b0.x;
+      var y = b0.y;
+      var vx = v.vx;
+      var vy = v.vy;
+      var sp = 1 / 46;
+      var i;
+      ctx.save();
+      ctx.fillStyle = "#ffe14a";
+      for (i = 0; i < 42; i++) {
+        x += vx * sp;
+        y += vy * sp;
+        if (x < 14) { x = 14; vx = Math.abs(vx); }
+        if (x > W - 14) { x = W - 14; vx = -Math.abs(vx); }
+        if (y < 16) break;
+        if (i % 2 === 0) {
+          ctx.globalAlpha = 0.35 + (i / 42) * 0.55;
+          ctx.beginPath();
+          ctx.arc(x, y, 2.7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+    function roundBtn(x, y, w, h, rad) {
+      var r = Math.min(rad, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+    function fireSlots() {
+      var slots = [];
+      if ((phase !== "play" && phase !== "serve") || yurec.dead || stunY > 0) return slots;
+      var y = yurec.y - yurec.r - 8;
+      var bw = 136;
+      var bh = 42;
+      if (shotY > 0 && phase === "play") {
+        y -= bh;
+        slots.push({ mode: "shot", x: clamp(yurec.x - bw / 2, 8, W - bw - 8), y: y, w: bw, h: bh });
+        y -= 8;
+      }
+      if (laserY > 0) {
+        y -= bh;
+        slots.push({ mode: "laser", x: clamp(yurec.x - bw / 2, 8, W - bw - 8), y: Math.max(NET + 10, y), w: bw, h: bh });
+      }
+      return slots;
+    }
+    function drawFireHud() {
+      var slots = fireSlots();
+      if (!slots.length) return;
+      var aimLaser = laserY > 0;
+      var i, s;
+      ctx.save();
+      ctx.setLineDash([6, 5]);
+      ctx.strokeStyle = aimLaser ? "rgba(255,60,120,0.95)" : "rgba(232,195,106,0.95)";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(yurec.x, yurec.y - yurec.r * 0.15);
+      ctx.lineTo(yurec.x, aimLaser ? 16 : NET);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(yurec.x, aimLaser ? 16 : NET, 6, 0, Math.PI * 2);
+      ctx.stroke();
+      for (i = 0; i < slots.length; i++) {
+        s = slots[i];
+        ctx.shadowColor = s.mode === "laser" ? "rgba(255,42,106,0.65)" : "rgba(180,120,40,0.55)";
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = s.mode === "laser" ? "#ff2a6a" : "#6b4a2b";
+        roundBtn(s.x, s.y, s.w, s.h, 12);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "rgba(255,255,255,0.45)";
+        ctx.stroke();
+        ctx.fillStyle = "#fff";
+        ctx.font = "800 15px Manrope, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(s.mode === "laser" ? ("ЛАЗЕР ×" + laserY) : ("ОГОНЬ ×" + shotY), s.x + s.w / 2, s.y + s.h / 2 + 1);
+      }
+      ctx.restore();
+    }
+    function hitFire(x, y) {
+      var slots = fireSlots();
+      var i, s;
+      for (i = slots.length - 1; i >= 0; i--) {
+        s = slots[i];
+        if (x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) return s.mode;
+      }
+      return "";
+    }
+
     function draw(t) {
       var sh = 0, sv = 0, i;
       if (trauma > 0 && !reduced) {
@@ -2335,16 +2560,18 @@
       }
 
       if (phase === "serve" && serveFor === "yurec") {
+        drawServeAim();
         ctx.fillStyle = "rgba(236,234,228,0.85)";
         ctx.font = "600 13px Manrope, sans-serif";
         ctx.textAlign = "center";
         if (stickyMode || pillSticky) {
-          ctx.fillText("липучка · ткни — подача", W / 2, yurec.y - yurec.r - 28);
+          ctx.fillText("липучка · ткни выше прицела", W / 2, NET + 22);
         } else {
           var left = Math.max(0, 10 - serveT);
-          ctx.fillText(left <= 3.2 ? "авто " + Math.ceil(left) + "с" : "ткни — подача", W / 2, yurec.y - yurec.r - 28);
+          ctx.fillText(left <= 3.2 ? "авто " + Math.ceil(left) + "с" : "пунктир — куда полетит", W / 2, NET + 22);
         }
       }
+      drawFireHud();
       if (bannerT > 0) {
         ctx.globalAlpha = Math.min(1, bannerT * 2);
         ctx.fillStyle = "#eceae4";
@@ -2423,14 +2650,9 @@
       if (e.cancelable) e.preventDefault();
       pointerX = eventX(e);
       var ey = eventY(e);
-      if (phase === "play" && shotY > 0 && stunY <= 0 && ey < NET) {
-        fireShot("yurec");
-        return;
-      }
-      if ((phase === "play" || phase === "serve") && laserY > 0 && stunY <= 0 && ey < NET) {
-        fireLaser("yurec");
-        return;
-      }
+      var fired = hitFire(pointerX, ey);
+      if (fired === "shot") { fireShot("yurec"); return; }
+      if (fired === "laser") { fireLaser("yurec"); return; }
       if (stunY > 0) return;
       if (phase === "serve" && serveFor === "yurec") launch();
     }
