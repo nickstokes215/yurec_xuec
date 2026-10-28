@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { catTitle, ensureSvoya, svoyaReady } from "@/data/svoya";
-import { SVOYA_COVER, SVOYA_HUB_BLURB, SVOYA_PITCH, SVOYA_RULES, SVOYA_TITLE } from "@/data/svoya-meta";
+import { SVOYA_COVER, SVOYA_FEATHER, SVOYA_HUB_BLURB, SVOYA_PITCH, SVOYA_PRIZE_LOSE, SVOYA_PRIZE_WIN, SVOYA_RULES, SVOYA_TITLE } from "@/data/svoya-meta";
 import { playFireworks } from "@/components/fireworks";
 import { playRain } from "@/components/rain";
 import { isSoundOn, isVibrateOn } from "@/lib/use-settings";
@@ -16,11 +16,13 @@ import {
   clearRun,
   currentRound,
   dealRun,
+  forfeitRun,
   playsCount,
   qualifies,
   readHall,
   readRun,
   roundOpen,
+  setAuctionBet,
   setFinalBet,
   submitHall,
   svoyaById,
@@ -31,7 +33,12 @@ import {
 
 export const Route = createFileRoute("/game/svoya")({ component: SvoyaPage });
 
-type Screen = "hub" | "board" | "q" | "gap" | "bet" | "fin" | "hall" | "rules";
+type Screen = "hub" | "board" | "q" | "gap" | "bet" | "auc" | "fin" | "hall" | "rules";
+
+function lastOf(run: SvoyaRun | null) {
+  if (!run) return 2;
+  return run.last || (run.v === 4 ? 2 : 3);
+}
 
 function subscribe(fn: () => void) {
   window.addEventListener("yurec-svoya", fn);
@@ -98,6 +105,7 @@ function SvoyaPage() {
   const [named, setNamed] = useState(false);
   const [bet, setBet] = useState(0);
   const [finFx, setFinFx] = useState(false);
+  const [giveAsk, setGiveAsk] = useState(false);
   const [packOn, setPackOn] = useState(() => svoyaReady());
   const [packErr, setPackErr] = useState(false);
   const q = qid ? svoyaById(qid) : undefined;
@@ -120,7 +128,7 @@ function SvoyaPage() {
   useEffect(() => {
     if (screen !== "fin" || !run?.ended || finFx) return;
     setFinFx(true);
-    if (run.score > 0) playFireworks();
+    if (run.score > 0 && !run.forfeit) playFireworks();
     else playRain();
   }, [screen, run?.ended, run?.score, finFx]);
 
@@ -131,6 +139,7 @@ function SvoyaPage() {
     setPicked(null);
     setQid(null);
     setFinFx(false);
+    setGiveAsk(false);
     setBet(0);
     if (!dealRun()) return;
     setScreen("board");
@@ -163,7 +172,26 @@ function SvoyaPage() {
     if (!cell || cell.done) return;
     setQid(id);
     setPicked(null);
+    setGiveAsk(false);
+    if (cell.kind === "auc" && cell.bet == null) {
+      setBet(cell.v);
+      setScreen("auc");
+      return;
+    }
     setScreen("q");
+  }
+
+  function giveUp() {
+    if (!giveAsk) {
+      setGiveAsk(true);
+      return;
+    }
+    const next = forfeitRun();
+    setGiveAsk(false);
+    setQid(null);
+    setPicked(null);
+    setFinFx(false);
+    if (next) setScreen("fin");
   }
 
   function pickAns(i: number) {
@@ -179,12 +207,13 @@ function SvoyaPage() {
     const cur = readRun();
     setQid(null);
     setPicked(null);
+    setGiveAsk(false);
     if (!cur) {
       setScreen("hub");
       return;
     }
     if (cur.ended) {
-      bumpPlays();
+      if (!cur.forfeit) bumpPlays();
       setScreen("fin");
       return;
     }
@@ -198,9 +227,10 @@ function SvoyaPage() {
 
   function goNextRound() {
     const next = advanceRound();
+    setGiveAsk(false);
     if (!next) return;
     if (next.ended) {
-      bumpPlays();
+      if (!next.forfeit) bumpPlays();
       setScreen("fin");
       return;
     }
@@ -295,7 +325,7 @@ function SvoyaPage() {
         <div className="svoya-play">
           <div className="svoya-top">
             <p className="svoya-kicker">
-              Раунд {run.round} из 3 · счёт {run.score}
+              Раунд {run.round} из {lastOf(run)} · счёт {run.score}
             </p>
             <p className="svoya-mini">
               {round.cells.filter((c) => c.done).length} / {round.cells.length} · верно {run.right} · мимо {run.wrong}
@@ -306,40 +336,47 @@ function SvoyaPage() {
               <div key={cat} className="svoya-col">
                 <div className="svoya-cat">{catTitle(cat)}</div>
                 {vals.map((v, i) => {
-                  const cell = round.cells.find((c) => c.cat === cat && c.t === i + 1);
+                  const cell = round.cells.find((c) => c.cat === cat && (c.row ?? c.t - 1) === i);
                   if (!cell) return null;
+                  const face = cell.done ? (cell.ok ? "✓" : "✗") : cell.kind === "cat" ? "КОТ" : cell.kind === "auc" ? "АУК" : v;
                   return (
                     <button
                       key={cell.qid}
                       type="button"
-                      className={cn("svoya-cell", cell.done && (cell.ok ? "ok" : "bad"))}
+                      className={cn("svoya-cell", cell.kind, cell.done && (cell.ok ? "ok" : "bad"))}
                       disabled={!!cell.done}
                       onClick={() => openQ(cell.qid)}
                     >
-                      {cell.done ? (cell.ok ? "✓" : "✗") : v}
+                      {face}
                     </button>
                   );
                 })}
               </div>
             ))}
           </div>
+          <button type="button" className="svoya-btn danger" onClick={giveUp}>
+            {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
+          </button>
         </div>
       ) : null}
 
       {screen === "gap" && run ? (
         <div className="svoya-hub">
-          <p className="svoya-kicker">Раунд {Math.min(run.round, 3)} сыгран</p>
+          <p className="svoya-kicker">Раунд {Math.min(run.round, lastOf(run))} сыгран</p>
           <h2>{run.score}</h2>
           <p className="svoya-blurb">верно {run.right} · мимо {run.wrong}</p>
-          {run.round >= 3 && run.score <= 0 ? (
-            <p className="svoya-pitch">Ноль или минус. Финала не будет — Юрец уже в баке.</p>
-          ) : run.round >= 3 ? (
-            <p className="svoya-pitch">Финал. Одна тема, одна ставка, один вопрос.</p>
+          {run.round >= lastOf(run) && run.score <= 0 ? (
+            <p className="svoya-pitch">Ноль или минус. Финала не будет, перо останется в серванте.</p>
+          ) : run.round >= lastOf(run) ? (
+            <p className="svoya-pitch">Финал. Одна тема, одна ставка. На кону золотое перо.</p>
           ) : (
-            <p className="svoya-pitch">Дальше темы новые и ценники злее.</p>
+            <p className="svoya-pitch">Дальше темы новые, ценники злее, кот опять в мешке.</p>
           )}
           <button type="button" className="svoya-btn gold" onClick={goNextRound}>
-            {run.round >= 3 ? (run.score <= 0 ? "К итогу" : "На финал") : "Следующий раунд"}
+            {run.round >= lastOf(run) ? (run.score <= 0 ? "К итогу" : "На финал") : "Следующий раунд"}
+          </button>
+          <button type="button" className="svoya-btn danger" onClick={giveUp}>
+            {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
           </button>
         </div>
       ) : null}
@@ -367,22 +404,66 @@ function SvoyaPage() {
                 setFinalBet(bet);
                 setQid(run.final!.qid);
                 setPicked(null);
+                setGiveAsk(false);
                 setScreen("q");
               }}
             >
               Поставить {bet} и смотреть вопрос
             </button>
           </div>
+          <button type="button" className="svoya-btn danger" onClick={giveUp}>
+            {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
+          </button>
+        </div>
+      ) : null}
+
+      {screen === "auc" && run && openCell?.kind === "auc" ? (
+        <div className="svoya-hub">
+          <p className="svoya-kicker">Аукцион · счёт {run.score}</p>
+          <h2>{catTitle(openCell.cat)}</h2>
+          <p className="svoya-pitch">
+            Номинал {openCell.v}. Ставь от него и до {Math.max(openCell.v, run.score)}. Вопрос ещё закрыт.
+          </p>
+          <div className="svoya-name">
+            <input
+              type="number"
+              min={openCell.v}
+              max={Math.max(openCell.v, run.score)}
+              value={bet}
+              onChange={(e) =>
+                setBet(Math.max(openCell.v, Math.min(Math.max(openCell.v, run.score), Number(e.target.value) || openCell.v)))
+              }
+            />
+            <button type="button" className="svoya-btn" onClick={() => setBet(Math.max(openCell.v, run.score))}>
+              Ва-банк {Math.max(openCell.v, run.score)}
+            </button>
+            <button
+              type="button"
+              className="svoya-btn gold"
+              onClick={() => {
+                setAuctionBet(openCell.qid, bet);
+                setPicked(null);
+                setGiveAsk(false);
+                setScreen("q");
+              }}
+            >
+              Поставить {Math.max(openCell.v, Math.min(Math.max(openCell.v, run.score), bet))} и вскрыть
+            </button>
+          </div>
+          <button type="button" className="svoya-btn danger" onClick={giveUp}>
+            {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
+          </button>
         </div>
       ) : null}
 
       {screen === "q" && q ? (
         <div className="svoya-q">
           <p className="svoya-kicker">
-            {catTitle(q.cat)}
+            {catTitle(openCell?.stolen || q.cat)}
             {run?.round === 4 && run.final ? ` · ставка ${run.final.bet}` : ""}
-            {openCell ? ` · ${openCell.v}` : ""}
+            {openCell?.kind === "auc" ? ` · ставка ${openCell.bet ?? openCell.v}` : openCell ? ` · ${openCell.v}` : ""}
           </p>
+          {openCell?.bark ? <p className="svoya-bark">{openCell.bark}</p> : null}
           <p className="svoya-ask">{q.q}</p>
           <div className="svoya-answers">
             {cellOrd(q.id, run).map((ai) => {
@@ -407,20 +488,31 @@ function SvoyaPage() {
             <button type="button" className="svoya-btn gold" onClick={afterQ}>
               Дальше
             </button>
-          ) : null}
+          ) : (
+            <button type="button" className="svoya-btn danger" onClick={giveUp}>
+              {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
+            </button>
+          )}
         </div>
       ) : null}
 
       {screen === "fin" && run ? (
         <div className="svoya-hub">
-          <p className="svoya-kicker">{run.score > 0 ? "Плюс двора" : "Минус двора"}</p>
-          <h2>{run.score}</h2>
+          <p className="svoya-kicker">{run.forfeit ? "Сдался" : run.score > 0 ? "Плюс двора" : "Минус двора"}</p>
+          <h2>{run.forfeit ? "Поражение" : run.score}</h2>
+          {!run.forfeit ? (
+            <button type="button" className="svoya-prize" onClick={() => openZoom(SVOYA_FEATHER)} aria-label="Открыть перо">
+              <img src={SVOYA_FEATHER} alt="Золотое перо Шотмана" />
+            </button>
+          ) : null}
           <p className="svoya-blurb">
-            верно {run.right} · мимо {run.wrong}
-            {run.skippedFinal ? " · финал не дали" : ""}
+            {run.forfeit
+              ? "розыгрыш закрыт · в книгу рекордов не пишется"
+              : `верно ${run.right} · мимо ${run.wrong}${run.skippedFinal ? " · финал не дали" : ""}`}
           </p>
+          {!run.forfeit ? <p className="svoya-pitch">{run.score > 0 ? SVOYA_PRIZE_WIN : SVOYA_PRIZE_LOSE}</p> : null}
           <p className="svoya-pitch">{run.story || ""}</p>
-          {qualifies(run.score) && !named ? (
+          {!run.forfeit && qualifies(run.score) && !named ? (
             <form
               className="svoya-name"
               onSubmit={(e) => {
@@ -443,10 +535,10 @@ function SvoyaPage() {
               className="svoya-btn gold"
               onClick={() => {
                 clearRun();
-                setScreen("hall");
+                setScreen(run.forfeit ? "hub" : "hall");
               }}
             >
-              К таблице
+              {run.forfeit ? "На хаб" : "К таблице"}
             </button>
           )}
           <button type="button" className="svoya-btn" onClick={startNew}>

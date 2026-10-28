@@ -1994,6 +1994,7 @@ html[data-wide="1"] .chat-log {
 }
 .svoya-grid[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .svoya-grid[data-cols="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.svoya-grid[data-cols="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .svoya-grid[data-cols="3"] .svoya-cat { font-size: 12px; min-height: 48px; }
 .svoya-grid[data-cols="4"] .svoya-cat { font-size: 11px; }
 .svoya-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -2012,6 +2013,11 @@ html[data-wide="1"] .chat-log {
 .svoya-cell:disabled { cursor: default; }
 .svoya-cell.ok { background: #16351f; color: #8ee0a8; }
 .svoya-cell.bad { background: #3a1512; color: #f0a8a0; }
+.svoya-cell.cat:not(:disabled) { background: #3a2a12; color: #f4e4a1; font-size: 12px; letter-spacing: 0.04em; }
+.svoya-cell.auc:not(:disabled) { background: #4a1d3a; color: #f6c6dc; font-size: 12px; letter-spacing: 0.04em; }
+.svoya-bark { margin: 8px 0 0; text-align: center; font-size: 13px; line-height: 1.35; color: #e3b341; }
+.svoya-prize { display: block; width: min(100%, 280px); margin: 12px auto 0; padding: 0; border: 0; background: transparent; }
+.svoya-prize img { display: block; width: 100%; border-radius: 16px; }
 .svoya-q { max-width: 32rem; margin: 0 auto; }
 .svoya-ask {
   margin-top: 12px; font-family: var(--font-serif);

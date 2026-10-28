@@ -16,9 +16,14 @@ export type SvoyaCell = {
   t: number;
   v: number;
   qid: string;
+  row?: number;
   ord?: number[];
   done?: boolean;
   ok?: boolean;
+  kind?: "cat" | "auc";
+  stolen?: string;
+  bark?: string;
+  bet?: number;
 };
 
 export type SvoyaRound = {
@@ -38,7 +43,7 @@ export type SvoyaFinal = {
 };
 
 export type SvoyaRun = {
-  v: 3;
+  v: 3 | 4;
   round: number;
   score: number;
   right: number;
@@ -46,8 +51,10 @@ export type SvoyaRun = {
   started: number;
   usedCats: string[];
   rounds: SvoyaRound[];
+  last?: number;
   final?: SvoyaFinal | null;
   skippedFinal?: boolean;
+  forfeit?: boolean;
   story?: string;
   ended?: boolean;
 };
@@ -105,7 +112,7 @@ function pickQ(cat: string, tier: number, used: Set<string>, bag: string[]): str
 
 export function readRun(): SvoyaRun | null {
   const run = readJson<SvoyaRun | null>(RUN_KEY, null);
-  if (!run || run.v !== 3 || !Array.isArray(run.rounds)) return null;
+  if (!run || (run.v !== 3 && run.v !== 4) || !Array.isArray(run.rounds)) return null;
   return run;
 }
 
@@ -145,14 +152,62 @@ function dealRound(n: number, usedCats: string[], used: Set<string>, bag: string
   return { n, cats, cells, values };
 }
 
+function dealShow(n: number, usedCats: string[], used: Set<string>, bag: string[]): SvoyaRound {
+  const spec = n === 1
+    ? { cats: 4, tiers: [1, 3, 5], values: [100, 300, 500] }
+    : { cats: 4, tiers: [2, 4, 5], values: [200, 600, 1200] };
+  const nCats = spec.cats;
+  const left = SVOYA_CATS.map((c) => c.id).filter((id) => !usedCats.includes(id));
+  const pool = left.length >= nCats ? left : SVOYA_CATS.map((c) => c.id);
+  const cats = shuffle(pool).slice(0, nCats);
+  const slots: { cat: string; t: number; row: number; v: number }[] = [];
+  for (const cat of cats) {
+    spec.tiers.forEach((t, row) => slots.push({ cat, t, row, v: spec.values[row] || 100 }));
+  }
+  const spice = shuffle(slots.map((_, i) => i));
+  const catAt = spice[0] ?? 0;
+  const aucAt = spice[1] ?? 1;
+  const cells: SvoyaCell[] = slots.map((slot, i) => {
+    let qCat = slot.cat;
+    let kind: SvoyaCell["kind"];
+    let stolen: string | undefined;
+    let v = slot.v;
+    let bark: string | undefined;
+    if (i === catAt) {
+      kind = "cat";
+      const others = SVOYA_CATS.map((c) => c.id).filter((id) => id !== slot.cat);
+      stolen = shuffle(others)[0];
+      qCat = stolen || slot.cat;
+      v = slot.v * 2;
+      bark = "Кот в мешке. Тема слиняла, номинал удвоен. Гоша в курсе, ты нет.";
+    } else if (i === aucAt) {
+      kind = "auc";
+      bark = "Аукцион. Цена от номинала и выше. Ошибёшься — ставка сгорит.";
+    }
+    return {
+      cat: slot.cat,
+      t: slot.t,
+      row: slot.row,
+      v,
+      qid: pickQ(qCat, slot.t, used, bag),
+      ord: shuffleOrd(),
+      kind,
+      stolen,
+      bark,
+    };
+  });
+  return { n, cats, cells, values: spec.values };
+}
+
 export function dealRun(): SvoyaRun | null {
   if (!svoyaReady()) return null;
   const used = new Set(readUsed());
   const bag = [...readUsed()];
-  const r1 = dealRound(1, [], used, bag);
+  const r1 = dealShow(1, [], used, bag);
   writeUsed(bag);
   const run: SvoyaRun = {
-    v: 3,
+    v: 4,
+    last: 2,
     round: 1,
     score: 0,
     right: 0,
@@ -171,7 +226,8 @@ export function advanceRound(): SvoyaRun | null {
   if (!run) return null;
   const cur = currentRound(run);
   if (!cur || cur.cells.some((c) => !c.done)) return run;
-  if (run.round === 3) {
+  const last = run.last || (run.v === 4 ? 2 : 3);
+  if (run.round === last) {
     if (run.score <= 0) {
       run.skippedFinal = true;
       run.ended = true;
@@ -189,10 +245,12 @@ export function advanceRound(): SvoyaRun | null {
     writeRun(run);
     return run;
   }
-  if (run.round < 3) {
+  if (run.round < last) {
     const used = new Set(readUsed());
     const bag = [...readUsed()];
-    const next = dealRound(run.round + 1, run.usedCats, used, bag);
+    const next = run.v === 4
+      ? dealShow(run.round + 1, run.usedCats, used, bag)
+      : dealRound(run.round + 1, run.usedCats, used, bag);
     run.rounds.push(next);
     run.usedCats = run.usedCats.concat(next.cats);
     run.round += 1;
@@ -227,12 +285,35 @@ export function answerCell(qid: string, pick: number): { run: SvoyaRun; q: Svoya
   const correct = pick === q.ok;
   cell.done = true;
   cell.ok = correct;
-  const delta = correct ? cell.v : -cell.v;
+  const stake = cell.kind === "auc" ? (cell.bet ?? cell.v) : cell.v;
+  const delta = correct ? stake : -stake;
   run.score += delta;
   if (correct) run.right += 1;
   else run.wrong += 1;
   writeRun(run);
   return { run, q, correct, delta };
+}
+
+export function setAuctionBet(qid: string, bet: number): SvoyaRun | null {
+  const run = readRun();
+  const cell = currentRound(run)?.cells.find((c) => c.qid === qid);
+  if (!run || !cell || cell.kind !== "auc" || cell.done) return run;
+  const floor = cell.v;
+  const ceil = Math.max(floor, run.score);
+  cell.bet = Math.max(floor, Math.min(ceil, Math.floor(bet) || floor));
+  writeRun(run);
+  return run;
+}
+
+export function forfeitRun(): SvoyaRun | null {
+  const run = readRun();
+  if (!run || run.ended) return run;
+  run.forfeit = true;
+  run.ended = true;
+  run.skippedFinal = true;
+  run.story = "Юрец встал посреди табло и сказал: сдаюсь. Перо осталось в серванте. В книгу рекордов этот стыд не пишут.";
+  writeRun(run);
+  return run;
 }
 
 export function setFinalBet(bet: number): SvoyaRun | null {

@@ -20,8 +20,8 @@ android {
         applicationId "ru.yurec.xuec"
         minSdk 21
         targetSdk 34
-        versionCode 171
-        versionName "1.65.17"
+        versionCode 172
+        versionName "1.65.18"
     }
 
     signingConfigs {

@@ -5448,7 +5448,7 @@ function renderGamesHub() {
     crosswords: { id: "crosswords", href: "#/game/crosswords", cover: "game/crosswords.jpg", title: "Шотманские кроссворды", score: "разгадано " + cwOpen + " / " + CWS.length, blurb: "Кроссворд из киоска на Шотмана. Гоша орёт золотые клетки. Не знаешь слово — ври, как Юрец." },
     av: { id: "av", href: "#/game/av", cover: "game/av.jpg", title: "Помойкобол", score: "отбито " + avBeatenCount() + " / 6", blurb: "Юрец снизу, колобок сверху. Пилюли с помойки, лазер и просрочка. Кто взял яд — сам сдох. Двор орёт с каждого гола." },
     ark: { id: "ark", href: "#/game/ark", cover: "game/ark.jpg", title: "Алконоид", score: "разбито " + arkBeatenCount() + " / 10", blurb: "Харя Юрца — ракетка. Десять дворов: от квартиры до Кости. Батя с дробовиком, аптека, камера. Юрец всё равно легенда." },
-    svoya: { id: "svoya", href: "#/game/svoya", cover: "game/svoya.jpg", title: "Юрца игра", score: "рекорд " + svoyaBest(), blurb: "Своя игра Шотмана. 25 тем, 10 000 вопросов. Раунды 3 → 4 → 5 тем и финал со ставкой. Ошибка уходит в минус." }
+    svoya: { id: "svoya", href: "#/game/svoya", cover: "game/svoya.jpg", title: "Юрца игра", score: "рекорд " + svoyaBest(), blurb: "Своя игра Шотмана. Два раунда, кот, аукцион и финал. Главный приз — золотое перо ручной работы." }
   };
   var ids = orderedGameIds();
   var html = '<p class="kicker">Игры</p>' +
@@ -5725,7 +5725,7 @@ function svoyaPool(cat, t) {
 }
 function svoyaRun() {
   var run = svoyaRead("yurec-svoya-run", null);
-  if (!run || run.v !== 3 || !run.rounds) return null;
+  if (!run || (run.v !== 3 && run.v !== 4) || !run.rounds) return null;
   return run;
 }
 function svoyaOpen(run) {
@@ -5786,14 +5786,76 @@ function svoyaDealRound(n, usedCats, used, bag) {
   }
   return { n: n, cats: cats, cells: cells, values: values };
 }
+function svoyaDealShow(n, usedCats, used, bag) {
+  var spec = n === 1
+    ? { cats: 4, tiers: [1, 3, 5], values: [100, 300, 500] }
+    : { cats: 4, tiers: [2, 4, 5], values: [200, 600, 1200] };
+  var pack = svoyaPack();
+  var all = [], i;
+  for (i = 0; i < (pack.categories || []).length; i++) all.push(pack.categories[i].id);
+  var left = [];
+  for (i = 0; i < all.length; i++) if (usedCats.indexOf(all[i]) < 0) left.push(all[i]);
+  var pool = left.length >= spec.cats ? left : all;
+  var cats = svoyaShuffle(pool).slice(0, spec.cats);
+  var slots = [], c, row, t;
+  for (c = 0; c < cats.length; c++) {
+    for (row = 0; row < spec.tiers.length; row++) {
+      slots.push({ cat: cats[c], t: spec.tiers[row], row: row, v: spec.values[row] });
+    }
+  }
+  var spice = svoyaShuffle(slots.map(function (_, idx) { return idx; }));
+  var catAt = spice[0], aucAt = spice[1];
+  var cells = [];
+  for (i = 0; i < slots.length; i++) {
+    var slot = slots[i];
+    var qCat = slot.cat, kind, stolen, v = slot.v, bark;
+    if (i === catAt) {
+      kind = "cat";
+      var others = [];
+      for (c = 0; c < all.length; c++) if (all[c] !== slot.cat) others.push(all[c]);
+      stolen = svoyaShuffle(others)[0];
+      qCat = stolen || slot.cat;
+      v = slot.v * 2;
+      bark = "Кот в мешке. Тема слиняла, номинал удвоен. Гоша в курсе, ты нет.";
+    } else if (i === aucAt) {
+      kind = "auc";
+      bark = "Аукцион. Цена от номинала и выше. Ошибёшься — ставка сгорит.";
+    }
+    cells.push({ cat: slot.cat, t: slot.t, row: slot.row, v: v, qid: svoyaPickQ(qCat, slot.t, used, bag), ord: svoyaOrd(), kind: kind, stolen: stolen, bark: bark });
+  }
+  return { n: n, cats: cats, cells: cells, values: spec.values };
+}
+function svoyaLast(run) {
+  if (!run) return 2;
+  return run.last || (run.v === 4 ? 2 : 3);
+}
+function svoyaCellById(run, qid) {
+  var round = svoyaCur(run), i;
+  if (!round || !qid) return null;
+  for (i = 0; i < round.cells.length; i++) if (round.cells[i].qid === qid) return round.cells[i];
+  return null;
+}
+function svoyaForfeit() {
+  var run = svoyaRun();
+  if (!run || run.ended) return run;
+  run.forfeit = true;
+  run.ended = true;
+  run.skippedFinal = true;
+  run.story = "Юрец встал посреди табло и сказал: сдаюсь. Перо осталось в серванте. В книгу рекордов этот стыд не пишут.";
+  svoyaWrite("yurec-svoya-run", run);
+  svoyaUi.give = false;
+  svoyaUi.fx = false;
+  svoyaUi.screen = "fin";
+  return run;
+}
 function svoyaDeal() {
   var usedList = svoyaRead("yurec-svoya-used", []) || [];
   var used = {}, i;
   for (i = 0; i < usedList.length; i++) used[usedList[i]] = 1;
   var bag = usedList.slice();
-  var r1 = svoyaDealRound(1, [], used, bag);
+  var r1 = svoyaDealShow(1, [], used, bag);
   svoyaWrite("yurec-svoya-used", bag.slice(-10000));
-  var run = { v: 3, round: 1, score: 0, right: 0, wrong: 0, started: Date.now(), usedCats: r1.cats.slice(), rounds: [r1], final: null };
+  var run = { v: 4, last: 2, round: 1, score: 0, right: 0, wrong: 0, started: Date.now(), usedCats: r1.cats.slice(), rounds: [r1], final: null };
   svoyaWrite("yurec-svoya-run", run);
   return run;
 }
@@ -5807,7 +5869,8 @@ function svoyaAdvance() {
   var cur = svoyaCur(run), i;
   if (!cur) return run;
   for (i = 0; i < cur.cells.length; i++) if (!cur.cells[i].done) return run;
-  if (run.round === 3) {
+  var last = svoyaLast(run);
+  if (run.round === last) {
     if (run.score <= 0) {
       run.skippedFinal = true; run.ended = true; run.story = svoyaStory(run.score, run.started + run.score);
       svoyaWrite("yurec-svoya-run", run); return run;
@@ -5825,11 +5888,11 @@ function svoyaAdvance() {
     svoyaWrite("yurec-svoya-run", run);
     return run;
   }
-  if (run.round < 3) {
+  if (run.round < last) {
     usedList = svoyaRead("yurec-svoya-used", []) || [];
     used = {}; for (i = 0; i < usedList.length; i++) used[usedList[i]] = 1;
     bag = usedList.slice();
-    var next = svoyaDealRound(run.round + 1, run.usedCats, used, bag);
+    var next = run.v === 4 ? svoyaDealShow(run.round + 1, run.usedCats, used, bag) : svoyaDealRound(run.round + 1, run.usedCats, used, bag);
     run.rounds.push(next);
     run.usedCats = run.usedCats.concat(next.cats);
     run.round += 1;
@@ -5860,7 +5923,8 @@ function svoyaAnswer(qid, pick) {
   if (!cell || cell.done) return { run: run, q: q, correct: false };
   ok = pick === q.ok;
   cell.done = true; cell.ok = ok;
-  delta = ok ? cell.v : -cell.v;
+  var stake = cell.kind === "auc" ? (cell.bet != null ? cell.bet : cell.v) : cell.v;
+  delta = ok ? stake : -stake;
   run.score += delta;
   if (ok) run.right += 1; else run.wrong += 1;
   svoyaWrite("yurec-svoya-run", run);
@@ -5903,10 +5967,10 @@ function renderSvoya() {
   if (s === "hub") {
     html += '<div class="svoya-hub"><button type="button" class="svoya-cover" id="svoya-zoom"><img src="game/svoya.jpg" alt="" /></button>' +
       '<p class="svoya-kicker">Игры двора</p><h2>Юрца игра</h2>' +
-      '<p class="svoya-blurb">Своя игра Шотмана. 25 тем, 10 000 вопросов. Раунды 3 → 4 → 5 тем и финал со ставкой. Ошибка уходит в минус.</p>' +
-      '<p class="svoya-pitch">Своя игра двора. Раунд 1 — три темы, раунд 2 — четыре, раунд 3 — пять, потом финал со ставкой.</p>' +
-      '<p class="svoya-pitch">Десять тысяч вопросов в баке. Генератор тасует темы и ячейки так, чтобы не жевать одно и то же.</p>' +
-      '<p class="svoya-pitch">Угадал — номинал в карман. Ошибся — номинал сгорает в минус. Без таймера. На нуле после третьего раунда финала нет: ты уже труп.</p>' +
+      '<p class="svoya-blurb">Своя игра Шотмана. Два раунда, кот, аукцион и финал. Главный приз — золотое перо ручной работы.</p>' +
+      '<p class="svoya-pitch">Короткий эфир, не вахта. Два раунда по четыре темы и три ячейки, потом финал со ставкой.</p>' +
+      '<p class="svoya-pitch">На табло каждый раунд прячутся кот в мешке и аукцион. Кот меняет тему и удваивает номинал. Аукцион — кричишь цену сам.</p>' +
+      '<p class="svoya-pitch">Угадал — плюс. Ошибся — минус. Сдаться можно в любой момент: партия сгорает и в книгу рекордов не пишется.</p>' +
       '<p class="svoya-scoreline">рекорд ' + svoyaBest() + " · партий " + svoyaPlays() + "</p>";
     if (svoyaOpen(run)) html += '<button type="button" class="svoya-btn gold" id="svoya-cont">Продолжить</button>';
     else if (svoyaDone(run)) html += '<button type="button" class="svoya-btn gold" id="svoya-fin">Итог партии</button>';
@@ -5918,49 +5982,69 @@ function renderSvoya() {
   } else if (s === "board" && run && run.round <= 3) {
     var round = svoyaCur(run), doneN = 0, vals = (round && round.values) || [100, 200, 300, 400, 500];
     if (round) for (i = 0; i < round.cells.length; i++) if (round.cells[i].done) doneN++;
-    html += '<div class="svoya-play"><div class="svoya-top"><p class="svoya-kicker">Раунд ' + run.round + " из 3 · счёт " + run.score + '</p><p class="svoya-mini">' + doneN + " / " + (round ? round.cells.length : 0) + " · верно " + run.right + " · мимо " + run.wrong + "</p></div><div class=\"svoya-grid\"" + (round ? ' data-cols="' + round.cats.length + '"' : "") + ">";
-    var c, t, cell, k;
+    html += '<div class="svoya-play"><div class="svoya-top"><p class="svoya-kicker">Раунд ' + run.round + " из " + svoyaLast(run) + " · счёт " + run.score + '</p><p class="svoya-mini">' + doneN + " / " + (round ? round.cells.length : 0) + " · верно " + run.right + " · мимо " + run.wrong + "</p></div><div class=\"svoya-grid\"" + (round ? ' data-cols="' + round.cats.length + '"' : "") + ">";
+    var c, t, cell, k, face, cls;
     if (round) for (c = 0; c < round.cats.length; c++) {
       html += '<div class="svoya-col"><div class="svoya-cat">' + esc(svoyaCatTitle(round.cats[c])) + "</div>";
       for (t = 0; t < vals.length; t++) {
         cell = null;
-        for (k = 0; k < round.cells.length; k++) if (round.cells[k].cat === round.cats[c] && round.cells[k].t === t + 1) cell = round.cells[k];
+        for (k = 0; k < round.cells.length; k++) {
+          var rowAt = round.cells[k].row != null ? round.cells[k].row : round.cells[k].t - 1;
+          if (round.cells[k].cat === round.cats[c] && rowAt === t) cell = round.cells[k];
+        }
         if (!cell) continue;
-        html += '<button type="button" class="svoya-cell' + (cell.done ? (cell.ok ? " ok" : " bad") : "") + '" data-svoya-q="' + esc(cell.qid) + '"' + (cell.done ? " disabled" : "") + ">" + (cell.done ? (cell.ok ? "✓" : "✗") : vals[t]) + "</button>";
+        face = cell.done ? (cell.ok ? "✓" : "✗") : (cell.kind === "cat" ? "КОТ" : (cell.kind === "auc" ? "АУК" : vals[t]));
+        cls = "svoya-cell" + (cell.kind ? " " + cell.kind : "") + (cell.done ? (cell.ok ? " ok" : " bad") : "");
+        html += '<button type="button" class="' + cls + '" data-svoya-q="' + esc(cell.qid) + '"' + (cell.done ? " disabled" : "") + ">" + face + "</button>";
       }
       html += "</div>";
     }
-    html += "</div></div>";
+    html += '</div><button type="button" class="svoya-btn danger" id="svoya-give">' + (svoyaUi.give ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь") + "</button></div>";
   } else if (s === "gap" && run) {
-    html += '<div class="svoya-hub"><p class="svoya-kicker">Раунд ' + Math.min(run.round, 3) + " сыгран</p><h2>" + run.score + "</h2>" +
+    html += '<div class="svoya-hub"><p class="svoya-kicker">Раунд ' + Math.min(run.round, svoyaLast(run)) + " сыгран</p><h2>" + run.score + "</h2>" +
       '<p class="svoya-blurb">верно ' + run.right + " · мимо " + run.wrong + "</p>";
-    if (run.round >= 3 && run.score <= 0) html += '<p class="svoya-pitch">Ноль или минус. Финала не будет — Юрец уже в баке.</p>';
-    else if (run.round >= 3) html += '<p class="svoya-pitch">Финал. Одна тема, одна ставка, один вопрос.</p>';
-    else html += '<p class="svoya-pitch">Дальше темы новые и ценники злее.</p>';
-    html += '<button type="button" class="svoya-btn gold" id="svoya-nextround">' + (run.round >= 3 ? (run.score <= 0 ? "К итогу" : "На финал") : "Следующий раунд") + "</button></div>";
+    if (run.round >= svoyaLast(run) && run.score <= 0) html += '<p class="svoya-pitch">Ноль или минус. Финала не будет, перо останется в серванте.</p>';
+    else if (run.round >= svoyaLast(run)) html += '<p class="svoya-pitch">Финал. Одна тема, одна ставка. На кону золотое перо.</p>';
+    else html += '<p class="svoya-pitch">Дальше темы новые, ценники злее, кот опять в мешке.</p>';
+    html += '<button type="button" class="svoya-btn gold" id="svoya-nextround">' + (run.round >= svoyaLast(run) ? (run.score <= 0 ? "К итогу" : "На финал") : "Следующий раунд") + "</button>" +
+      '<button type="button" class="svoya-btn danger" id="svoya-give">' + (svoyaUi.give ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь") + "</button></div>";
   } else if (s === "bet" && run && run.final) {
     html += '<div class="svoya-hub"><p class="svoya-kicker">Финал · счёт ' + run.score + "</p><h2>" + esc(svoyaCatTitle(run.final.cat)) + "</h2>" +
       '<p class="svoya-pitch">Тема открыта. Ставка — не больше баланса.</p><div class="svoya-name">' +
       '<input id="svoya-bet" type="number" min="0" max="' + Math.max(0, run.score) + '" value="' + (svoyaUi.bet || 0) + '" />' +
       '<button type="button" class="svoya-btn" id="svoya-allin">Ва-банк ' + Math.max(0, run.score) + "</button>" +
-      '<button type="button" class="svoya-btn gold" id="svoya-go">Поставить и смотреть вопрос</button></div></div>';
+      '<button type="button" class="svoya-btn gold" id="svoya-go">Поставить и смотреть вопрос</button></div>' +
+      '<button type="button" class="svoya-btn danger" id="svoya-give">' + (svoyaUi.give ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь") + "</button></div>";
+  } else if (s === "auc" && run) {
+    var auc = svoyaCellById(run, svoyaUi.qid);
+    if (auc) {
+      var aucMax = Math.max(auc.v, run.score);
+      html += '<div class="svoya-hub"><p class="svoya-kicker">Аукцион · счёт ' + run.score + "</p><h2>" + esc(svoyaCatTitle(auc.cat)) + "</h2>" +
+        '<p class="svoya-pitch">Номинал ' + auc.v + ". Ставь от него и до " + aucMax + ". Вопрос ещё закрыт.</p><div class=\"svoya-name\">" +
+        '<input id="svoya-auc" type="number" min="' + auc.v + '" max="' + aucMax + '" value="' + (svoyaUi.bet || auc.v) + '" />' +
+        '<button type="button" class="svoya-btn" id="svoya-auc-all">Ва-банк ' + aucMax + "</button>" +
+        '<button type="button" class="svoya-btn gold" id="svoya-auc-go">Поставить и вскрыть</button></div>' +
+        '<button type="button" class="svoya-btn danger" id="svoya-give">' + (svoyaUi.give ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь") + "</button></div>";
+    }
   } else if (s === "q") {
     var q = svoyaQ(svoyaUi.qid);
     if (q) {
-      var cellv = "";
+      var cellv = "", bark = "", theme = q.cat, open = null;
       if (run && run.round === 4 && run.final) cellv = " · ставка " + run.final.bet;
       else if (run) {
-        var rr = svoyaCur(run);
-        if (rr) for (i = 0; i < rr.cells.length; i++) if (rr.cells[i].qid === q.id) cellv = " · " + rr.cells[i].v;
+        open = svoyaCellById(run, q.id);
+        if (open) {
+          theme = open.stolen || q.cat;
+          bark = open.bark || "";
+          cellv = open.kind === "auc" ? (" · ставка " + (open.bet != null ? open.bet : open.v)) : (" · " + open.v);
+        }
       }
-      html += '<div class="svoya-q"><p class="svoya-kicker">' + esc(svoyaCatTitle(q.cat)) + cellv + "</p>" +
+      html += '<div class="svoya-q"><p class="svoya-kicker">' + esc(svoyaCatTitle(theme)) + cellv + "</p>" +
+        (bark ? '<p class="svoya-bark">' + esc(bark) + "</p>" : "") +
         '<p class="svoya-ask">' + esc(q.q) + '</p><div class="svoya-answers">';
       var ord = [0, 1, 2, 3], oi, ai;
       if (run && run.round === 4 && run.final && run.final.ord) ord = run.final.ord;
-      else if (run) {
-        rr = svoyaCur(run);
-        if (rr) for (i = 0; i < rr.cells.length; i++) if (rr.cells[i].qid === q.id && rr.cells[i].ord) ord = rr.cells[i].ord;
-      }
+      else if (open && open.ord) ord = open.ord;
       for (oi = 0; oi < ord.length; oi++) {
         ai = ord[oi];
         if (ai == null || !q.a[ai]) continue;
@@ -5969,19 +6053,26 @@ function renderSvoya() {
       }
       html += "</div>";
       if (svoyaUi.picked != null) html += '<button type="button" class="svoya-btn gold" id="svoya-next">Дальше</button>';
+      else html += '<button type="button" class="svoya-btn danger" id="svoya-give">' + (svoyaUi.give ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь") + "</button>";
       html += "</div>";
     }
   } else if (s === "fin" && run) {
-    html += '<div class="svoya-hub"><p class="svoya-kicker">' + (run.score > 0 ? "Плюс двора" : "Минус двора") + "</p><h2>" + run.score + "</h2>" +
-      '<p class="svoya-blurb">верно ' + run.right + " · мимо " + run.wrong + (run.skippedFinal ? " · финал не дали" : "") + "</p>" +
+    var prize = run.forfeit ? "" : '<button type="button" class="svoya-prize" id="svoya-feather"><img src="game/feather.jpg" alt="Золотое перо Шотмана" /></button>';
+    var cap = run.forfeit ? "Сдался" : (run.score > 0 ? "Плюс двора" : "Минус двора");
+    var head = run.forfeit ? "Поражение" : String(run.score);
+    var line = run.forfeit ? "розыгрыш закрыт · в книгу рекордов не пишется" : ("верно " + run.right + " · мимо " + run.wrong + (run.skippedFinal ? " · финал не дали" : ""));
+    var feather = run.forfeit ? "" : '<p class="svoya-pitch">' + (run.score > 0 ? "Перо твоё. Лежит в серванте, пока Гоша не склюёт камень." : "Перо осталось в серванте. До финала ты досидел, но плюса нет — Юрец его не отдал.") + "</p>";
+    html += '<div class="svoya-hub"><p class="svoya-kicker">' + cap + "</p><h2>" + head + "</h2>" + prize +
+      '<p class="svoya-blurb">' + line + "</p>" + feather +
       '<p class="svoya-pitch">' + esc(run.story || "") + "</p>";
     var hall = svoyaHall();
-    var fits = hall.length < 5 ? true : run.score > (hall[hall.length - 1].score || -999999);
+    var fits = !run.forfeit && (hall.length < 5 ? true : run.score > (hall[hall.length - 1].score || -999999));
     if (fits && !svoyaUi.named) {
       html += '<form class="svoya-name" id="svoya-name"><p class="svoya-pitch">Ты влез в таблицу. Как подписать стыд?</p>' +
         '<input id="svoya-nick" maxlength="16" placeholder="Юрец" value="' + esc(svoyaUi.name) + '" />' +
         '<button type="submit" class="svoya-btn gold">Вписать</button></form>';
-    } else html += '<button type="button" class="svoya-btn gold" id="svoya-tohall">К таблице</button>';
+    } else if (run.forfeit) html += '<button type="button" class="svoya-btn gold" id="svoya-tohub">На хаб</button>';
+    else html += '<button type="button" class="svoya-btn gold" id="svoya-tohall">К таблице</button>';
     html += '<button type="button" class="svoya-btn" id="svoya-again">Ещё круг</button></div>';
   } else if (s === "hall") {
     hall = svoyaHall();
@@ -5994,15 +6085,15 @@ function renderSvoya() {
     html += '<button type="button" class="svoya-btn gold" id="svoya-back">Назад</button></div>';
   } else if (s === "rules") {
     html += '<div class="svoya-hub"><p class="svoya-kicker">Регламент</p><h2>Правила</h2>' +
-      '<p class="svoya-pitch">Раунд 1. Три случайные темы. Ячейки 100, 200, 300, 400, 500.</p>' +
-      '<p class="svoya-pitch">Раунд 2. Четыре новые темы. 200, 400, 600, 800, 1000.</p>' +
-      '<p class="svoya-pitch">Раунд 3. Пять тем. 300, 600, 900, 1200, 1500. Третья, четвёртая и пятая ячейки — с подвохом: бред Юрца рядом с паспортом.</p>' +
-      '<p class="svoya-pitch">Верный ответ: плюс номинал. Ошибка: минус номинал. Баланс может уйти ниже нуля.</p>' +
-      '<p class="svoya-pitch">После третьего раунда, если очков 0 или меньше — финала нет, ты проиграл.</p>' +
-      '<p class="svoya-pitch">Финал. Одна случайная тема. Сначала ставка: от нуля до текущего баланса. Потом один вопрос. Угадал — плюс ставка, ошибся — минус ставка.</p>' +
-      '<p class="svoya-pitch">Темы и вопросы каждый заход другие. Отыгранное кладётся на дно бака и всплывает, только когда колода клетки кончится.</p>' +
-      '<p class="svoya-pitch">Партию можно бросить и продолжить. Статистику во вкладке игры сбрасывает красная кнопка — с дождём, как лицензию.</p>' +
-      '<p class="svoya-pitch">Плюс на финише — салют. Минус или ноль — дождь. Юрец всё равно что-то сделает с этим «выигрышем».</p>' +
+      '<p class="svoya-pitch">Раунд 1. Четыре случайные темы. Ячейки 100, 300, 500. Одна из них — кот, одна — аукцион.</p>' +
+      '<p class="svoya-pitch">Раунд 2. Четыре новые темы. 200, 600, 1200. Снова кот и снова аукцион.</p>' +
+      '<p class="svoya-pitch">Кот в мешке. На табло написано КОТ. Тема внутри чужая, номинал удвоен.</p>' +
+      '<p class="svoya-pitch">Аукцион. На табло написано АУК. Ставка не меньше номинала. Если счёт меньше — играешь ровно номинал.</p>' +
+      '<p class="svoya-pitch">После второго раунда, если очков 0 или меньше — финала нет.</p>' +
+      '<p class="svoya-pitch">Финал. Одна тема, ставка от нуля до баланса, один вопрос.</p>' +
+      '<p class="svoya-pitch">Сдаюсь. Второй тап подтверждает. Розыгрыш закрывается поражением и в таблицу не пишется.</p>' +
+      '<p class="svoya-pitch">Доиграл в плюсе — Золотое перо Шотмана. Жёлтое золото, россыпь граната, янтаря и малахита, на стержне осколок фианита. Перо из серванта, не телепремия.</p>' +
+      '<p class="svoya-pitch">Доиграл в минусе — перо остаётся в серванте.</p>' +
       '<button type="button" class="svoya-btn gold" id="svoya-back">Назад</button></div>';
   }
   html += "</div>";
@@ -6021,7 +6112,7 @@ function bindSvoya() {
     var run0 = svoyaRun();
     if (run0 && run0.ended) {
       svoyaUi.fx = true;
-      if (run0.score > 0) burstFireworks(); else burstRain();
+      if (run0.forfeit || run0.score <= 0) burstRain(); else burstFireworks();
     }
   }
   on($("#svoya-zoom"), "click", function () { openZoom("game/svoya.jpg"); });
@@ -6057,13 +6148,40 @@ function bindSvoya() {
   });
   on($("#svoya-back"), "click", function () { svoyaUi.screen = "hub"; paint(); });
   on($("#svoya-tohall"), "click", function () { svoyaWrite("yurec-svoya-run", null); svoyaUi.screen = "hall"; paint(); });
+  on($("#svoya-tohub"), "click", function () { svoyaWrite("yurec-svoya-run", null); svoyaUi.screen = "hub"; paint(); });
+  on($("#svoya-feather"), "click", function () { openZoom("game/feather.jpg"); });
+  on($("#svoya-give"), "click", function () {
+    if (!svoyaUi.give) { svoyaUi.give = true; paint(); return; }
+    svoyaForfeit();
+    paint();
+  });
+  on($("#svoya-auc-all"), "click", function () {
+    var run = svoyaRun();
+    var cell = svoyaCellById(run, svoyaUi.qid);
+    svoyaUi.bet = cell ? Math.max(cell.v, run ? run.score : 0) : 0;
+    paint();
+  });
+  on($("#svoya-auc-go"), "click", function () {
+    var run = svoyaRun();
+    var cell = svoyaCellById(run, svoyaUi.qid);
+    if (!run || !cell) return;
+    var n = Number(($("#svoya-auc") && $("#svoya-auc").value) || svoyaUi.bet || cell.v);
+    var ceil = Math.max(cell.v, run.score);
+    cell.bet = Math.max(cell.v, Math.min(ceil, Math.floor(n) || cell.v));
+    svoyaWrite("yurec-svoya-run", run);
+    svoyaUi.picked = null;
+    svoyaUi.give = false;
+    svoyaUi.screen = "q";
+    paint();
+  });
   on($("#svoya-again"), "click", function () {
     svoyaUi = { screen: "board", qid: null, picked: null, name: "", wipe: false, anew: false, named: false, bet: 0, fx: false };
     svoyaDeal(); paint();
   });
   on($("#svoya-nextround"), "click", function () {
     var next = svoyaAdvance();
-    if (next && next.ended) { svoyaBump(); svoyaUi.screen = "fin"; }
+    svoyaUi.give = false;
+    if (next && next.ended) { if (!next.forfeit) svoyaBump(); svoyaUi.screen = "fin"; }
     else if (next && next.round === 4) { svoyaUi.bet = 0; svoyaUi.screen = "bet"; }
     else svoyaUi.screen = "board";
     paint();
@@ -6095,9 +6213,9 @@ function bindSvoya() {
     paint();
   });
   on($("#svoya-next"), "click", function () {
-    svoyaUi.qid = null; svoyaUi.picked = null;
+    svoyaUi.qid = null; svoyaUi.picked = null; svoyaUi.give = false;
     var run = svoyaRun();
-    if (run && run.ended) { svoyaBump(); svoyaUi.screen = "fin"; }
+    if (run && run.ended) { if (!run.forfeit) svoyaBump(); svoyaUi.screen = "fin"; }
     else if (run && !svoyaRoundOpen(run)) svoyaUi.screen = "gap";
     else svoyaUi.screen = "board";
     paint();
@@ -6106,8 +6224,17 @@ function bindSvoya() {
   var i;
   for (i = 0; i < cells.length; i++) {
     cells[i].addEventListener("click", function () {
-      svoyaUi.qid = this.getAttribute("data-svoya-q");
-      svoyaUi.picked = null; svoyaUi.screen = "q"; paint();
+      var id = this.getAttribute("data-svoya-q");
+      var run = svoyaRun();
+      var cell = svoyaCellById(run, id);
+      svoyaUi.qid = id;
+      svoyaUi.picked = null;
+      svoyaUi.give = false;
+      if (cell && cell.kind === "auc" && cell.bet == null) {
+        svoyaUi.bet = cell.v;
+        svoyaUi.screen = "auc";
+      } else svoyaUi.screen = "q";
+      paint();
     });
   }
   var ans = document.querySelectorAll("[data-svoya-a]");
