@@ -127,7 +127,7 @@
       scoreBg: "#2a3544",
       scoreFg: "#e8c36a",
       face: "batya",
-      ball: 520, ai: 660, err: 1.2, delay: 0, accel: 1.075, max: 840, playerR: 42, aiR: 56,
+      ball: 460, ai: 520, err: 8, delay: 0.04, accel: 1.05, max: 720, playerR: 46, aiR: 52,
       predict: true, gun: true,
       score: [
         "Сынок, ты дебил клинический, бля!",
@@ -303,7 +303,7 @@
     lvlRow("1", "Повар шавермы", "До пяти. Колобок с гриля, медленный, зевает. Разогрев. Касса не прощает скидку, лаваш не броня.") +
     lvlRow("2", "Лысый хер", "До пяти. Фараон «Олимпика». Быстрее повара, почти не промахивается. В кабинете ты никто, пока не забьёшь пятый.") +
     lvlRow("3", "Бабка-ящер", "До пяти. Зинаида с языком, читает шар, но зевает. После твоих четырёх голов достаёт половник — шире бьёт, не на весь двор. Закрыть можно и без пилюль.") +
-    lvlRow("4", "Батя", "Секрет после ящера. До пяти. Раз в десять секунд — очередь из дробовика. Кого задело — сгорает, ворота пустые.") +
+    lvlRow("4", "Батя", "Секрет после ящера. До пяти. Раз в четырнадцать секунд — два заряда, не прицельная очередь. Кого задело — сгорает, ворота пустые. Тяжелее бабки, но закрывается.") +
     lvlRow("5", "Светлана", "Секрет после бати. До двух. Помойка раз в десять секунд, почти не зевает. Выиграть трудно. Награда — поцелуй.") +
     lvlRow("6", "Костя", "Зеркало после Светки. Ты снизу уже Костя, сверху Юрец. Режим бога: пилюли кнопками под кортом. До пяти. На четырёх очках Юрец зовёт ящера вдвоём. Счёт любой — Юрец всё равно легенда Шотмана.") +
     '<p class="av-man-foot">Методичка врёт меньше, чем Юрец. Дальше — сам.</p>';
@@ -343,17 +343,18 @@
     var head = document.createElement("div");
     head.className = "av-head";
     head.innerHTML = '<button type="button" class="av-title">Помойкобол</button>';
+    var pauseBtn = document.createElement("button");
+    pauseBtn.type = "button";
+    pauseBtn.className = "av-pause";
+    pauseBtn.hidden = true;
+    pauseBtn.textContent = "ПАУЗА";
+    head.appendChild(pauseBtn);
 
     var wrap = document.createElement("div");
     wrap.className = "av-stage";
     var canvas = document.createElement("canvas");
     canvas.setAttribute("aria-label", "Помойкобол");
     wrap.appendChild(canvas);
-    var pauseBtn = document.createElement("button");
-    pauseBtn.type = "button";
-    pauseBtn.className = "av-pause av-pause-corner";
-    pauseBtn.hidden = true;
-    pauseBtn.textContent = "Пауза";
     var pauseVeil = document.createElement("div");
     pauseVeil.className = "av-pause-veil";
     pauseVeil.hidden = true;
@@ -429,7 +430,6 @@
     host.appendChild(head);
     host.appendChild(hud);
     host.appendChild(wrap);
-    host.appendChild(pauseBtn);
     host.appendChild(shotBtn);
     host.appendChild(gods);
 
@@ -797,7 +797,7 @@
     var aiShotCool = 0;
     var ladle = false;
     var laughT = 0;
-    var batyaGunT = 10;
+    var batyaGunT = 14;
     var svetaDumpT = 10;
     var vodkaY = 0;
     var vodkaZ = 0;
@@ -998,7 +998,8 @@
       if (!live) paused = false;
       if (pauseBtn) {
         pauseBtn.hidden = !live;
-        pauseBtn.textContent = paused ? "Дальше" : "Пауза";
+        pauseBtn.textContent = "ПАУЗА";
+        pauseBtn.classList.toggle("is-on", !!paused);
       }
       if (pauseVeil) pauseVeil.hidden = !paused;
     }
@@ -1034,7 +1035,7 @@
       trauma = 0;
       ladle = false;
       laughT = 0;
-      batyaGunT = 10;
+      batyaGunT = 14;
       svetaDumpT = 10;
       vodkaY = pendingImmune ? 15 : 0;
       pendingImmune = false;
@@ -1227,7 +1228,7 @@
         (s.pf || s.pa ? " · очки " + s.pf + " : " + s.pa : "") +
         "</span>" +
         "</p>" +
-        (hallFits(matchPoints(win))
+        (!win && hallFits(matchPoints(win))
           ? '<form class="av-hall-ask"><p class="av-lead">В таблицу. Очки ' + matchPoints(win) + ". Как подписать?</p>" +
             '<input class="av-cheat-in av-hall-name" maxlength="16" value="' + hallEsc(hallNick()) + '" />' +
             '<button type="submit" class="av-next">Вписать</button></form>'
@@ -1700,13 +1701,13 @@
     function batyaBurst() {
       var i, spread;
       say(pick(cfg.score));
-      for (i = 0; i < 3; i++) {
-        spread = (i - 1) * 90;
+      for (i = 0; i < 2; i++) {
+        spread = (i - 0.5) * 150;
         pellets.push({
           x: babka.x,
           y: babka.y + babka.r * 0.5,
-          vx: (yurec.x - babka.x) * 1.5 + spread,
-          vy: 680,
+          vx: (yurec.x - babka.x) * 0.85 + spread,
+          vy: 520,
           from: "foe",
           r: 6
         });
@@ -2037,7 +2038,7 @@
         batyaGunT -= dt;
         if (batyaGunT <= 0) {
           batyaBurst();
-          batyaGunT = 10;
+          batyaGunT = 14;
         }
       }
       if (cfg.dumpster && phase === "play" && stunZ <= 0 && !babka.dead) {

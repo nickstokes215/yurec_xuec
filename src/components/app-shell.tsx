@@ -57,6 +57,40 @@ const MEDIA_NAV = [
   { to: "/videos/other", label: "Другое", icon: Images },
 ] as const;
 
+const YX_TABS = ["/", "/citats", "/videos", "/game", "/chat", "/characters", "/saved", "/zashkvary", "/about"];
+const YX_SHEETS = ["/settings", "/donate", "/passport", "/changelog", "/ideas", "/apk", "/channel", "/offline", "/wall"];
+
+function yxNorm(p: string) {
+  if (!p) return "/";
+  return p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
+}
+
+function yxSheet(p: string) {
+  return YX_SHEETS.some((s) => p === s || p.startsWith(`${s}/`));
+}
+
+function yxTab(p: string) {
+  if (p === "/") return "/";
+  return YX_TABS.find((r) => r !== "/" && (p === r || p.startsWith(`${r}/`))) || "";
+}
+
+function yxRouteKind(from: string, to: string) {
+  const a = yxNorm(from);
+  const b = yxNorm(to);
+  if (!a || a === b) return "none";
+  if (a.startsWith("/story/") && !b.startsWith("/story/")) return "pop";
+  if (b.startsWith("/story/") && !a.startsWith("/story/")) return "push";
+  if (a.startsWith("/story/") && b.startsWith("/story/")) return "fade";
+  if (yxSheet(b) && !yxSheet(a)) return "push";
+  if (yxSheet(a) && !yxSheet(b)) return "pop";
+  if (b.startsWith(`${a}/`)) return "push";
+  if (a.startsWith(`${b}/`)) return "pop";
+  const ra = yxTab(a);
+  const rb = yxTab(b);
+  if (ra && rb && ra !== rb) return "tab";
+  return "fade";
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
@@ -209,6 +243,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     };
   }, [pathname]);
 
+  const navFx = useRef({ path: pathname, motion: "none" });
+  if (navFx.current.path !== pathname) {
+    const from = navFx.current.path;
+    const reduce = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    navFx.current = { path: pathname, motion: reduce ? "none" : yxRouteKind(from, pathname) };
+  }
+  const yxPlay = navFx.current.motion === "none" ? "" : navFx.current.motion;
+
   return (
     <div className="min-h-dvh bg-void">
       <div
@@ -270,7 +312,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           </header>
         )}
 
-        <div className={cn("flex-1", isChat && "flex min-h-0 flex-col overflow-hidden", !hideChrome && !hideDock && (isMedia ? "pb-[8.5rem]" : isChat ? "pb-0" : "pb-20"))}>{children}</div>
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-x-clip">
+          <div
+            key={pathname}
+            className={cn(
+              "yx-stage min-h-0 flex-1",
+              yxPlay && `yx-play-${yxPlay}`,
+              isChat && "flex flex-col overflow-hidden",
+              !hideChrome && !hideDock && (isMedia ? "pb-[8.5rem]" : isChat ? "pb-0" : "pb-20"),
+            )}
+          >
+            {children}
+          </div>
+        </div>
 
         {!hideChrome && !hideDock && (
           <nav

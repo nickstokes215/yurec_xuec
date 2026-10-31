@@ -2174,6 +2174,30 @@ html.av-nodock [data-app-dock] {
   pointer-events: auto;
 }
 .av-pause[hidden] { display: none !important; }
+.av-head .av-pause {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  z-index: 5;
+  transform: translateY(-50%);
+  height: 32px;
+  min-width: 72px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #1a1408;
+  color: #f4e4a1;
+  box-shadow: 0 0 0 2px #e8c36a;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  pointer-events: auto;
+}
+.av-head .av-pause.is-on {
+  background: #e8c36a;
+  color: #1a1408;
+}
 .av-pause-veil {
   position: absolute;
   inset: 0;
@@ -2547,6 +2571,7 @@ html[data-wide="1"] .av-diffs {
   align-items: center;
   min-height: 56px;
   width: 100%;
+  margin-top: 0;
   padding: 10px 12px;
   border: 0;
   border-radius: 14px;
@@ -2554,7 +2579,15 @@ html[data-wide="1"] .av-diffs {
   color: #eaf3e4;
   font-weight: 650;
   font-size: 16px;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  position: relative;
+}
+.av-info.av-hall-open,
+.av-info.av-hall-end {
+  background: #1e4a7a;
+  color: #f4e4a1;
+  box-shadow: inset 0 0 0 2px #e8c36a;
+  margin-top: 12px;
 }
 .av-manual {
   position: absolute;
@@ -3110,6 +3143,26 @@ html[data-wide="1"] .chat-log { max-width: 720px; margin-inline: auto; width: 10
 .svoya-btn.tg { background: #229ed9; color: #fff; }
 .svoya-btn.off { background: #2f8f4e; color: #e8f8ee; }
 .svoya-btn.danger { background: #b42318; color: #fff; }
+.svoya-give {
+  position: fixed;
+  left: 8px;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  z-index: 24;
+  width: auto;
+  max-width: 42vw;
+  height: auto;
+  margin: 0;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(160, 148, 130, 0.45);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: left;
+}
+.svoya-give.is-ask { color: rgba(196, 59, 110, 0.8); }
 .svoya-top { text-align: center; }
 .svoya-mini { font-size: 12px; color: var(--subtle, #6e6c68); }
 .svoya-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
@@ -3156,4 +3209,89 @@ html[data-wide="1"] .svoya-cell { min-height: 56px; font-size: 18px; }
 .wall form { display: flex; gap: 8px; }
 .wall input { flex: 1; height: 44px; border: 0; border-radius: 12px; padding: 0 12px; background: rgba(0,0,0,.28); color: #e7f0d8; font-size: 16px; }
 .wall form button { height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: #e7f0d8; color: #1c2418; font-weight: 700; }
+
+/* Ход экрана. Кривая как у iOS: быстро срывается и мягко садится. */
+:root { --yx-ease: cubic-bezier(0.32, 0.72, 0, 1); }
+button, a, .card, .chip, .ccard { -webkit-tap-highlight-color: transparent; }
+.btn, .chip, .card, .ccard, .citat, .iconbtn, .brandbtn, .nav a, .subnav a,
+.name-opt, .icon-opt, .back, .svoya-ans, .svoya-cell, .post-link, .totop, .walk-go {
+  transition: transform .28s var(--yx-ease), background-color .22s ease, color .22s ease, opacity .22s ease, box-shadow .22s ease;
+}
+.btn:active, .chip:active, .card:active, .ccard:active, .citat:active, .iconbtn:active,
+.brandbtn:active, .nav a:active, .subnav a:active, .name-opt:active, .icon-opt:active,
+.back:active, .svoya-ans:active, .svoya-cell:active, .totop:active, .walk-go:active {
+  transform: scale(0.96);
+}
+.nav .navico, .subnav .navico {
+  transition: background-color .32s var(--yx-ease), transform .32s var(--yx-ease);
+}
+.nav a.on .navico, .subnav a.on .navico { transform: scale(1); }
+.page.yx-in, #reader.yx-in, .app.yx-in {
+  background: var(--bg);
+  position: relative;
+  z-index: 16;
+  will-change: transform, opacity;
+}
+.page.yx-in-push, #reader.yx-in-push, .app.yx-in-push { transform: translate3d(100%, 0, 0); }
+.page.yx-in-pop, #reader.yx-in-pop, .app.yx-in-pop { transform: translate3d(-22%, 0, 0); }
+.page.yx-in-tab, #reader.yx-in-tab, .app.yx-in-tab { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.985); }
+.page.yx-in-fade, #reader.yx-in-fade, .app.yx-in-fade { opacity: 0; }
+.page.yx-in-push.yx-go, #reader.yx-in-push.yx-go, .app.yx-in-push.yx-go {
+  transform: translate3d(0, 0, 0);
+  transition: transform .46s var(--yx-ease);
+  box-shadow: -18px 0 42px rgba(0, 0, 0, 0.38);
+}
+.page.yx-in-pop.yx-go, #reader.yx-in-pop.yx-go, .app.yx-in-pop.yx-go {
+  transform: none;
+  transition: transform .42s var(--yx-ease);
+}
+.page.yx-in-tab.yx-go, #reader.yx-in-tab.yx-go, .app.yx-in-tab.yx-go {
+  opacity: 1;
+  transform: none;
+  transition: opacity .34s ease, transform .4s var(--yx-ease);
+}
+.page.yx-in-fade.yx-go, #reader.yx-in-fade.yx-go, .app.yx-in-fade.yx-go {
+  opacity: 1;
+  transition: opacity .26s ease;
+}
+#reader.yx-in, .app.yx-in { z-index: 26; }
+.yx-clip {
+  position: fixed;
+  z-index: 15;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg);
+  will-change: transform, opacity;
+}
+.yx-clip .page { margin: 0; }
+.yx-clip.yx-full { z-index: 24; height: 100dvh; overflow: hidden; }
+.yx-clip.yx-out-pop, .yx-clip.yx-full.yx-out-pop { z-index: 28; box-shadow: -18px 0 42px rgba(0, 0, 0, 0.38); }
+.yx-clip.yx-out-push.yx-go { transform: translate3d(-28%, 0, 0); opacity: 0.5; transition: transform .46s var(--yx-ease), opacity .46s ease; }
+.yx-clip.yx-out-pop.yx-go { transform: translate3d(104%, 0, 0); transition: transform .42s var(--yx-ease); }
+.yx-clip.yx-out-tab.yx-go { opacity: 0; transform: translate3d(0, -10px, 0) scale(0.99); transition: opacity .32s ease, transform .36s var(--yx-ease); }
+.yx-clip.yx-out-fade.yx-go { opacity: 0; transition: opacity .22s ease; }
+#yx-under {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg);
+}
+.modal { animation: yx-dim .28s ease both; }
+.modal .box, .ach-modal-card { animation: yx-sheet .44s var(--yx-ease) both; }
+@keyframes yx-dim { from { background-color: rgba(5, 5, 6, 0); } }
+@keyframes yx-sheet {
+  from { opacity: 0; transform: translate3d(0, 28px, 0) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .yx-clip, .page.yx-in, #reader.yx-in, .app.yx-in, .modal, .modal .box, .ach-modal-card {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
 

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { catTitle, ensureSvoya, svoyaReady } from "@/data/svoya";
-import { SVOYA_COVER, SVOYA_FEATHER, SVOYA_HUB_BLURB, SVOYA_PITCH, SVOYA_PRIZE_LOSE, SVOYA_PRIZE_WIN, SVOYA_RULES, SVOYA_TITLE } from "@/data/svoya-meta";
+import { SVOYA_COVER, SVOYA_HUB_BLURB, SVOYA_PITCH, SVOYA_PRIZE_LOSE, SVOYA_RULES, SVOYA_TITLE, svoyaPrize, svoyaPrizeSrc } from "@/data/svoya-meta";
 import { playFireworks } from "@/components/fireworks";
 import { playRain } from "@/components/rain";
 import { isSoundOn, isVibrateOn } from "@/lib/use-settings";
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/game/svoya")({ component: SvoyaPage });
 type Screen = "hub" | "board" | "q" | "gap" | "bet" | "auc" | "fin" | "hall" | "rules";
 
 function lastOf(run: SvoyaRun | null) {
-  if (!run) return 2;
+  if (!run) return 3;
   return run.last || (run.v === 4 ? 2 : 3);
 }
 
@@ -338,12 +338,12 @@ function SvoyaPage() {
                 {vals.map((v, i) => {
                   const cell = round.cells.find((c) => c.cat === cat && (c.row ?? c.t - 1) === i);
                   if (!cell) return null;
-                  const face = cell.done ? (cell.ok ? "✓" : "✗") : cell.kind === "cat" ? "КОТ" : cell.kind === "auc" ? "АУК" : v;
+                  const face = cell.done ? (cell.ok ? "✓" : "✗") : v;
                   return (
                     <button
                       key={cell.qid}
                       type="button"
-                      className={cn("svoya-cell", cell.kind, cell.done && (cell.ok ? "ok" : "bad"))}
+                      className={cn("svoya-cell", cell.done && (cell.ok ? "ok" : "bad"))}
                       disabled={!!cell.done}
                       onClick={() => openQ(cell.qid)}
                     >
@@ -354,8 +354,8 @@ function SvoyaPage() {
               </div>
             ))}
           </div>
-          <button type="button" className="svoya-btn danger" onClick={giveUp}>
-            {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
+          <button type="button" className={cn("svoya-give", giveAsk && "is-ask")} onClick={giveUp}>
+            {giveAsk ? "Точно сдаться?" : "сдаюсь"}
           </button>
         </div>
       ) : null}
@@ -368,15 +368,15 @@ function SvoyaPage() {
           {run.round >= lastOf(run) && run.score <= 0 ? (
             <p className="svoya-pitch">Ноль или минус. Финала не будет, перо останется в серванте.</p>
           ) : run.round >= lastOf(run) ? (
-            <p className="svoya-pitch">Финал. Одна тема, одна ставка. На кону золотое перо.</p>
+            <p className="svoya-pitch">Финал. Одна тема, одна ставка. На кону одно из пяти перьев.</p>
           ) : (
-            <p className="svoya-pitch">Дальше темы новые, ценники злее, кот опять в мешке.</p>
+            <p className="svoya-pitch">Дальше темы новые. Где кот и аукцион — узнаешь, когда вскроешь.</p>
           )}
           <button type="button" className="svoya-btn gold" onClick={goNextRound}>
             {run.round >= lastOf(run) ? (run.score <= 0 ? "К итогу" : "На финал") : "Следующий раунд"}
           </button>
-          <button type="button" className="svoya-btn danger" onClick={giveUp}>
-            {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
+          <button type="button" className={cn("svoya-give", giveAsk && "is-ask")} onClick={giveUp}>
+            {giveAsk ? "Точно сдаться?" : "сдаюсь"}
           </button>
         </div>
       ) : null}
@@ -411,8 +411,8 @@ function SvoyaPage() {
               Поставить {bet} и смотреть вопрос
             </button>
           </div>
-          <button type="button" className="svoya-btn danger" onClick={giveUp}>
-            {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
+          <button type="button" className={cn("svoya-give", giveAsk && "is-ask")} onClick={giveUp}>
+            {giveAsk ? "Точно сдаться?" : "сдаюсь"}
           </button>
         </div>
       ) : null}
@@ -450,8 +450,8 @@ function SvoyaPage() {
               Поставить {Math.max(openCell.v, Math.min(Math.max(openCell.v, run.score), bet))} и вскрыть
             </button>
           </div>
-          <button type="button" className="svoya-btn danger" onClick={giveUp}>
-            {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
+          <button type="button" className={cn("svoya-give", giveAsk && "is-ask")} onClick={giveUp}>
+            {giveAsk ? "Точно сдаться?" : "сдаюсь"}
           </button>
         </div>
       ) : null}
@@ -489,8 +489,8 @@ function SvoyaPage() {
               Дальше
             </button>
           ) : (
-            <button type="button" className="svoya-btn danger" onClick={giveUp}>
-              {giveAsk ? "Точно сдаться? В таблицу не попадёт" : "Сдаюсь"}
+            <button type="button" className={cn("svoya-give", giveAsk && "is-ask")} onClick={giveUp}>
+              {giveAsk ? "Точно сдаться?" : "сдаюсь"}
             </button>
           )}
         </div>
@@ -500,9 +500,9 @@ function SvoyaPage() {
         <div className="svoya-hub">
           <p className="svoya-kicker">{run.forfeit ? "Сдался" : run.score > 0 ? "Плюс двора" : "Минус двора"}</p>
           <h2>{run.forfeit ? "Поражение" : run.score}</h2>
-          {!run.forfeit ? (
-            <button type="button" className="svoya-prize" onClick={() => openZoom(SVOYA_FEATHER)} aria-label="Открыть перо">
-              <img src={SVOYA_FEATHER} alt="Золотое перо Шотмана" />
+          {run.prize && run.score > 0 && !run.forfeit ? (
+            <button type="button" className="svoya-prize" onClick={() => openZoom(svoyaPrizeSrc(run.prize))} aria-label="Открыть перо">
+              <img src={svoyaPrizeSrc(run.prize)} alt={svoyaPrize(run.prize).title} />
             </button>
           ) : null}
           <p className="svoya-blurb">
@@ -510,7 +510,13 @@ function SvoyaPage() {
               ? "розыгрыш закрыт · в книгу рекордов не пишется"
               : `верно ${run.right} · мимо ${run.wrong}${run.skippedFinal ? " · финал не дали" : ""}`}
           </p>
-          {!run.forfeit ? <p className="svoya-pitch">{run.score > 0 ? SVOYA_PRIZE_WIN : SVOYA_PRIZE_LOSE}</p> : null}
+          {!run.forfeit ? (
+            <p className="svoya-pitch">
+              {run.score > 0 && run.prize
+                ? `${svoyaPrize(run.prize).title}. ${svoyaPrize(run.prize).line}`
+                : SVOYA_PRIZE_LOSE}
+            </p>
+          ) : null}
           <p className="svoya-pitch">{run.story || ""}</p>
           {!run.forfeit && qualifies(run.score) && !named ? (
             <form

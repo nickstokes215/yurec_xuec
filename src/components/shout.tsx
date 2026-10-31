@@ -14,6 +14,12 @@ export function ShoutHost() {
     return () => window.clearTimeout(t);
   }, []);
 
+  useEffect(() => {
+    if (!text) return;
+    const t = window.setTimeout(() => setText(null), 10000);
+    return () => window.clearTimeout(t);
+  }, [text]);
+
   if (!text) return null;
   return (
     <button type="button" className="shout" onClick={() => setText(null)}>

@@ -1,5 +1,5 @@
 import { ROUND_CATS, ROUND_VALS, SVOYA_CATS, svoyaById, svoyaPool, svoyaReady, type SvoyaQ } from "@/data/svoya";
-import { svoyaStory } from "@/data/svoya-meta";
+import { svoyaStory, type SvoyaPrizeId } from "@/data/svoya-meta";
 import {
   emitSvoya,
   readHall,
@@ -57,6 +57,7 @@ export type SvoyaRun = {
   forfeit?: boolean;
   story?: string;
   ended?: boolean;
+  prize?: SvoyaPrizeId;
 };
 
 export type { SvoyaHall };
@@ -143,12 +144,33 @@ function dealRound(n: number, usedCats: string[], used: Set<string>, bag: string
   const left = SVOYA_CATS.map((c) => c.id).filter((id) => !usedCats.includes(id));
   const pool = left.length >= nCats ? left : SVOYA_CATS.map((c) => c.id);
   const cats = shuffle(pool).slice(0, nCats);
+  const allIds = SVOYA_CATS.map((c) => c.id);
   const cells: SvoyaCell[] = [];
   for (const cat of cats) {
     for (let t = 1; t <= 5; t++) {
-      cells.push({ cat, t, v: values[t - 1] || t * 100, qid: pickQ(cat, t, used, bag), ord: shuffleOrd() });
+      cells.push({ cat, t, v: values[t - 1] || t * 100, qid: "", ord: shuffleOrd() });
     }
   }
+  const order = shuffle(cells.map((_, i) => i));
+  const nCat = 1 + Math.floor(Math.random() * 3);
+  const nAuc = 1 + Math.floor(Math.random() * 3);
+  const catAt = new Set(order.slice(0, nCat));
+  const aucAt = new Set(order.slice(nCat, nCat + nAuc));
+  cells.forEach((cell, i) => {
+    let qCat = cell.cat;
+    if (catAt.has(i)) {
+      const stolen = shuffle(allIds.filter((id) => id !== cell.cat))[0];
+      cell.kind = "cat";
+      cell.stolen = stolen;
+      qCat = stolen || cell.cat;
+      cell.v *= 2;
+      cell.bark = "Кот в мешке. Тема слиняла, номинал удвоен. На табло этого не было.";
+    } else if (aucAt.has(i)) {
+      cell.kind = "auc";
+      cell.bark = "Аукцион. Цена от номинала и выше. Ошибёшься — ставка сгорит.";
+    }
+    cell.qid = pickQ(qCat, cell.t, used, bag);
+  });
   return { n, cats, cells, values };
 }
 
@@ -199,15 +221,21 @@ function dealShow(n: number, usedCats: string[], used: Set<string>, bag: string[
   return { n, cats, cells, values: spec.values };
 }
 
+const PRIZE_IDS: SvoyaPrizeId[] = ["shotman", "gosha", "sveta", "lysy", "batya"];
+
+function rollPrize(): SvoyaPrizeId {
+  return PRIZE_IDS[Math.floor(Math.random() * PRIZE_IDS.length)]!;
+}
+
 export function dealRun(): SvoyaRun | null {
   if (!svoyaReady()) return null;
   const used = new Set(readUsed());
   const bag = [...readUsed()];
-  const r1 = dealShow(1, [], used, bag);
+  const r1 = dealRound(1, [], used, bag);
   writeUsed(bag);
   const run: SvoyaRun = {
-    v: 4,
-    last: 2,
+    v: 3,
+    last: 3,
     round: 1,
     score: 0,
     right: 0,
@@ -276,6 +304,7 @@ export function answerCell(qid: string, pick: number): { run: SvoyaRun; q: Svoya
     else run.wrong += 1;
     run.ended = true;
     run.story = svoyaStory(run.score, run.started + run.score);
+    if (run.score > 0 && !run.forfeit && !run.prize) run.prize = rollPrize();
     writeRun(run);
     return { run, q, correct, delta };
   }

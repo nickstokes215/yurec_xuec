@@ -188,20 +188,20 @@
       label: "Максидом",
       sub: "отдел Светланы — добраться до неё",
       bg: ["#2a0818", "#7a2048", "#ff7ab0"],
-      speed: 445,
+      speed: 355,
       lives: 3,
-      paddleW: 96,
-      cap: 1.58,
+      paddleW: 98,
+      cap: 1.4,
       skin: "maxi",
       face: "svetlana",
       rows: [
-        "2.2.2.2.2.2",
-        ".3.1.1.1.3.",
-        "21212121212",
-        ".1.3.G.3.1.",
-        "33333333333",
-        ".2.1.1.1.2.",
-        "1.2.2.2.2.1"
+        "GG.......GG",
+        "G333333333G",
+        "G322222223G",
+        "G3.21112.3G",
+        "G322222223G",
+        "G333333333G",
+        "GG.2.2.2.GG"
       ]
     },
     yard: {
@@ -477,6 +477,12 @@
     var head = document.createElement("div");
     head.className = "av-head";
     head.innerHTML = '<button type="button" class="av-title">Алконоид</button>';
+    var pauseBtn = document.createElement("button");
+    pauseBtn.type = "button";
+    pauseBtn.className = "av-pause";
+    pauseBtn.hidden = true;
+    pauseBtn.textContent = "ПАУЗА";
+    head.appendChild(pauseBtn);
     var titleTaps = 0;
     var titleTapAt = 0;
     var pendingVodka = false;
@@ -486,11 +492,6 @@
     var canvas = document.createElement("canvas");
     canvas.setAttribute("aria-label", "Алконоид");
     wrap.appendChild(canvas);
-    var pauseBtn = document.createElement("button");
-    pauseBtn.type = "button";
-    pauseBtn.className = "av-pause av-pause-corner";
-    pauseBtn.hidden = true;
-    pauseBtn.textContent = "Пауза";
     var pauseVeil = document.createElement("div");
     pauseVeil.className = "av-pause-veil";
     pauseVeil.hidden = true;
@@ -586,7 +587,6 @@
     host.appendChild(head);
     host.appendChild(hud);
     host.appendChild(wrap);
-    host.appendChild(pauseBtn);
     host.appendChild(shotBtn);
     host.appendChild(kitEl);
 
@@ -979,7 +979,8 @@
       if (!live) paused = false;
       if (pauseBtn) {
         pauseBtn.hidden = !live;
-        pauseBtn.textContent = paused ? "Дальше" : "Пауза";
+        pauseBtn.textContent = "ПАУЗА";
+        pauseBtn.classList.toggle("is-on", !!paused);
       }
       if (pauseVeil) pauseVeil.hidden = !paused;
     }
@@ -1022,11 +1023,8 @@
       boss = null;
       buildBricks(cfg.rows);
       if (id === "maxi") {
-        enemies.push({ x: 48, y: 248, vx: 150, r: 11, kind: "bat" });
-        enemies.push({ x: 180, y: 300, vx: -170, r: 12, kind: "bat" });
-        enemies.push({ x: 300, y: 268, vx: 130, r: 11, kind: "bat" });
-        caps.push({ x: 110, y: 96, kind: "through", vy: 78 });
-        caps.push({ x: 250, y: 132, kind: "fast", vy: 86 });
+        enemies.push({ x: 80, y: 300, vx: 70, r: 12, kind: "bat" });
+        enemies.push({ x: 260, y: 340, vx: -80, r: 12, kind: "bat" });
       }
       if (id === "yard") {
         boss = { x: W / 2, y: 50, vx: 130, r: 28, hp: 12, max: 12, t: 0, kind: "ufo", spit: 1.8 };
@@ -1149,7 +1147,7 @@
       if (levelId === "kostya") { winTitle = "Юрец — легенда!"; winLead = "Костя — читер. Лысый, НЛО и Батя прикрывали. Тщетно. Юрец всё равно легенда Шотмана."; }
       var html = "<h3>" + (won ? winTitle : "Проиграл двор") + "</h3>";
       html += '<p class="av-lead">' + (won ? winLead : "Ракетки кончились. Совок победил на этот раз.") + " Очки: " + score + ".</p>";
-      if (hallFits(score)) {
+      if (!won && hallFits(score)) {
         html += '<form class="av-hall-ask"><p class="av-lead">В таблицу. Как подписать?</p>' +
           '<input class="av-cheat-in av-hall-name" maxlength="16" value="' + hallEsc(hallNick()) + '" />' +
           '<button type="submit" class="av-next">Вписать</button></form>';
@@ -1283,9 +1281,8 @@
         facePopY = br.y + br.h / 2;
         if (Math.random() < 0.28) say(pickQuote(levelId), 3.6);
         beep(660, 0.07, 0.05);
-        if (Math.random() < (levelId === "maxi" ? 0.48 : 0.16)) {
+        if (Math.random() < 0.16) {
           var drop = Math.random() < 0.62 ? pick(CAP_BAD) : pick(CAP_GOOD);
-          if (levelId === "maxi") drop = Math.random() < 0.72 ? pick(["through", "through", "laser", "fast", "triple", "split", "grow"]) : drop;
           if (cfg.skin === "tolik") drop = Math.random() < 0.45 ? "vodka" : drop;
           if (cfg.skin === "pharm") drop = Math.random() < 0.4 ? "life" : drop;
           if (cfg.skin === "fsb") drop = Math.random() < 0.45 ? "bomb" : drop;

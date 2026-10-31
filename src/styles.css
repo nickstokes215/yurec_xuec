@@ -1041,6 +1041,30 @@ html.av-nodock .dock-inner {
   pointer-events: auto;
 }
 .av-pause[hidden] { display: none !important; }
+.av-head .av-pause {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  z-index: 5;
+  transform: translateY(-50%);
+  height: 32px;
+  min-width: 72px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #1a1408;
+  color: #f4e4a1;
+  box-shadow: 0 0 0 2px #e8c36a;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  pointer-events: auto;
+}
+.av-head .av-pause.is-on {
+  background: #e8c36a;
+  color: #1a1408;
+}
 .av-pause-veil {
   position: absolute;
   inset: 0;
@@ -1414,6 +1438,7 @@ html[data-wide="1"] .av-diffs {
   align-items: center;
   min-height: 56px;
   width: 100%;
+  margin-top: 0;
   padding: 10px 12px;
   border: 0;
   border-radius: 14px;
@@ -1421,7 +1446,15 @@ html[data-wide="1"] .av-diffs {
   color: #eaf3e4;
   font-weight: 650;
   font-size: 16px;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  position: relative;
+}
+.av-info.av-hall-open,
+.av-info.av-hall-end {
+  background: #1e4a7a;
+  color: #f4e4a1;
+  box-shadow: inset 0 0 0 2px #e8c36a;
+  margin-top: 12px;
 }
 .av-manual {
   position: absolute;
@@ -1983,6 +2016,26 @@ html[data-wide="1"] .chat-log {
 .svoya-btn.tg { background: var(--color-tg); color: var(--color-tg-fg); }
 .svoya-btn.off { background: var(--color-off); color: var(--color-off-fg); }
 .svoya-btn.danger { background: var(--color-danger); color: var(--color-danger-fg); }
+.svoya-give {
+  position: fixed;
+  left: 8px;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  z-index: 24;
+  width: auto;
+  max-width: 42vw;
+  height: auto;
+  margin: 0;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(160, 148, 130, 0.45);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: left;
+}
+.svoya-give.is-ask { color: rgba(196, 59, 110, 0.8); }
 .svoya-play { padding-top: 4px; }
 .svoya-top { text-align: center; }
 .svoya-mini { font-size: 12px; color: var(--color-subtle); }
@@ -2159,4 +2212,51 @@ html[data-wide="1"] .chat-log {
   color: #1c2418;
   font-weight: 700;
 }
+
+/* Ход экрана. Кривая как у iOS. */
+:root { --yx-ease: cubic-bezier(0.32, 0.72, 0, 1); }
+.yx-stage { transform-origin: center top; }
+.yx-play-push { animation: yx-push .46s var(--yx-ease) both; }
+.yx-play-pop { animation: yx-pop .42s var(--yx-ease) both; }
+.yx-play-tab { animation: yx-tab .4s var(--yx-ease) both; }
+.yx-play-fade { animation: yx-fade .26s ease both; }
+@keyframes yx-push {
+  from { transform: translate3d(100%, 0, 0); }
+  to { transform: none; }
+}
+@keyframes yx-pop {
+  from { transform: translate3d(-22%, 0, 0); opacity: 0.72; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes yx-tab {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes yx-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+header a, header button, nav a, nav button {
+  transition: transform .28s var(--yx-ease), background-color .22s ease, color .22s ease, opacity .22s ease;
+}
+header a:active, header button:active, nav a:active, nav button:active { transform: scale(0.94); }
+.yx-stage a:active, .yx-stage button:active { transform: scale(0.975); }
+[role="dialog"]:not(.raven-joke):not([class*="touch-none"]) {
+  animation: yx-dim .26s ease both;
+}
+[role="dialog"]:not(.raven-joke):not([class*="touch-none"]) > * {
+  animation: yx-sheet .44s var(--yx-ease) both;
+}
+@keyframes yx-dim { from { background-color: rgba(5, 5, 6, 0); } }
+@keyframes yx-sheet {
+  from { opacity: 0; transform: translate3d(0, 22px, 0) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .yx-play-push, .yx-play-pop, .yx-play-tab, .yx-play-fade,
+  [role="dialog"], [role="dialog"] > * {
+    animation: none !important;
+  }
+}
+
 
