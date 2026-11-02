@@ -2131,14 +2131,19 @@ html.av-nodock [data-app-dock] {
 }
 .av-head {
   position: relative;
+  z-index: 30;
   flex-shrink: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 4.6rem minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 0 2.8rem 0.2rem;
+  min-height: 44px;
+  padding: 0 4px 0 0;
+  overflow: visible;
 }
 .av-head .av-title {
+  grid-column: 2;
+  justify-self: center;
+  max-width: 100%;
   margin: 0;
   padding: 0.15rem 0.4rem;
   border: 0;
@@ -2175,14 +2180,16 @@ html.av-nodock [data-app-dock] {
 }
 .av-pause[hidden] { display: none !important; }
 .av-head .av-pause {
-  position: absolute;
-  top: 50%;
-  right: 0.35rem;
-  z-index: 5;
-  transform: translateY(-50%);
-  height: 32px;
-  min-width: 72px;
-  padding: 0 10px;
+  grid-column: 3;
+  justify-self: end;
+  position: static;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  min-width: 76px;
+  margin: 0;
+  padding: 0 12px;
   border: 0;
   border-radius: 999px;
   background: #1a1408;
@@ -2193,6 +2200,8 @@ html.av-nodock [data-app-dock] {
   font-weight: 800;
   letter-spacing: 0.08em;
   pointer-events: auto;
+  transform: none;
+  z-index: 31;
 }
 .av-head .av-pause.is-on {
   background: #e8c36a;
@@ -2214,6 +2223,7 @@ html.av-nodock [data-app-dock] {
 .av-pause-veil[hidden] { display: none !important; }
 .av-stage {
   position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -3215,44 +3225,38 @@ html[data-wide="1"] .svoya-cell { min-height: 56px; font-size: 18px; }
 button, a, .card, .chip, .ccard { -webkit-tap-highlight-color: transparent; }
 .btn, .chip, .card, .ccard, .citat, .iconbtn, .brandbtn, .nav a, .subnav a,
 .name-opt, .icon-opt, .back, .svoya-ans, .svoya-cell, .post-link, .totop, .walk-go {
-  transition: transform .28s var(--yx-ease), background-color .22s ease, color .22s ease, opacity .22s ease, box-shadow .22s ease;
+  transition: background-color .22s ease, color .22s ease, opacity .22s ease, box-shadow .22s ease;
 }
 .btn:active, .chip:active, .card:active, .ccard:active, .citat:active, .iconbtn:active,
 .brandbtn:active, .nav a:active, .subnav a:active, .name-opt:active, .icon-opt:active,
 .back:active, .svoya-ans:active, .svoya-cell:active, .totop:active, .walk-go:active {
-  transform: scale(0.96);
+  opacity: 0.72;
 }
 .nav .navico, .subnav .navico {
-  transition: background-color .32s var(--yx-ease), transform .32s var(--yx-ease);
+  transition: background-color .32s var(--yx-ease);
 }
-.nav a.on .navico, .subnav a.on .navico { transform: scale(1); }
+.nav a.on .navico, .subnav a.on .navico { transform: none; }
 .page.yx-in, #reader.yx-in, .app.yx-in {
   background: var(--bg);
   position: relative;
   z-index: 16;
-  will-change: transform, opacity;
 }
 .page.yx-in-push, #reader.yx-in-push, .app.yx-in-push { transform: translate3d(100%, 0, 0); }
-.page.yx-in-pop, #reader.yx-in-pop, .app.yx-in-pop { transform: translate3d(-22%, 0, 0); }
-.page.yx-in-tab, #reader.yx-in-tab, .app.yx-in-tab { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.985); }
+.page.yx-in-pop, #reader.yx-in-pop, .app.yx-in-pop { transform: translate3d(-16%, 0, 0); }
+.page.yx-in-tab, #reader.yx-in-tab, .app.yx-in-tab,
 .page.yx-in-fade, #reader.yx-in-fade, .app.yx-in-fade { opacity: 0; }
 .page.yx-in-push.yx-go, #reader.yx-in-push.yx-go, .app.yx-in-push.yx-go {
   transform: translate3d(0, 0, 0);
-  transition: transform .46s var(--yx-ease);
-  box-shadow: -18px 0 42px rgba(0, 0, 0, 0.38);
+  transition: transform .36s var(--yx-ease);
 }
 .page.yx-in-pop.yx-go, #reader.yx-in-pop.yx-go, .app.yx-in-pop.yx-go {
   transform: none;
-  transition: transform .42s var(--yx-ease);
+  transition: transform .32s var(--yx-ease);
 }
-.page.yx-in-tab.yx-go, #reader.yx-in-tab.yx-go, .app.yx-in-tab.yx-go {
-  opacity: 1;
-  transform: none;
-  transition: opacity .34s ease, transform .4s var(--yx-ease);
-}
+.page.yx-in-tab.yx-go, #reader.yx-in-tab.yx-go, .app.yx-in-tab.yx-go,
 .page.yx-in-fade.yx-go, #reader.yx-in-fade.yx-go, .app.yx-in-fade.yx-go {
   opacity: 1;
-  transition: opacity .26s ease;
+  transition: opacity .22s ease;
 }
 #reader.yx-in, .app.yx-in { z-index: 26; }
 .yx-clip {
@@ -3261,15 +3265,13 @@ button, a, .card, .chip, .ccard { -webkit-tap-highlight-color: transparent; }
   overflow: hidden;
   pointer-events: none;
   background: var(--bg);
-  will-change: transform, opacity;
 }
 .yx-clip .page { margin: 0; }
 .yx-clip.yx-full { z-index: 24; height: 100dvh; overflow: hidden; }
 .yx-clip.yx-out-pop, .yx-clip.yx-full.yx-out-pop { z-index: 28; box-shadow: -18px 0 42px rgba(0, 0, 0, 0.38); }
-.yx-clip.yx-out-push.yx-go { transform: translate3d(-28%, 0, 0); opacity: 0.5; transition: transform .46s var(--yx-ease), opacity .46s ease; }
-.yx-clip.yx-out-pop.yx-go { transform: translate3d(104%, 0, 0); transition: transform .42s var(--yx-ease); }
-.yx-clip.yx-out-tab.yx-go { opacity: 0; transform: translate3d(0, -10px, 0) scale(0.99); transition: opacity .32s ease, transform .36s var(--yx-ease); }
-.yx-clip.yx-out-fade.yx-go { opacity: 0; transition: opacity .22s ease; }
+.yx-clip.yx-out-push.yx-go { transform: translate3d(-18%, 0, 0); opacity: 0.45; transition: transform .36s var(--yx-ease), opacity .36s ease; }
+.yx-clip.yx-out-pop.yx-go { transform: translate3d(100%, 0, 0); transition: transform .32s var(--yx-ease); }
+.yx-clip.yx-out-tab.yx-go, .yx-clip.yx-out-fade.yx-go { opacity: 0; transform: none; transition: opacity .2s ease; }
 #yx-under {
   position: fixed;
   inset: 0;
@@ -3281,8 +3283,18 @@ button, a, .card, .chip, .ccard { -webkit-tap-highlight-color: transparent; }
 .modal { animation: yx-dim .28s ease both; }
 .modal .box, .ach-modal-card { animation: yx-sheet .44s var(--yx-ease) both; }
 @keyframes yx-dim { from { background-color: rgba(5, 5, 6, 0); } }
+.page.av-fill.yx-in,
+.page.av-fill.yx-in-push,
+.page.av-fill.yx-in-pop,
+.page.av-fill.yx-in-tab,
+.page.av-fill.yx-in-fade {
+  transform: none !important;
+  animation: none !important;
+  opacity: 1 !important;
+  transition: none !important;
+}
 @keyframes yx-sheet {
-  from { opacity: 0; transform: translate3d(0, 28px, 0) scale(0.96); }
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
   to { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {

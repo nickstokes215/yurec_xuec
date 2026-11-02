@@ -7703,12 +7703,27 @@ function yxFreeze(src, clone) {
 }
 function yxClear() {
   if (yxTimer) { clearTimeout(yxTimer); yxTimer = 0; }
-  if (yxGhost && yxGhost.parentNode) yxGhost.parentNode.removeChild(yxGhost);
-  yxGhost = null;
-  if (yxPage) {
-    yxPage.classList.remove("yx-in", "yx-in-push", "yx-in-pop", "yx-in-tab", "yx-in-fade", "yx-go");
-    yxPage = null;
+  var i, node, nodes;
+  nodes = document.querySelectorAll(".yx-clip, #yx-under");
+  for (i = 0; i < nodes.length; i++) {
+    if (nodes[i].parentNode) nodes[i].parentNode.removeChild(nodes[i]);
   }
+  yxGhost = null;
+  nodes = document.querySelectorAll(".yx-in");
+  for (i = 0; i < nodes.length; i++) {
+    node = nodes[i];
+    node.classList.remove("yx-in", "yx-in-push", "yx-in-pop", "yx-in-tab", "yx-in-fade", "yx-go");
+    if (node.style) {
+      node.style.willChange = "";
+      node.style.transform = "";
+      node.style.opacity = "";
+    }
+  }
+  yxPage = null;
+}
+function yxHeavy(p) {
+  p = yxNorm(p || "");
+  return p === "/game" || p.indexOf("/game/") === 0;
 }
 function yxNorm(p) {
   var s = String(p || "/").split("?")[0];
@@ -7759,6 +7774,19 @@ function yxMount(root, html, motion, keep) {
     root.innerHTML = html;
     return;
   }
+  if (motion === "fade" || motion === "tab") {
+    yxClear();
+    root.innerHTML = html;
+    var fadeEl = root.querySelector(".page") || root.querySelector("#reader") || root.querySelector(".app");
+    if (fadeEl) {
+      fadeEl.classList.add("yx-in", "yx-in-fade");
+      yxPage = fadeEl;
+      void fadeEl.offsetWidth;
+      fadeEl.classList.add("yx-go");
+      yxTimer = window.setTimeout(yxClear, 280);
+    }
+    return;
+  }
   var holder = document.createElement("div");
   holder.innerHTML = html;
   var neu = holder.firstElementChild;
@@ -7774,23 +7802,18 @@ function yxMount(root, html, motion, keep) {
   var ms = motion === "tab" ? 400 : motion === "fade" ? 300 : 500;
   yxClear();
   if (oldPage && (newPage || newReader)) {
-    var header = oldApp.querySelector(".top");
-    var dock = oldApp.querySelector(".dock");
-    var headBottom = header ? header.getBoundingClientRect().bottom : 0;
-    var dockTop = dock ? dock.getBoundingClientRect().top : window.innerHeight;
     var rect = oldPage.getBoundingClientRect();
     var clip = document.createElement("div");
     clip.className = "yx-clip yx-out yx-out-" + motion;
     clip.setAttribute("aria-hidden", "true");
-    clip.style.top = Math.max(0, headBottom) + "px";
+    clip.style.top = Math.max(0, rect.top) + "px";
     clip.style.left = rect.left + "px";
     clip.style.width = rect.width + "px";
-    clip.style.height = Math.max(80, dockTop - headBottom) + "px";
+    clip.style.height = Math.max(80, Math.min(rect.height, window.innerHeight - Math.max(0, rect.top))) + "px";
     var ghost = oldPage.cloneNode(true);
-    yxFreeze(oldPage, ghost);
     yxStrip(ghost);
-    ghost.style.transform = "translateY(" + (rect.top - headBottom) + "px)";
     ghost.style.margin = "0";
+    ghost.style.transform = "none";
     clip.appendChild(ghost);
     document.body.appendChild(clip);
     yxGhost = clip;
@@ -7806,7 +7829,6 @@ function yxMount(root, html, motion, keep) {
     var host = oldReader || oldApp;
     var rect2 = host.getBoundingClientRect();
     var ghost2 = host.cloneNode(true);
-    yxFreeze(host, ghost2);
     yxStrip(ghost2);
     ghost2.classList.add("yx-clip", "yx-full", "yx-out", "yx-out-" + motion);
     ghost2.style.top = "0px";
@@ -7985,6 +8007,8 @@ function paint() {
   yxMotion = "none";
   if (!same) yxMotion = yxKind(lastRoute, r);
   else if (gForceTop) yxMotion = "fade";
+  if (yxHeavy(lastRoute) || yxHeavy(r)) yxMotion = "none";
+  else if ((yxMotion === "push" || yxMotion === "pop") && window.scrollY > 24) yxMotion = "fade";
   if ((r === "/citats" || r === "/citats/") && !same) citatOrder = null;
   var chipsNow = document.querySelector(".chips");
   if (chipsNow) chipMap[lastRoute] = chipsNow.scrollLeft;

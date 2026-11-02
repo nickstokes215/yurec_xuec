@@ -480,8 +480,8 @@
     var pauseBtn = document.createElement("button");
     pauseBtn.type = "button";
     pauseBtn.className = "av-pause";
-    pauseBtn.hidden = true;
     pauseBtn.textContent = "ПАУЗА";
+    pauseBtn.setAttribute("aria-label", "Пауза");
     head.appendChild(pauseBtn);
     var titleTaps = 0;
     var titleTapAt = 0;
@@ -978,9 +978,10 @@
       var live = phase !== "menu" && phase !== "over";
       if (!live) paused = false;
       if (pauseBtn) {
-        pauseBtn.hidden = !live;
+        pauseBtn.hidden = false;
+        pauseBtn.removeAttribute("hidden");
         pauseBtn.textContent = "ПАУЗА";
-        pauseBtn.classList.toggle("is-on", !!paused);
+        pauseBtn.classList.toggle("is-on", !!(paused && live));
       }
       if (pauseVeil) pauseVeil.hidden = !paused;
     }

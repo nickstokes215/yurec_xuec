@@ -19,7 +19,7 @@ import {
   Users,
   Trophy,
 } from "lucide-react";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef } from "react";
 import { FireworksHost } from "@/components/fireworks";
 import { RainHost } from "@/components/rain";
 import { StarfallHost } from "@/components/starfall";
@@ -74,10 +74,16 @@ function yxTab(p: string) {
   return YX_TABS.find((r) => r !== "/" && (p === r || p.startsWith(`${r}/`))) || "";
 }
 
+function yxGame(p: string) {
+  return p === "/game" || p.startsWith("/game/");
+}
+
 function yxRouteKind(from: string, to: string) {
   const a = yxNorm(from);
   const b = yxNorm(to);
   if (!a || a === b) return "none";
+  // Холст и лица уровней в WebView замирают, если предок сдвинут. Игры — без хода.
+  if (yxGame(a) || yxGame(b)) return "none";
   if (a.startsWith("/story/") && !b.startsWith("/story/")) return "pop";
   if (b.startsWith("/story/") && !a.startsWith("/story/")) return "push";
   if (a.startsWith("/story/") && b.startsWith("/story/")) return "fade";
@@ -244,12 +250,39 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   const navFx = useRef({ path: pathname, motion: "none" });
+  const stageRef = useRef<HTMLDivElement>(null);
   if (navFx.current.path !== pathname) {
     const from = navFx.current.path;
     const reduce = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     navFx.current = { path: pathname, motion: reduce ? "none" : yxRouteKind(from, pathname) };
   }
-  const yxPlay = navFx.current.motion === "none" ? "" : navFx.current.motion;
+  useLayoutEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const kill = ["yx-play-push", "yx-play-pop", "yx-play-tab", "yx-play-fade"];
+    const clear = () => {
+      kill.forEach((c) => el.classList.remove(c));
+      el.style.transform = "";
+      el.style.opacity = "";
+    };
+    const motion = navFx.current.motion;
+    clear();
+    if (!motion || motion === "none") return;
+    void el.offsetWidth;
+    const cls = `yx-play-${motion}`;
+    el.classList.add(cls);
+    const done = (ev: AnimationEvent) => {
+      if (ev.target !== el) return;
+      clear();
+    };
+    el.addEventListener("animationend", done);
+    const timer = window.setTimeout(clear, 480);
+    return () => {
+      window.clearTimeout(timer);
+      el.removeEventListener("animationend", done);
+      clear();
+    };
+  }, [pathname]);
 
   return (
     <div className="min-h-dvh bg-void">
@@ -314,10 +347,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="relative flex min-h-0 flex-1 flex-col overflow-x-clip">
           <div
-            key={pathname}
+            ref={stageRef}
             className={cn(
               "yx-stage min-h-0 flex-1",
-              yxPlay && `yx-play-${yxPlay}`,
               isChat && "flex flex-col overflow-hidden",
               !hideChrome && !hideDock && (isMedia ? "pb-[8.5rem]" : isChat ? "pb-0" : "pb-20"),
             )}
