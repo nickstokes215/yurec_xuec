@@ -127,7 +127,7 @@
       scoreBg: "#2a3544",
       scoreFg: "#e8c36a",
       face: "batya",
-      ball: 460, ai: 520, err: 8, delay: 0.04, accel: 1.05, max: 720, playerR: 46, aiR: 52,
+      ball: 460, ai: 340, err: 28, delay: 0.22, accel: 1.045, max: 700, playerR: 46, aiR: 52,
       predict: true, gun: true,
       score: [
         "Сынок, ты дебил клинический, бля!",
@@ -303,7 +303,7 @@
     lvlRow("1", "Повар шавермы", "До пяти. Колобок с гриля, медленный, зевает. Разогрев. Касса не прощает скидку, лаваш не броня.") +
     lvlRow("2", "Лысый хер", "До пяти. Фараон «Олимпика». Быстрее повара, почти не промахивается. В кабинете ты никто, пока не забьёшь пятый.") +
     lvlRow("3", "Бабка-ящер", "До пяти. Зинаида с языком, читает шар, но зевает. После твоих четырёх голов достаёт половник — шире бьёт, не на весь двор. Закрыть можно и без пилюль.") +
-    lvlRow("4", "Батя", "Секрет после ящера. До пяти. Раз в четырнадцать секунд — два заряда, не прицельная очередь. Кого задело — сгорает, ворота пустые. Тяжелее бабки, но закрывается.") +
+    lvlRow("4", "Батя", "Секрет после ящера. До пяти. Раз в четырнадцать секунд — от двух до пяти зарядов, не прицельная очередь. Кого задело — сгорает, ворота пустые. Тяжелее бабки, но закрывается.") +
     lvlRow("5", "Светлана", "Секрет после бати. До двух. Помойка раз в десять секунд, почти не зевает. Выиграть трудно. Награда — поцелуй.") +
     lvlRow("6", "Костя", "Зеркало после Светки. Ты снизу уже Костя, сверху Юрец. Режим бога: пилюли кнопками под кортом. До пяти. На четырёх очках Юрец зовёт ящера вдвоём. Счёт любой — Юрец всё равно легенда Шотмана.") +
     '<p class="av-man-foot">Методичка врёт меньше, чем Юрец. Дальше — сам.</p>';
@@ -1700,10 +1700,11 @@
     }
 
     function batyaBurst() {
-      var i, spread;
+      var i, n, spread;
       say(pick(cfg.score));
-      for (i = 0; i < 2; i++) {
-        spread = (i - 0.5) * 150;
+      n = 2 + Math.floor(Math.random() * 4);
+      for (i = 0; i < n; i++) {
+        spread = (i - (n - 1) / 2) * 120;
         pellets.push({
           x: babka.x,
           y: babka.y + babka.r * 0.5,
@@ -2013,9 +2014,14 @@
         }
         var aiWant = aiTarget;
         if (phase === "serve" && serveFor !== "yurec") aiWant = W / 2 + Math.sin(last * 0.002) * 30;
-        var aiStep = cfg.ai * dt;
-        var adx = clamp(aiWant - babka.x, -aiStep, aiStep);
-        babka.x = clamp(babka.x + adx, babka.r * 0.85, W - babka.r * 0.85);
+        if (cfg.gun) {
+          var glide = 1 - Math.exp(-3.6 * dt);
+          babka.x = clamp(babka.x + (aiWant - babka.x) * glide, babka.r * 0.85, W - babka.r * 0.85);
+        } else {
+          var aiStep = cfg.ai * dt;
+          var adx = clamp(aiWant - babka.x, -aiStep, aiStep);
+          babka.x = clamp(babka.x + adx, babka.r * 0.85, W - babka.r * 0.85);
+        }
         babka.vx = (babka.x - prev) / dt;
         if (cfg.tongue && phase === "play" && threat && threat.vy < 0 && Math.abs(threat.x - babka.x) > babka.r * 0.7 && threat.y < NET * 0.7) {
           babka.tongue = 1;
@@ -2645,6 +2651,9 @@
       var rect = canvas.getBoundingClientRect();
       return clamp((e.clientY - rect.top) * (H / rect.height), 0, H);
     }
+    function inFaceZone(y) {
+      return y >= yurec.y - yurec.r * 1.15;
+    }
 
     function onDown(e) {
       if (paused) return;
@@ -2656,7 +2665,7 @@
       if (fired === "shot") { fireShot("yurec"); return; }
       if (fired === "laser") { fireLaser("yurec"); return; }
       if (stunY > 0) return;
-      if (phase === "serve" && serveFor === "yurec") launch();
+      if (phase === "serve" && serveFor === "yurec" && !inFaceZone(ey)) launch();
     }
     function onMove(e) {
       if (e.cancelable) e.preventDefault();

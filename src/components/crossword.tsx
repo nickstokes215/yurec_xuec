@@ -96,10 +96,25 @@ function goldLetters(data: CrosswordData, fill: Fill) {
   return letters.slice().sort((a, b) => a.localeCompare(b, "ru"));
 }
 
+function hintKey(id: string) {
+  return `yurec-cw-hint:${id}`;
+}
+
+function readHint(id: string) {
+  const raw = readJson<{ cap?: number; used?: number } | null>(hintKey(id), null);
+  if (raw && raw.cap && raw.cap >= 5 && raw.cap <= 7 && (raw.used || 0) >= 0) {
+    return { cap: raw.cap, used: Math.min(raw.used || 0, raw.cap) };
+  }
+  const bag = { cap: 5 + Math.floor(Math.random() * 3), used: 0 };
+  writeJson(hintKey(id), bag);
+  return bag;
+}
+
 function wipeCrosswordStorage(id: string) {
   try {
     localStorage.removeItem(fillStoreKey(id));
     localStorage.removeItem(secretStoreKey(id));
+    localStorage.removeItem(hintKey(id));
     clearCrosswordTimer(id);
     if (id === "crossword") {
       localStorage.removeItem(LEGACY_FILL);
@@ -274,6 +289,7 @@ function CrosswordPlay({
   const secretKey = secretStoreKey(data.id);
   const grid = useMemo(() => buildCrosswordGrid(data), [data]);
   const [fill, setFill] = useState<Fill>(() => readJson<Fill>(fillKey, {}));
+  const [hint, setHint] = useState(() => readHint(data.id));
   const [secret, setSecret] = useState(() => {
     const raw = readJson<string[]>(secretKey, emptySecret(data));
     return raw.length === data.secret.length ? raw : emptySecret(data);
@@ -402,6 +418,27 @@ function CrosswordPlay({
     onWin();
   }
 
+  function revealHint() {
+    if (hint.used >= hint.cap) return;
+    const pool: { r: number; c: number; ch: string }[] = [];
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        const cell = grid[r][c];
+        if (!cell) continue;
+        if (fill[cellKey(r, c)] === cell.ch) continue;
+        pool.push({ r, c, ch: cell.ch });
+      }
+    }
+    if (!pool.length) return;
+    const pick = pool[Math.floor(Math.random() * pool.length)]!;
+    const next = { ...fill, [cellKey(pick.r, pick.c)]: pick.ch };
+    setFill(next);
+    writeJson(fillKey, next);
+    const bag = { cap: hint.cap, used: hint.used + 1 };
+    setHint(bag);
+    writeJson(hintKey(data.id), bag);
+  }
+
   function applyCheat() {
     if (!matchCheat(cheatVal)) {
       setCheatErr(true);
@@ -438,6 +475,17 @@ function CrosswordPlay({
       </p>
 
       <div className="xwrap mt-4">
+      <div className="xhelp-row">
+        <button
+          type="button"
+          className="xhelp"
+          disabled={hint.used >= hint.cap}
+          aria-label="Подсказка"
+          onClick={revealHint}
+        >
+          ? {Math.max(0, hint.cap - hint.used)}
+        </button>
+      </div>
       <div
         className={cn("xgrid", data.cols >= 12 && "xgrid-dense")}
         style={{ gridTemplateColumns: `repeat(${data.cols}, minmax(0, 1fr))` }}

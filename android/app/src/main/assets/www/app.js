@@ -137,6 +137,7 @@ var wipeBakAsk = false;
 var wipeChatAsk = false;
 var bakNote = "";
 var widgetNote = "";
+var settingsQuery = "";
 var notesNote = "";
 var bakErr = "";
 var OFFLINE = { items: [], cached: {}, prog: {}, err: {}, busy: "" };
@@ -1415,211 +1416,465 @@ function maybeShout() {
   var timer = setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 10000);
   document.body.appendChild(b);
 }
+function readPostcard() {
+  var d = { on: true, font: "random", textMode: "day", customText: "", image: "speaker", customImage: "", format: "jpg", path: "Yurec_Xuec", paper: "random", pattern: "random", roll: 1 };
+  try {
+    var o = JSON.parse(localStorage.getItem("yurec-postcard") || "null");
+    if (o && typeof o === "object") {
+      if (o.on === false) d.on = false;
+      if (o.font) d.font = o.font;
+      if (o.textMode === "custom" || o.textMode === "day") d.textMode = o.textMode;
+      if (typeof o.customText === "string") d.customText = String(o.customText).slice(0, 280);
+      if (o.image === "speaker" || o.image === "yurec" || o.image === "custom" || o.image === "none") d.image = o.image;
+      if (typeof o.customImage === "string" && o.customImage.indexOf("data:image/") === 0) d.customImage = o.customImage;
+      if (o.format === "png" || o.format === "jpg") d.format = o.format;
+      if (typeof o.path === "string") d.path = cleanPostPath(o.path);
+      if (o.paper) d.paper = o.paper;
+      if (o.pattern) d.pattern = o.pattern;
+      if (o.roll > 0) d.roll = Math.floor(o.roll);
+    }
+  } catch (e) {}
+  return d;
+}
+function cleanPostPath(raw) {
+  var s = String(raw || "").replace(/\\/g, "/").trim().replace(/^\/+/, "").replace(/\.\./g, "");
+  s = s.replace(/[^0-9A-Za-zА-Яа-яЁё _./-]/g, "").replace(/\/+/g, "/").replace(/\/$/, "");
+  s = s.slice(0, 80).trim();
+  return s || "Yurec_Xuec";
+}
+function writePostcard(patch) {
+  var d = readPostcard();
+  var k;
+  for (k in patch) if (Object.prototype.hasOwnProperty.call(patch, k)) d[k] = patch[k];
+  d.path = cleanPostPath(d.path);
+  d.customText = String(d.customText || "").slice(0, 280);
+  if (String(d.customImage || "").indexOf("data:image/") !== 0) d.customImage = "";
+  try { localStorage.setItem("yurec-postcard", JSON.stringify(d)); }
+  catch (e) {
+    d.customImage = "";
+    try { localStorage.setItem("yurec-postcard", JSON.stringify(d)); } catch (e2) {}
+  }
+  return d;
+}
+function postFolder(prefs) {
+  return "Pictures/" + cleanPostPath((prefs || readPostcard()).path);
+}
+function postRng(seed) {
+  var s = seed >>> 0 || 1;
+  return function () {
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+function postOne(list, rng) { return list[Math.floor(rng() * list.length)]; }
+function postRound(ctx, x, y, w, h, r) {
+  var rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+function postWrap(ctx, text, max) {
+  var words = String(text || "").split(/\s+/);
+  var lines = [], line = "", i, w, tryLine;
+  for (i = 0; i < words.length; i++) {
+    w = words[i];
+    if (!w) continue;
+    tryLine = line ? line + " " + w : w;
+    if (ctx.measureText(tryLine).width > max && line) { lines.push(line); line = w; }
+    else line = tryLine;
+  }
+  if (line) lines.push(line);
+  return lines.length ? lines : [String(text || "")];
+}
+function postPattern(ctx, name, ink, rng) {
+  var i, x, y;
+  ctx.save();
+  if (name === "stars") {
+    ctx.fillStyle = ink;
+    for (i = 0; i < 42; i++) {
+      ctx.globalAlpha = 0.18 + rng() * 0.45;
+      x = 30 + rng() * 1020; y = 30 + rng() * 1380;
+      ctx.fillRect(x, y, 2, 9);
+      ctx.fillRect(x - 3.5, y + 3.5, 9, 2);
+    }
+  } else if (name === "dust") {
+    ctx.fillStyle = ink;
+    for (i = 0; i < 160; i++) {
+      ctx.globalAlpha = 0.05 + rng() * 0.16;
+      ctx.beginPath();
+      ctx.arc(rng() * 1080, rng() * 1440, 1 + rng() * 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (name === "lines") {
+    ctx.strokeStyle = ink; ctx.globalAlpha = 0.14; ctx.lineWidth = 1;
+    for (y = 90; y < 1380; y += 34) { ctx.beginPath(); ctx.moveTo(80, y); ctx.lineTo(1000, y); ctx.stroke(); }
+  } else if (name === "rain") {
+    ctx.strokeStyle = ink; ctx.globalAlpha = 0.22; ctx.lineWidth = 2;
+    for (i = 0; i < 64; i++) {
+      x = rng() * 1080; y = rng() * 1440;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 16, y + 42); ctx.stroke();
+    }
+  } else if (name === "blots") {
+    ctx.fillStyle = ink;
+    for (i = 0; i < 10; i++) {
+      ctx.globalAlpha = 0.06 + rng() * 0.08;
+      ctx.beginPath();
+      ctx.arc(rng() * 1080, rng() * 1440, 24 + rng() * 80, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (name === "bars") {
+    ctx.fillStyle = ink; ctx.globalAlpha = 0.08;
+    for (i = 0; i < 7; i++) ctx.fillRect(0, rng() * 1440, 1080, 6 + rng() * 16);
+  } else if (name === "sun") {
+    ctx.fillStyle = ink; ctx.globalAlpha = 0.12;
+    ctx.beginPath(); ctx.arc(860, 240, 170, 0, Math.PI * 2); ctx.fill();
+  } else if (name === "grid") {
+    ctx.strokeStyle = ink; ctx.globalAlpha = 0.1; ctx.lineWidth = 2;
+    for (i = -6; i < 16; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * 100, 0); ctx.lineTo(i * 100 + 640, 1440);
+      ctx.moveTo(i * 100, 1440); ctx.lineTo(i * 100 + 640, 0);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+function postCover(ctx, img, x, y, w, h) {
+  var s = Math.max(w / img.width, h / img.height);
+  var dw = img.width * s, dh = img.height * s;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+function paintPostcard(ctx, img, text, speaker, prefs, seed) {
+  var papers = [
+    { id: "night", a: "#14110c", b: "#3a2a16", ink: "#f6f0e4", mute: "#e8c547", stamp: "#c43b6e" },
+    { id: "chalk", a: "#1a2618", b: "#31422c", ink: "#e7f0d8", mute: "#d5e4c4", stamp: "#e8c547" },
+    { id: "news", a: "#f4ead6", b: "#e2d0ae", ink: "#241910", mute: "#7a2e2e", stamp: "#9a3030" },
+    { id: "rain", a: "#0d2233", b: "#1c4664", ink: "#e8f4fb", mute: "#9ad4ea", stamp: "#e8c547" },
+    { id: "rust", a: "#3b2214", b: "#8a4b28", ink: "#fff4e8", mute: "#f0c27a", stamp: "#1a120c" },
+    { id: "fridge", a: "#d7eef3", b: "#8fb9c6", ink: "#102830", mute: "#14586e", stamp: "#c43b6e" },
+    { id: "soviet", a: "#6d1c28", b: "#2c0c12", ink: "#f8e7c4", mute: "#f0d78c", stamp: "#f4efe4" },
+    { id: "lino", a: "#241c16", b: "#4a3a28", ink: "#f4efe4", mute: "#c9a227", stamp: "#c43b6e" },
+    { id: "night", a: "#12101a", b: "#2c2640", ink: "#f4efe8", mute: "#d8c6f2", stamp: "#e8c547" },
+    { id: "rain", a: "#10211c", b: "#0c1412", ink: "#e7f3ec", mute: "#b7d7c4", stamp: "#c9a227" }
+  ];
+  var fonts = {
+    serif: "italic {s}px Georgia, 'Times New Roman', serif",
+    mono: "{s}px 'Courier New', monospace",
+    script: "{s}px 'Segoe Print', 'Comic Sans MS', cursive",
+    sans: "700 {s}px sans-serif",
+    book: "italic 600 {s}px Palatino, Georgia, serif"
+  };
+  var patterns = ["stars", "dust", "lines", "rain", "blots", "bars", "sun", "grid", "quiet"];
+  var rng = postRng(seed);
+  var pool = [], i;
+  if (prefs.paper && prefs.paper !== "random") {
+    for (i = 0; i < papers.length; i++) if (papers[i].id === prefs.paper) pool.push(papers[i]);
+  }
+  if (!pool.length) pool = papers;
+  var paper = postOne(pool, rng);
+  var pattern = (!prefs.pattern || prefs.pattern === "random") ? postOne(patterns, rng) : prefs.pattern;
+  var fontKey = (!prefs.font || prefs.font === "random") ? postOne(["serif", "book", "script", "mono", "sans"], rng) : prefs.font;
+  if (!fonts[fontKey]) fontKey = "serif";
+  var ang = rng() * Math.PI * 2;
+  var g = ctx.createLinearGradient(540 - Math.cos(ang) * 800, 720 - Math.sin(ang) * 900, 540 + Math.cos(ang) * 800, 720 + Math.sin(ang) * 900);
+  g.addColorStop(0, paper.a); g.addColorStop(1, paper.b);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 1080, 1440);
+  postPattern(ctx, pattern, paper.ink, rng);
+  var vig = ctx.createRadialGradient(540, 700, 380, 540, 720, 980);
+  vig.addColorStop(0, "rgba(0,0,0,0)"); vig.addColorStop(1, "rgba(0,0,0,0.22)");
+  ctx.fillStyle = vig; ctx.fillRect(0, 0, 1080, 1440);
+  ctx.strokeStyle = paper.mute; ctx.lineWidth = 8; ctx.strokeRect(40, 40, 1000, 1360);
+  if (rng() < 0.55) { ctx.lineWidth = 2; ctx.strokeRect(58, 58, 964, 1324); }
+  var photoX = 120, photoW = 840, photoY = 168, photoH = 500, hasImg = !!img;
+  if (hasImg) {
+    ctx.save(); postRound(ctx, photoX, photoY, photoW, photoH, 28); ctx.clip();
+    postCover(ctx, img, photoX, photoY, photoW, photoH); ctx.restore();
+    ctx.strokeStyle = paper.mute; ctx.lineWidth = 8;
+    postRound(ctx, photoX, photoY, photoW, photoH, 28); ctx.stroke();
+  }
+  ctx.save();
+  ctx.translate(hasImg ? 900 : 880, hasImg ? 230 : 250);
+  ctx.rotate(-0.18 + rng() * 0.28);
+  ctx.beginPath(); ctx.arc(0, 0, 78, 0, Math.PI * 2);
+  ctx.strokeStyle = paper.stamp; ctx.lineWidth = 6; ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, 64, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = paper.stamp; ctx.textAlign = "center";
+  ctx.font = "700 22px sans-serif"; ctx.fillText("ШОТМАН", 0, 4);
+  ctx.font = "600 13px sans-serif";
+  ctx.fillText(postOne(["НЕВСКИЙ", "ДВОР", "ОРЁТ", "147", String(new Date().getFullYear())], rng), 0, 24);
+  ctx.restore();
+  var zoneTop = hasImg ? 760 : 300;
+  var zoneH = hasImg ? 500 : 900;
+  var maxW = 840;
+  var quoted = "«" + String(text || "").trim() + "»";
+  var fontTpl = fonts[fontKey];
+  var maxSize = hasImg ? 72 : 96;
+  var minSize = 32;
+  var size, lines, step;
+  for (size = maxSize; size >= minSize; size -= 2) {
+    ctx.font = fontTpl.replace("{s}", String(size));
+    lines = postWrap(ctx, quoted, maxW);
+    step = Math.round(size * 1.28);
+    if (lines.length <= 7 && lines.length * step <= zoneH - 36) break;
+  }
+  var block = lines.length * step;
+  var plateH = Math.min(zoneH, Math.max(block + 88, hasImg ? 340 : block + 72));
+  var plateY = hasImg ? zoneTop : zoneTop + Math.max(0, (zoneH - plateH) / 2);
+  ctx.save(); ctx.globalAlpha = 0.82; ctx.fillStyle = paper.a;
+  postRound(ctx, photoX, plateY, photoW, plateH, 28); ctx.fill(); ctx.restore();
+  ctx.strokeStyle = paper.mute; ctx.globalAlpha = 0.55; ctx.lineWidth = 2;
+  postRound(ctx, photoX, plateY, photoW, plateH, 28); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = paper.mute; ctx.textAlign = "center";
+  ctx.font = "600 26px sans-serif";
+  ctx.fillText(String(speaker || "Юрец").toUpperCase(), 540, plateY + 48);
+  ctx.fillStyle = paper.ink;
+  ctx.font = fontTpl.replace("{s}", String(size));
+  var textTop = plateY + 48 + Math.max(28, (plateH - 48 - block) / 2) + size;
+  for (i = 0; i < lines.length; i++) ctx.fillText(lines[i], 540, textTop + i * step);
+  ctx.fillStyle = paper.mute;
+  ctx.font = "600 22px sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("Жизнь Юрца", 96, 1368);
+}
+function charPhotoSrc(id) {
+  var i;
+  for (i = 0; i < CHARACTERS.length; i++) {
+    if (CHARACTERS[i].id === id && CHARACTERS[i].photo) return photoSrc(CHARACTERS[i].photo);
+  }
+  return "";
+}
+function postImageSrc(prefs, speakerId) {
+  if (prefs.image === "none") return "";
+  if (prefs.image === "custom") return prefs.customImage || "";
+  if (prefs.image === "yurec") return charPhotoSrc("yurec");
+  return charPhotoSrc(speakerId) || charPhotoSrc("yurec");
+}
+function postBody(prefs, dayText) {
+  if (prefs.textMode === "custom" && String(prefs.customText || "").trim()) return String(prefs.customText).trim();
+  return dayText;
+}
+function shrinkPostFile(file, done) {
+  var reader = new FileReader();
+  reader.onload = function () {
+    var im = new Image();
+    im.onload = function () {
+      var max = 720;
+      var s = Math.min(1, max / Math.max(im.width, im.height));
+      var c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(im.width * s));
+      c.height = Math.max(1, Math.round(im.height * s));
+      var x = c.getContext("2d");
+      if (!x) { done(""); return; }
+      x.drawImage(im, 0, 0, c.width, c.height);
+      done(c.toDataURL("image/jpeg", 0.82));
+    };
+    im.onerror = function () { done(""); };
+    im.src = String(reader.result || "");
+  };
+  reader.onerror = function () { done(""); };
+  reader.readAsDataURL(file);
+}
+function drawPostPreview() {
+  var canvas = document.getElementById("post-preview");
+  if (!canvas || !canvas.getContext) return;
+  var prefs = readPostcard();
+  canvas.width = 1080;
+  canvas.height = 1440;
+  var ctx = canvas.getContext("2d");
+  var body = postBody(prefs, "Двор орёт, а Юрец уже в подъезде. Кто не верит — пусть сам послушает.");
+  var src = postImageSrc(prefs, "yurec");
+  function go(img) { paintPostcard(ctx, img, body, "Юрец", prefs, (prefs.roll * 10007 + 3) >>> 0); }
+  if (!src) { go(null); return; }
+  var im = new Image();
+  im.onload = function () { go(im); };
+  im.onerror = function () { go(null); };
+  im.src = src;
+}
+function postChip(key, val, label, cur) {
+  return '<button type="button" class="post-chip' + (cur === val ? " on" : "") + '" data-post="' + key + '" data-val="' + val + '">' + label + "</button>";
+}
+function postcardSettingsHtml() {
+  var p = readPostcard();
+  var html = '<section class="set-card">' +
+    '<p class="set-head">' + setIco('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 3-3 5 5"/>') + "Открытка</p>" +
+    '<p class="subtle">Цитата дня собирается в карточку. Текст и фото одной ширины. Фон, узор и шрифт можно закрепить или оставить случайными.</p>' +
+    '<button type="button" class="set-switch" data-post="on" role="switch" aria-checked="' + (p.on ? "true" : "false") + '">' +
+      '<span>Режим открытки</span><span class="pill' + (p.on ? " on" : "") + '">' + (p.on ? "включён" : "выключен") + "</span></button>" +
+    (p.on ? "" : '<p class="subtle">Кнопка на сборнике спрятана. Настройки ниже никуда не денутся.</p>') +
+    '<p class="subtle" style="margin-top:14px">Шрифт</p><div class="post-chips">' +
+      postChip("font", "random", "Случайный", p.font) +
+      postChip("font", "serif", "Антиква", p.font) +
+      postChip("font", "book", "Книжный", p.font) +
+      postChip("font", "script", "Рукопись", p.font) +
+      postChip("font", "mono", "Машинопись", p.font) +
+      postChip("font", "sans", "Гротеск", p.font) +
+    "</div>" +
+    '<p class="subtle" style="margin-top:14px">Текст</p><div class="post-chips">' +
+      postChip("textMode", "day", "Цитата дня", p.textMode) +
+      postChip("textMode", "custom", "Свой", p.textMode) +
+    "</div>" +
+    (p.textMode === "custom"
+      ? '<textarea id="post-text" class="post-area" maxlength="280" placeholder="Своя фраза на открытку">' + esc(p.customText) + "</textarea>"
+      : '<p class="subtle">Берётся цитата дня. Свой текст подставит то, что напишешь.</p>') +
+    '<p class="subtle" style="margin-top:14px">Картинка</p><div class="post-chips">' +
+      postChip("image", "speaker", "Кто сказал", p.image) +
+      postChip("image", "yurec", "Юрец", p.image) +
+      postChip("image", "custom", "Своя", p.image) +
+      postChip("image", "none", "Без фото", p.image) +
+    "</div>" +
+    (p.image === "custom"
+      ? '<input id="post-file" type="file" accept="image/*" style="display:none" /><button type="button" class="btn wide gold" id="post-file-btn">' + (p.customImage ? "Заменить картинку" : "Выбрать картинку") + "</button>"
+      : "") +
+    '<p class="subtle" style="margin-top:14px">Формат</p><div class="post-chips">' +
+      postChip("format", "jpg", "JPG", p.format) +
+      postChip("format", "png", "PNG", p.format) +
+    "</div>" +
+    '<p class="subtle" style="margin-top:14px">Фон</p><div class="post-chips">' +
+      postChip("paper", "random", "Случайный", p.paper) +
+      postChip("paper", "night", "Ночь", p.paper) +
+      postChip("paper", "chalk", "Мел", p.paper) +
+      postChip("paper", "news", "Газета", p.paper) +
+      postChip("paper", "rain", "Дождь", p.paper) +
+      postChip("paper", "rust", "Ржавчина", p.paper) +
+      postChip("paper", "fridge", "Холодильник", p.paper) +
+      postChip("paper", "soviet", "Советский", p.paper) +
+      postChip("paper", "lino", "Линолеум", p.paper) +
+    "</div>" +
+    '<p class="subtle" style="margin-top:14px">Узор</p><div class="post-chips">' +
+      postChip("pattern", "random", "Случайный", p.pattern) +
+      postChip("pattern", "stars", "Звёзды", p.pattern) +
+      postChip("pattern", "dust", "Пыль", p.pattern) +
+      postChip("pattern", "lines", "Линейка", p.pattern) +
+      postChip("pattern", "rain", "Дождь", p.pattern) +
+      postChip("pattern", "blots", "Пятна", p.pattern) +
+      postChip("pattern", "bars", "Полосы", p.pattern) +
+      postChip("pattern", "sun", "Солнце", p.pattern) +
+      postChip("pattern", "grid", "Клетка", p.pattern) +
+      postChip("pattern", "quiet", "Тихо", p.pattern) +
+    "</div>" +
+    '<p class="subtle" style="margin-top:14px">Папка</p>' +
+    '<p class="subtle">Куда класть в галерее. По умолчанию Pictures/Yurec_Xuec.</p>' +
+    '<input id="post-path" class="post-path" value="' + esc(p.path) + '" />' +
+    '<p class="subtle" id="post-path-lab">' + esc(postFolder(p)) + "</p>" +
+    '<canvas id="post-preview" class="post-preview" width="1080" height="1440"></canvas>' +
+    '<button type="button" class="btn wide gold" data-post="roll">Другой вариант</button>' +
+  "</section>";
+  return html;
+}
+function bindPostcard() {
+  var nodes = document.querySelectorAll("[data-post]");
+  var i;
+  for (i = 0; i < nodes.length; i++) {
+    nodes[i].addEventListener("click", function () {
+      var key = this.getAttribute("data-post");
+      var val = this.getAttribute("data-val");
+      if (key === "roll") {
+        writePostcard({ roll: (readPostcard().roll || 1) + 1 });
+        drawPostPreview();
+        return;
+      }
+      if (key === "on") {
+        writePostcard({ on: !readPostcard().on });
+        paint();
+        return;
+      }
+      var patch = {};
+      patch[key] = val;
+      writePostcard(patch);
+      paint();
+    });
+  }
+  var area = document.getElementById("post-text");
+  if (area) area.addEventListener("input", function () {
+    writePostcard({ customText: area.value });
+    drawPostPreview();
+  });
+  var path = document.getElementById("post-path");
+  if (path) path.addEventListener("change", function () {
+    var next = writePostcard({ path: path.value });
+    path.value = next.path;
+    var lab = document.getElementById("post-path-lab");
+    if (lab) lab.textContent = postFolder(next);
+  });
+  var file = document.getElementById("post-file");
+  on($("#post-file-btn"), "click", function () { if (file) file.click(); });
+  if (file) file.addEventListener("change", function () {
+    var f = file.files && file.files[0];
+    file.value = "";
+    if (!f) return;
+    shrinkPostFile(f, function (url) {
+      if (!url) return;
+      writePostcard({ customImage: url, image: "custom" });
+      paint();
+    });
+  });
+  drawPostPreview();
+}
 function sharePostcard(text, speaker, speakerId, done) {
+  var prefs = readPostcard();
+  var folder = postFolder(prefs);
+  if (!prefs.on) { if (done) done("off"); return; }
   var canvas = document.createElement("canvas");
   canvas.width = 1080;
   canvas.height = 1440;
   var ctx = canvas.getContext("2d");
-  if (!ctx) return;
-  var papers = [
-    { a: "#14110c", b: "#3a2a16", ink: "#f6f0e4", mute: "#e8c547", stamp: "#c43b6e", kind: "night" },
-    { a: "#1a2618", b: "#31422c", ink: "#e7f0d8", mute: "#d5e4c4", stamp: "#e8c547", kind: "chalk" },
-    { a: "#f4ead6", b: "#e2d0ae", ink: "#241910", mute: "#7a2e2e", stamp: "#9a3030", kind: "news" },
-    { a: "#0d2233", b: "#1c4664", ink: "#e8f4fb", mute: "#9ad4ea", stamp: "#e8c547", kind: "rain" },
-    { a: "#3b2214", b: "#8a4b28", ink: "#fff4e8", mute: "#f0c27a", stamp: "#1a120c", kind: "rust" },
-    { a: "#d7eef3", b: "#8fb9c6", ink: "#102830", mute: "#14586e", stamp: "#c43b6e", kind: "fridge" },
-    { a: "#6d1c28", b: "#2c0c12", ink: "#f8e7c4", mute: "#f0d78c", stamp: "#f4efe4", kind: "soviet" },
-    { a: "#241c16", b: "#4a3a28", ink: "#f4efe4", mute: "#c9a227", stamp: "#c43b6e", kind: "lino" },
-    { a: "#12101a", b: "#2c2640", ink: "#f4efe8", mute: "#d8c6f2", stamp: "#e8c547", kind: "night" },
-    { a: "#10211c", b: "#0c1412", ink: "#e7f3ec", mute: "#b7d7c4", stamp: "#c9a227", kind: "rain" }
-  ];
-  var fonts = [
-    "italic {s}px Georgia, 'Times New Roman', serif",
-    "{s}px 'Courier New', monospace",
-    "italic {s}px Palatino, Georgia, serif",
-    "{s}px 'Segoe Print', 'Comic Sans MS', cursive",
-    "700 {s}px sans-serif",
-    "italic 600 {s}px Georgia, serif",
-    "{s}px sans-serif"
-  ];
-  function one(list) { return list[Math.floor(Math.random() * list.length)]; }
-  function paint(img) {
-    var paper = one(papers);
-    var layout = Math.floor(Math.random() * 3);
-    var ang = Math.random() * Math.PI * 2;
-    var g = ctx.createLinearGradient(540 - Math.cos(ang) * 800, 720 - Math.sin(ang) * 900, 540 + Math.cos(ang) * 800, 720 + Math.sin(ang) * 900);
-    g.addColorStop(0, paper.a);
-    g.addColorStop(1, paper.b);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 1080, 1440);
-    ctx.save();
-    var i;
-    if (paper.kind === "night") {
-      ctx.fillStyle = paper.mute;
-      for (i = 0; i < 48; i++) {
-        ctx.globalAlpha = 0.25 + Math.random() * 0.6;
-        var x = 40 + Math.random() * 1000, y = 40 + Math.random() * 1360;
-        ctx.fillRect(x, y, 2, 8);
-        ctx.fillRect(x - 3, y + 3, 8, 2);
-      }
-    } else if (paper.kind === "chalk") {
-      ctx.fillStyle = "#f4f7ee";
-      for (i = 0; i < 180; i++) {
-        ctx.globalAlpha = 0.05 + Math.random() * 0.18;
-        ctx.beginPath();
-        ctx.arc(Math.random() * 1080, Math.random() * 1440, 1 + Math.random() * 3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else if (paper.kind === "news") {
-      ctx.strokeStyle = "rgba(36,25,16,.18)";
-      ctx.lineWidth = 1;
-      for (var hy = 80; hy < 1400; hy += 36) { ctx.beginPath(); ctx.moveTo(70, hy); ctx.lineTo(1010, hy); ctx.stroke(); }
-    } else if (paper.kind === "rain") {
-      ctx.strokeStyle = "rgba(232,244,251,.28)";
-      ctx.lineWidth = 2;
-      for (i = 0; i < 70; i++) {
-        var rx = Math.random() * 1080, ry = Math.random() * 1440;
-        ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 18, ry + 46); ctx.stroke();
-      }
-    } else if (paper.kind === "rust") {
-      ctx.fillStyle = "rgba(90,40,16,.35)";
-      for (i = 0; i < 14; i++) {
-        ctx.beginPath();
-        ctx.arc(Math.random() * 1080, Math.random() * 1440, 20 + Math.random() * 70, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else if (paper.kind === "fridge") {
-      ctx.fillStyle = "rgba(255,255,255,.35)";
-      for (i = 0; i < 8; i++) ctx.fillRect(0, Math.random() * 1440, 1080, 8 + Math.random() * 22);
-    } else if (paper.kind === "soviet") {
-      ctx.fillStyle = "rgba(248,231,196,.12)";
-      ctx.beginPath(); ctx.arc(860, 220, 180, 0, Math.PI * 2); ctx.fill();
-    } else {
-      ctx.strokeStyle = "rgba(244,239,228,.12)";
-      ctx.lineWidth = 2;
-      for (i = -8; i < 18; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * 90, 0); ctx.lineTo(i * 90 + 700, 1440);
-        ctx.moveTo(i * 90, 1440); ctx.lineTo(i * 90 + 700, 0);
-        ctx.stroke();
-      }
-    }
-    ctx.restore();
-    ctx.strokeStyle = paper.mute;
-    ctx.lineWidth = layout === 1 ? 4 : 10;
-    if (layout !== 2) ctx.strokeRect(46, 46, 988, 1348);
-    function stampAt(sx, sy) {
-      var sub = one(["НЕВСКИЙ", "ДВОР", "ОРЁТ", "147", String(new Date().getFullYear())]);
-      ctx.save();
-      ctx.translate(sx, sy);
-      ctx.rotate(-0.4 + Math.random() * 0.5);
-      ctx.beginPath(); ctx.arc(0, 0, 108, 0, Math.PI * 2);
-      ctx.strokeStyle = paper.stamp; ctx.lineWidth = 7; ctx.stroke();
-      ctx.beginPath(); ctx.arc(0, 0, 90, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = paper.stamp; ctx.textAlign = "center";
-      ctx.font = "700 32px sans-serif"; ctx.fillText("ШОТМАН", 0, 6);
-      ctx.font = "600 16px sans-serif"; ctx.fillText(sub, 0, 34);
-      ctx.restore();
-    }
-    function cover(im, x, y, size) {
-      var s = Math.max(size / im.width, size / im.height);
-      var w = im.width * s, h = im.height * s;
-      ctx.drawImage(im, x + (size - w) / 2, y + (size - h) / 2, w, h);
-    }
-    var quoteX = 540, quoteMax = 860, quoteTop = 620;
-    if (img && layout === 0) {
-      ctx.save(); ctx.beginPath(); ctx.arc(540, 330, 156, 0, Math.PI * 2); ctx.clip(); cover(img, 384, 174, 312); ctx.restore();
-      ctx.beginPath(); ctx.arc(540, 330, 156, 0, Math.PI * 2); ctx.strokeStyle = paper.mute; ctx.lineWidth = 8; ctx.stroke();
-      stampAt(820, 1180);
-    } else if (img && layout === 1) {
-      ctx.save(); ctx.translate(780, 250); ctx.rotate(-0.08);
-      ctx.fillStyle = paper.ink; ctx.fillRect(-8, -8, 236, 276);
-      ctx.beginPath(); ctx.rect(0, 0, 220, 260); ctx.clip(); cover(img, 0, 0, 220); ctx.restore();
-      quoteX = 500; quoteMax = 720; quoteTop = 560;
-      stampAt(240, 1180);
-    } else if (img) {
-      ctx.fillStyle = paper.mute; ctx.fillRect(0, 0, 86, 1440);
-      ctx.save(); ctx.beginPath(); ctx.arc(220, 360, 130, 0, Math.PI * 2); ctx.clip(); cover(img, 90, 230, 260); ctx.restore();
-      ctx.beginPath(); ctx.arc(220, 360, 130, 0, Math.PI * 2); ctx.strokeStyle = paper.ink; ctx.lineWidth = 6; ctx.stroke();
-      quoteX = 680; quoteMax = 620; quoteTop = 560;
-      stampAt(860, 1200);
-    } else {
-      stampAt(Math.random() < 0.5 ? 240 : 820, 1180);
-      quoteTop = 480;
-    }
-    ctx.fillStyle = paper.mute;
-    ctx.font = "600 26px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(String(speaker || "").toUpperCase(), quoteX, quoteTop - 48);
-    var quoted = "«" + text + "»";
-    var fontTpl = one(fonts);
-    var size = text.length > 90 ? 40 : text.length > 50 ? 48 : 56;
-    var lines = [];
-    function wrap(max) {
-      var words = quoted.split(" ");
-      var out = [], line = "", w;
-      for (var n = 0; n < words.length; n++) {
-        w = words[n];
-        var tryLine = line ? line + " " + w : w;
-        if (ctx.measureText(tryLine).width > max && line) { out.push(line); line = w; }
-        else line = tryLine;
-      }
-      if (line) out.push(line);
-      return out;
-    }
-    for (; size >= 28; size -= 2) {
-      ctx.font = fontTpl.replace("{s}", String(size));
-      lines = wrap(quoteMax);
-      if (lines.length <= 8) break;
-    }
-    ctx.fillStyle = paper.ink;
-    ctx.textAlign = "center";
-    var ty = quoteTop, step = size + 16;
-    for (i = 0; i < lines.length && i < 8; i++) { ctx.fillText(lines[i], quoteX, ty); ty += step; }
-    ctx.fillStyle = paper.mute;
-    ctx.font = "600 24px sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText("Жизнь Юрца", layout === 2 ? 140 : 92, 1324);
-    canvas.toBlob(function (blob) {
-      if (!blob) { if (done) done("fail"); return; }
-      var reader = new FileReader();
-      reader.onload = function () {
-        var raw = String(reader.result || "");
-        var b64 = raw.indexOf(",") >= 0 ? raw.split(",")[1] : raw;
-        var saved = false;
+  if (!ctx) { if (done) done("fail"); return; }
+  var body = postBody(prefs, text);
+  var ext = prefs.format === "png" ? "png" : "jpg";
+  var mime = ext === "png" ? "image/png" : "image/jpeg";
+  function finish(blob) {
+    if (!blob) { if (done) done("fail"); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var raw = String(reader.result || "");
+      var b64 = raw.indexOf(",") >= 0 ? raw.split(",")[1] : raw;
+      var saved = false;
+      var meta = JSON.stringify({ folder: cleanPostPath(prefs.path), ext: ext, mime: mime });
+      try {
+        if (window.YurecNative && typeof window.YurecNative.savePostcard === "function") {
+          saved = window.YurecNative.savePostcard(b64, meta) === "ok";
+        }
+      } catch (e) {
         try {
           if (window.YurecNative && typeof window.YurecNative.savePostcard === "function") {
             saved = window.YurecNative.savePostcard(b64) === "ok";
           }
-        } catch (e) {}
-        var file = new File([blob], "shotman-otkrytka.jpg", { type: "image/jpeg" });
-        var shared = false;
-        if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
-          shared = true;
-          navigator.share({ files: [file], title: "Открытка со Шотмана", text: text }).catch(function () {});
-        } else if (!saved) {
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement("a");
-          a.href = url;
-          a.download = "shotman-otkrytka.jpg";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
-        }
-        if (done) done(saved ? "gallery" : shared ? "shared" : "file");
-      };
-      reader.readAsDataURL(blob);
-    }, "image/jpeg", 0.92);
+        } catch (e2) {}
+      }
+      var file = new File([blob], "shotman-otkrytka." + ext, { type: mime });
+      var shared = false;
+      if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+        shared = true;
+        navigator.share({ files: [file], title: "Открытка со Шотмана", text: body }).catch(function () {});
+      } else if (!saved) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "shotman-otkrytka." + ext;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      }
+      if (done) done(saved ? "gallery" : shared ? "shared" : "file");
+    };
+    reader.readAsDataURL(blob);
   }
-  var ch = null, ci;
-  for (ci = 0; ci < CHARACTERS.length; ci++) if (CHARACTERS[ci].id === speakerId) ch = CHARACTERS[ci];
-  if (ch && ch.photo) {
-    var im = new Image();
-    im.onload = function () { paint(im); };
-    im.onerror = function () { paint(null); };
-    im.src = photoSrc(ch.photo);
-  } else paint(null);
+  function paint(img) {
+    paintPostcard(ctx, img, body, speaker, prefs, (Date.now() ^ (prefs.roll * 997)) >>> 0);
+    canvas.toBlob(finish, mime, ext === "png" ? undefined : 0.92);
+  }
+  var src = postImageSrc(prefs, speakerId);
+  if (!src) { paint(null); return; }
+  var im = new Image();
+  im.onload = function () { paint(im); };
+  im.onerror = function () { paint(null); };
+  im.src = src;
 }
 function playWalkVoice(src) {
   try { if (localStorage.getItem("yurec-sound") === "0") return; } catch (e) {}
@@ -1679,8 +1934,11 @@ function renderHome() {
         '<div class="kicker">Цитата дня</div>' +
         '<p class="quote-text">«' + esc(qd.text) + '»</p>' +
         '<p class="subtle">' + esc(qd.speaker) + " · " + CITATS.length + " в цитатнике</p></a>" +
-        '<button type="button" class="post-link" id="post-day" data-txt="' + esc(qd.text) + '" data-who="' + esc(qd.speaker) + '" data-id="' + esc(qd.speakerId || "") + '">Открытка</button>' +
-        '<p class="post-note" id="post-note" hidden></p></div>';
+        (readPostcard().on
+          ? '<button type="button" class="post-link" id="post-day" data-txt="' + esc(qd.text) + '" data-who="' + esc(qd.speaker) + '" data-id="' + esc(qd.speakerId || "") + '">Открытка</button>' +
+            '<p class="post-note" id="post-note" hidden></p>'
+          : "") +
+        "</div>";
     }
   }
   if (cont && last && last.percent > 3 && last.percent < 99) {
@@ -3580,6 +3838,11 @@ function renderSettings() {
   var html = '<p class="kicker" style="text-align:center">Приложение</p>' +
     '<h2 style="font-size:28px;margin-top:4px;text-align:center">Настройки</h2>' +
     '<p class="muted" style="margin-top:8px;text-align:center">Тема на весь сборник, письма о багах и пара кнопок, которые нужны автору, а не двору.</p>' +
+    '<section class="set-card" id="set-search">' +
+      '<p class="set-head">' + setIco('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/>') + "Поиск</p>" +
+      '<p class="subtle">Ключевое слово: звук, открытка, читы, виджет. Карточки без этого слова прячутся.</p>' +
+      '<input id="set-q" class="search" placeholder="Найти настройку…" value="' + esc(settingsQuery) + '" />' +
+    "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="17" r="2"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.7-.7 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.5-.7-.5-1.1a1.6 1.6 0 0 1 1.7-1.7h2c3 0 5.5-2.5 5.5-5.5C22 6 17.5 2 12 2z"/>') + "Тема оформления</p>" +
       '<p class="subtle">Светлая — бумага. Тёмная — сумерки. Чёрная — OLED. «Как в системе» слушает телефон.</p>' +
@@ -3591,6 +3854,7 @@ function renderSettings() {
       '<button type="button" class="btn wide' + (choice === "system" ? " on-sys" : " ghost") + '" id="theme-system">Задано системой</button>' +
     "</section>" +
     fontCardHtml() +
+    postcardSettingsHtml() +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>') + "Обучение</p>" +
       '<p class="subtle">Первый запуск сам водит по двору. Потом больше не лезет. Если хочешь ещё раз — кнопка ниже.</p>' +
@@ -3745,9 +4009,9 @@ function renderSettings() {
     (isDev() ?
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M21 2l-2 2m-7.6 7.6L3 21l7.4-8.4M15 9l6-6"/><circle cx="9" cy="9" r="2"/>') + "Чит-коды</p>" +
-      '<p class="subtle">Одно поле на все слова двора. Регистр не важен. «Легенда» — список слов. Без кода разработчика этого блока нет.</p>' +
+      '<p class="subtle">Одно поле на все слова двора. Регистр не важен. «Коды доступа» — список слов. Без кода разработчика этого блока нет.</p>' +
       '<button type="button" class="btn wide gold" id="cheat-admin">Ввести код</button>' +
-      '<button type="button" class="btn wide ghost" id="cheat-book" style="margin-top:8px">Легенда</button>' +
+      '<button type="button" class="btn wide ghost" id="cheat-book" style="margin-top:8px">Коды доступа</button>' +
     "</section>" : "") +
     '<p class="subtle" style="text-align:center;margin-top:28px">Версия ' + esc((APP && APP.version) || "1.65.16") +
     "<br/>Лицензия: " + licenseLabel() + "</p>" +
@@ -4045,7 +4309,7 @@ function openCheatBook() {
         '<p class="hint" style="margin-top:2px">' + esc(CHEAT_BOOK[i][1]) + "</p>";
     }
     el.innerHTML = '<div class="box">' +
-      '<p class="ttl">Легенда</p>' +
+      '<p class="ttl">Коды доступа</p>' +
       '<p class="hint">Слова, которые принимает окно читов. Регистр не важен.</p>' +
       rows +
       '<button type="button" class="btn wide ghost" id="cheat-book-close" style="margin-top:14px">Закрыть</button></div>';
@@ -4066,10 +4330,10 @@ function openLegendLock() {
     el.id = "legend-lock-modal";
     el.className = "modal";
     el.innerHTML = '<form class="box">' +
-      '<p class="ttl">Легенда</p>' +
+      '<p class="ttl">Коды доступа</p>' +
       '<p class="hint">Список слов закрыт. Сначала код разработчика.</p>' +
       '<input id="legend-lock-key" type="text" autocomplete="off" placeholder="код разработчика" />' +
-      '<p class="hint" id="legend-lock-err">Без этого слова легенды нет.</p>' +
+      '<p class="hint" id="legend-lock-err">Без этого слова списка нет.</p>' +
       '<div class="row"><button type="button" class="btn danger" id="legend-lock-cancel">Закрыть</button>' +
       '<button type="submit" class="btn gold">Открыть</button></div></form>';
     document.body.appendChild(el);
@@ -4096,7 +4360,7 @@ function openLegendLock() {
   var inp = document.getElementById("legend-lock-key");
   if (inp) inp.value = "";
   var err = document.getElementById("legend-lock-err");
-  if (err) { err.className = "hint"; err.textContent = "Без этого слова легенды нет."; }
+  if (err) { err.className = "hint"; err.textContent = "Без этого слова списка нет."; }
   el.style.display = "flex";
   lockModal(true);
   window.setTimeout(function () { if (inp) inp.focus(); }, 50);
@@ -4136,6 +4400,35 @@ function bindFontCard() {
   });
 }
 
+function applySettingsFilter() {
+  var q = String(settingsQuery || "").toLowerCase().replace(/^\s+|\s+$/g, "");
+  var cards = document.querySelectorAll(".set-card");
+  var i, card, hay, hide;
+  for (i = 0; i < cards.length; i++) {
+    card = cards[i];
+    if (card.id === "set-search") continue;
+    hay = (card.textContent || "").toLowerCase();
+    hide = !!q && hay.indexOf(q) === -1;
+    if (hide) card.setAttribute("hidden", "");
+    else card.removeAttribute("hidden");
+  }
+  var extras = document.querySelectorAll(".set-rule");
+  for (i = 0; i < extras.length; i++) {
+    hay = (extras[i].textContent || "").toLowerCase();
+    hide = !!q && hay.indexOf(q) === -1;
+    if (hide) extras[i].setAttribute("hidden", "");
+    else extras[i].removeAttribute("hidden");
+  }
+}
+function bindSettingsSearch() {
+  var setQ = document.getElementById("set-q");
+  if (!setQ) return;
+  setQ.addEventListener("input", function () {
+    settingsQuery = setQ.value;
+    applySettingsFilter();
+  });
+  applySettingsFilter();
+}
 function bindSettings() {
   var i, btns = document.querySelectorAll("[data-theme-set]");
   for (i = 0; i < btns.length; i++) {
@@ -4146,6 +4439,8 @@ function bindSettings() {
   }
   on($("#theme-system"), "click", function () { setTheme("system"); paint(); });
   bindFontCard();
+  bindPostcard();
+  bindSettingsSearch();
   on($("#tour-again"), "click", function () {
     go("/");
     window.setTimeout(function () { startTour(true); }, 80);
@@ -5029,10 +5324,39 @@ function cwSave() {
   try { localStorage.setItem(cwFillKey(CW.id), JSON.stringify(cwFill)); } catch (e) {}
   try { localStorage.setItem(cwSecretKey(CW.id), JSON.stringify(cwSecret)); } catch (e) {}
 }
+function cwHintKey(id) { return "yurec-cw-hint:" + id; }
+function cwHintBag() {
+  if (!CW) return { cap: 5, used: 0 };
+  var raw = null;
+  try { raw = JSON.parse(localStorage.getItem(cwHintKey(CW.id)) || "null"); } catch (e) {}
+  if (raw && raw.cap >= 5 && raw.cap <= 7 && raw.used >= 0) return { cap: raw.cap, used: Math.min(raw.used, raw.cap) };
+  raw = { cap: 5 + Math.floor(Math.random() * 3), used: 0 };
+  try { localStorage.setItem(cwHintKey(CW.id), JSON.stringify(raw)); } catch (e2) {}
+  return raw;
+}
+function cwRevealHint() {
+  var bag = cwHintBag();
+  if (bag.used >= bag.cap) return;
+  var g = cwGrid(), pool = [], r, c, cell;
+  for (r = 0; r < g.length; r++) for (c = 0; c < g[r].length; c++) {
+    cell = g[r][c];
+    if (!cell) continue;
+    if (cwFill[cwKey(r, c)] === cell.ch) continue;
+    pool.push({ r: r, c: c, ch: cell.ch });
+  }
+  if (!pool.length) return;
+  var pick = pool[Math.floor(Math.random() * pool.length)];
+  cwFill[cwKey(pick.r, pick.c)] = pick.ch;
+  cwSave();
+  bag.used += 1;
+  try { localStorage.setItem(cwHintKey(CW.id), JSON.stringify(bag)); } catch (e) {}
+  paint();
+}
 function cwWipeStorage(id) {
   try {
     localStorage.removeItem(cwFillKey(id));
     localStorage.removeItem(cwSecretKey(id));
+    localStorage.removeItem(cwHintKey(id));
     localStorage.removeItem(endKey(id));
     if (id === "crossword") {
       localStorage.removeItem("yurec-crossword:fill");
@@ -5233,7 +5557,10 @@ function renderCrossword() {
   var html = '<a class="back" href="#/game/crosswords">← Кроссворды</a>' +
     "<h2 style=\"margin-top:16px\">" + esc(CW.title) + "</h2>" +
     '<p class="subtle">клеток ' + cnt.f + " / " + cnt.n + "</p>" +
-    '<div class="xwrap"><div class="xgrid" id="cw-grid" style="grid-template-columns:repeat(' + CW.cols + ',minmax(0,1fr))">';
+    '<div class="xwrap"><div class="xhelp-row"><button type="button" class="xhelp" id="cw-hint"' +
+    (cwHintBag().used >= cwHintBag().cap ? " disabled" : "") +
+    ' aria-label="Подсказка">? ' + Math.max(0, cwHintBag().cap - cwHintBag().used) + '</button></div>' +
+    '<div class="xgrid" id="cw-grid" style="grid-template-columns:repeat(' + CW.cols + ',minmax(0,1fr))">';
   var r, c, cell, k, cls, done;
   for (r = 0; r < CW.rows; r++) {
     for (c = 0; c < CW.cols; c++) {
@@ -5292,6 +5619,7 @@ function bindCrossword() {
   on($("#cw-again"), "click", function () { cwPhase = "play"; paint(); });
   on($("#cw-wipe"), "click", function () { openWipeModal("crossword"); });
   on($("#cw-cheat"), "click", function () { openCheatModal("cw"); });
+  on($("#cw-hint"), "click", function () { cwRevealHint(); });
   var grid = document.getElementById("cw-grid");
   if (!grid) {
     var z = document.querySelectorAll("[data-zoom]");
@@ -7261,7 +7589,7 @@ function bindHome() {
       post.textContent = "Сделать";
       if (note) {
         note.hidden = false;
-        note.textContent = "На телефоне картинка ложится в галерею, папка Pictures/Yurec_Xuec. С сайта — в загрузки или в «поделиться».";
+        note.textContent = "На телефоне картинка ложится в галерею, папка " + postFolder() + ". С сайта — в загрузки или в «поделиться».";
       }
       return;
     }
@@ -7273,11 +7601,14 @@ function bindHome() {
       post.textContent = "Открытка";
       if (!note) return;
       note.hidden = false;
-      note.textContent = how === "gallery"
-        ? "Лежит в галерее: Pictures/Yurec_Xuec."
-        : how === "shared"
-          ? "Ушла в «поделиться». На телефоне это папка Pictures/Yurec_Xuec."
-          : "Файл скачан. В приложении это папка Pictures/Yurec_Xuec.";
+      var folder = postFolder();
+      note.textContent = how === "off"
+        ? "Открытка выключена в настройках."
+        : how === "gallery"
+          ? "Лежит в галерее: " + folder + "."
+          : how === "shared"
+            ? "Ушла в «поделиться». На телефоне это папка " + folder + "."
+            : "Файл скачан. В приложении это папка " + folder + ".";
     });
   });
   var q = $("#q");

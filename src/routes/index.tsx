@@ -21,6 +21,7 @@ import { CITATS, citatOfDay } from "@/data/citats";
 import { cn } from "@/lib/utils";
 import { openZoom } from "@/lib/zoom";
 import { sharePostcard, yardMorning } from "@/lib/yard-life";
+import { postcardFolder, readPostcard } from "@/lib/postcard";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -95,27 +96,35 @@ function Home() {
   const [cardNote, setCardNote] = useState("");
   const [cardAsk, setCardAsk] = useState(false);
 
+  const postOn = readPostcard().on;
+  const postFolder = postcardFolder();
+
   async function postcard() {
+    if (!postOn) return;
     if (!cardAsk) {
       setCardAsk(true);
       setCardNote(
-        "На телефоне картинка ложится в галерею, папка Pictures/Yurec_Xuec. С сайта — в загрузки или в «поделиться».",
+        "На телефоне картинка ложится в галерею, папка " + postFolder + ". С сайта — в загрузки или в «поделиться».",
       );
       return;
     }
     try {
-      const how = await sharePostcard({
+      const res = await sharePostcard({
         text: dayCitat.text,
         speaker: dayCitat.speaker,
         speakerId: dayCitat.speakerId,
       });
       setCardAsk(false);
+      if (res.how === "off") {
+        setCardNote("Открытки выключены в настройках.");
+        return;
+      }
       setCardNote(
-        how === "gallery"
-          ? "Лежит в галерее: Pictures/Yurec_Xuec."
-          : how === "shared"
-            ? "Ушла в «поделиться». На телефоне это папка Pictures/Yurec_Xuec."
-            : "Файл скачан. В приложении это папка Pictures/Yurec_Xuec.",
+        res.how === "gallery"
+          ? "Лежит в галерее: " + res.folder + "."
+          : res.how === "shared"
+            ? "Ушла в «поделиться». На телефоне это папка " + res.folder + "."
+            : "Файл скачан. В приложении это папка " + res.folder + ".",
       );
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return;
@@ -162,9 +171,11 @@ function Home() {
             {dayCitat.speaker} <span className="text-subtle">· {CITATS.length} в цитатнике</span>
           </p>
         </Link>
-        <button type="button" className="post-link" onClick={() => void postcard()}>
-          {cardAsk ? "Сделать" : "Открытка"}
-        </button>
+        {postOn ? (
+          <button type="button" className="post-link" onClick={() => void postcard()}>
+            {cardAsk ? "Сделать" : "Открытка"}
+          </button>
+        ) : null}
         {cardNote ? <p className="post-note">{cardNote}</p> : null}
       </div>
 

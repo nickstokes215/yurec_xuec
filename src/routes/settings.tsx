@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Bell,
   Bug,
@@ -35,6 +35,18 @@ import {
   GraduationCap,
   KeyRound,
 } from "lucide-react";
+import { ImagePlus } from "lucide-react";
+import {
+  POST_FONTS,
+  POST_PAPERS,
+  POST_PATTERNS,
+  drawPostcardPreview,
+  postcardFolder,
+  readPostcard,
+  shrinkPostcardFile,
+  writePostcard,
+  type PostcardPrefs,
+} from "@/lib/postcard";
 import { APP_VERSION, GITHUB_APK_URL } from "@/data/catalog";
 import { notesAsk, notesHint, notesTest, readNotesClock, setNotesClock } from "@/lib/notes";
 import { useTheme, type ThemeChoice } from "@/lib/use-theme";
@@ -125,11 +137,38 @@ function SettingsPage() {
   const [notesClock, setNotesClockUi] = useState(readNotesClock);
   const [aiNote, setAiNote] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const [setQ, setSetQ] = useState("");
   const navigate = useNavigate();
 
+  useLayoutEffect(() => {
+    const root = mainRef.current;
+    if (!root) return;
+    const q = setQ.trim().toLowerCase();
+    root.querySelectorAll<HTMLElement>("section, [data-set-find]").forEach((el) => {
+      if (el.id === "set-search") return;
+      const text = (el.textContent || "").toLowerCase();
+      el.hidden = Boolean(q) && !text.includes(q);
+    });
+  });
+
   return (
-    <main className="px-4 pt-4 pb-10">
-      <p className="text-center text-[11px] font-medium tracking-[0.16em] text-muted uppercase">Приложение</p>
+    <main ref={mainRef} className="px-4 pt-4 pb-10">
+      <section id="set-search" className="rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+        <p className="text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Поиск</p>
+        <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
+          Ключевое слово: звук, открытка, читы, виджет. Карточки без этого слова прячутся.
+        </p>
+        <input
+          value={setQ}
+          onChange={(e) => setSetQ(e.target.value)}
+          placeholder="Найти настройку…"
+          aria-label="Поиск настроек"
+          className="mt-3 h-12 w-full rounded-2xl bg-elevated px-4 text-center text-sm text-fg outline-none"
+        />
+      </section>
+
+      <p className="mt-6 text-center text-[11px] font-medium tracking-[0.16em] text-muted uppercase">Приложение</p>
       <h2 className="mt-1 text-center font-sans text-2xl font-semibold leading-tight">Настройки</h2>
       <p className="mt-2 text-center text-sm leading-relaxed text-muted">
         Тема на весь сборник, письма о багах и пара кнопок, которые нужны автору, а не двору.
@@ -161,6 +200,7 @@ function SettingsPage() {
       </section>
 
       <FontSizeCard />
+      <PostcardCard />
 
       <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
@@ -834,7 +874,7 @@ function SettingsPage() {
         </Link>
       </section>
 
-      <div className="mt-8 flex items-center gap-3" role="separator">
+      <div className="mt-8 flex items-center gap-3" role="separator" data-set-find>
         <span className="h-px flex-1 bg-border" />
         <span className="inline-flex items-center gap-1.5 text-[11px] font-medium tracking-[0.16em] text-muted uppercase">
           <Shield className="size-3.5" />
@@ -842,7 +882,7 @@ function SettingsPage() {
         </span>
         <span className="h-px flex-1 bg-border" />
       </div>
-      <p className="mt-2 text-center text-[13px] leading-relaxed text-subtle">
+      <p className="mt-2 text-center text-[13px] leading-relaxed text-subtle" data-set-find>
         Предназначено исключительно для разработчика приложения. Здесь быстрые ссылки автора — чужой аккаунт сюда не пустят.
       </p>
 
@@ -880,7 +920,7 @@ function SettingsPage() {
           Чит-коды
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          Одно поле на все слова двора. Регистр не важен. «Легенда» — список слов. Без кода разработчика этого блока нет.
+          Одно поле на все слова двора. Регистр не важен. «Коды доступа» — список слов. Без кода разработчика этого блока нет.
         </p>
         <button
           type="button"
@@ -894,7 +934,7 @@ function SettingsPage() {
           onClick={() => setBookOpen(true)}
           className="mt-2 flex h-11 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
         >
-          Легенда
+          Коды доступа
         </button>
       </section>
       ) : null}
@@ -933,6 +973,186 @@ function SettingsPage() {
       ) : null}
       {dev.on && bookOpen ? <CheatBookModal onClose={() => setBookOpen(false)} /> : null}
     </main>
+  );
+}
+
+function Chip({
+  on,
+  label,
+  click,
+}: {
+  on: boolean;
+  label: string;
+  click: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={click}
+      className={cn(
+        "h-9 rounded-full px-3 text-xs font-medium",
+        on ? "bg-accent text-accent-fg" : "bg-elevated text-fg",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function PostcardCard() {
+  const [post, setPost] = useState<PostcardPrefs>(() => readPostcard());
+  const [note, setNote] = useState("");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function patch(p: Partial<PostcardPrefs>) {
+    setPost(writePostcard(p));
+  }
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let dead = false;
+    void drawPostcardPreview(canvas, post, {
+      text: "Двор орёт, а Юрец уже в подъезде. Кто не верит — пусть сам послушает.",
+      speaker: "Юрец",
+      speakerId: "yurec",
+    }).then(() => {
+      if (dead) return;
+    });
+    return () => {
+      dead = true;
+    };
+  }, [post]);
+
+  return (
+    <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+      <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
+        <ImagePlus className="size-3.5" />
+        Открытка
+      </p>
+      <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
+        Цитата дня собирается в карточку. Текст и фото одной ширины. Фон, узор и шрифт можно закрепить или оставить случайными.
+      </p>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={post.on}
+        onClick={() => patch({ on: !post.on })}
+        className="mt-3 flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-elevated px-4 text-sm font-medium"
+      >
+        <span>Режим открытки</span>
+        <span className={cn("rounded-full px-2 py-0.5 text-xs", post.on ? "bg-accent text-accent-fg" : "bg-bg text-muted")}>
+          {post.on ? "включён" : "выключен"}
+        </span>
+      </button>
+      {!post.on ? (
+        <p className="mt-2 text-center text-[13px] text-subtle">Кнопка на сборнике спрятана. Настройки ниже никуда не денутся.</p>
+      ) : null}
+
+      <p className="mt-4 text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Шрифт</p>
+      <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+        {POST_FONTS.map((f) => (
+          <Chip key={f.id} label={f.label} on={post.font === f.id} click={() => patch({ font: f.id })} />
+        ))}
+      </div>
+
+      <p className="mt-4 text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Текст</p>
+      <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+        <Chip label="Цитата дня" on={post.textMode === "day"} click={() => patch({ textMode: "day" })} />
+        <Chip label="Свой" on={post.textMode === "custom"} click={() => patch({ textMode: "custom" })} />
+      </div>
+      {post.textMode === "custom" ? (
+        <textarea
+          value={post.customText}
+          maxLength={280}
+          rows={3}
+          placeholder="Своя фраза на открытку"
+          onChange={(e) => patch({ customText: e.target.value.slice(0, 280) })}
+          className="mt-2 w-full resize-none rounded-xl bg-elevated px-3 py-2 text-sm text-fg outline-none"
+        />
+      ) : (
+        <p className="mt-2 text-center text-[13px] text-subtle">Берётся цитата дня. Свой текст подставит то, что напишешь.</p>
+      )}
+
+      <p className="mt-4 text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Картинка</p>
+      <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+        <Chip label="Кто сказал" on={post.image === "speaker"} click={() => patch({ image: "speaker" })} />
+        <Chip label="Юрец" on={post.image === "yurec"} click={() => patch({ image: "yurec" })} />
+        <Chip label="Своя" on={post.image === "custom"} click={() => patch({ image: "custom" })} />
+        <Chip label="Без фото" on={post.image === "none"} click={() => patch({ image: "none" })} />
+      </div>
+      {post.image === "custom" ? (
+        <div className="mt-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              void shrinkPostcardFile(file).then((url) => {
+                if (!url) {
+                  setNote("Картинку не прочитать.");
+                  return;
+                }
+                patch({ customImage: url, image: "custom" });
+                setNote("Своя картинка на месте. Она уменьшена, чтоб телефон не задохнулся.");
+              });
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="flex h-11 w-full items-center justify-center rounded-xl bg-elevated text-sm font-medium"
+          >
+            {post.customImage ? "Заменить картинку" : "Выбрать картинку"}
+          </button>
+        </div>
+      ) : null}
+
+      <p className="mt-4 text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Формат</p>
+      <div className="mt-2 flex justify-center gap-1.5">
+        <Chip label="JPG" on={post.format === "jpg"} click={() => patch({ format: "jpg" })} />
+        <Chip label="PNG" on={post.format === "png"} click={() => patch({ format: "png" })} />
+      </div>
+
+      <p className="mt-4 text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Фон</p>
+      <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+        {POST_PAPERS.map((f) => (
+          <Chip key={f.id} label={f.label} on={post.paper === f.id} click={() => patch({ paper: f.id })} />
+        ))}
+      </div>
+
+      <p className="mt-4 text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Узор</p>
+      <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+        {POST_PATTERNS.map((f) => (
+          <Chip key={f.id} label={f.label} on={post.pattern === f.id} click={() => patch({ pattern: f.id })} />
+        ))}
+      </div>
+
+      <p className="mt-4 text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Папка</p>
+      <p className="mt-1 text-center text-[13px] text-subtle">Куда класть в галерее. По умолчанию Pictures/Yurec_Xuec.</p>
+      <input
+        value={post.path}
+        onChange={(e) => patch({ path: e.target.value })}
+        className="mt-2 h-11 w-full rounded-xl bg-elevated px-3 text-center text-sm text-fg outline-none"
+        aria-label="Папка открыток"
+      />
+      <p className="mt-1 text-center text-[12px] text-muted">{postcardFolder(post)}</p>
+
+      <canvas ref={canvasRef} className="mx-auto mt-4 block w-[240px] max-w-full rounded-2xl shadow-[0_0_0_1px_rgba(255,255,255,0.08)]" />
+      <button
+        type="button"
+        onClick={() => patch({ roll: post.roll + 1 })}
+        className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-elevated text-sm font-medium"
+      >
+        Другой вариант
+      </button>
+      {note ? <p className="mt-2 text-center text-[13px] text-subtle">{note}</p> : null}
+    </section>
   );
 }
 
@@ -1333,7 +1553,7 @@ function LegendLock({ onClose, onOpen }: { onClose: () => void; onOpen: () => vo
           onOpen();
         }}
       >
-        <p className="text-center font-sans text-[15px] font-semibold leading-snug">Легенда</p>
+        <p className="text-center font-sans text-[15px] font-semibold leading-snug">Коды доступа</p>
         <p className="mt-2 text-center text-[12px] leading-relaxed text-subtle">
           Список слов закрыт. Сначала код разработчика.
         </p>
@@ -1349,7 +1569,7 @@ function LegendLock({ onClose, onOpen }: { onClose: () => void; onOpen: () => vo
           autoComplete="off"
         />
         <p className={"mt-2 text-center text-[12px] " + (err ? "text-danger" : "text-subtle")}>
-          {err ? "Не тот код. Список не откроется." : "Без этого слова легенды нет."}
+          {err ? "Не тот код. Список не откроется." : "Без этого слова списка нет."}
         </p>
         <div className="mt-4 flex gap-2">
           <button type="button" onClick={onClose} className="h-11 flex-1 rounded-xl bg-danger text-sm font-medium text-danger-fg">
@@ -1374,7 +1594,7 @@ function CheatBookModal({ onClose }: { onClose: () => void }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full max-w-[340px] rounded-2xl bg-surface p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">
-        <p className="text-center font-sans text-[15px] font-semibold leading-snug">Легенда</p>
+        <p className="text-center font-sans text-[15px] font-semibold leading-snug">Коды доступа</p>
         <p className="mt-2 text-center text-[12px] leading-relaxed text-subtle">
           Слова, которые принимает окно читов. Регистр не важен.
         </p>

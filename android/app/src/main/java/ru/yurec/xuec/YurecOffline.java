@@ -401,12 +401,20 @@ public class YurecOffline {
 
     @JavascriptInterface
     public String savePostcard(final String base64) {
-        String r = writePostcardNow(base64);
+        return savePostcard(base64, "");
+    }
+
+    @JavascriptInterface
+    public String savePostcard(final String base64, final String meta) {
+        final String folder = folderFrom(meta);
+        final String ext = extFrom(meta);
+        final String mime = mimeFrom(meta);
+        String r = writePostcardNow(base64, folder, ext, mime);
         if ("ok".equals(r)) {
             ui.post(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(ctx, "Открытка: Pictures/Yurec_Xuec", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ctx, "Открытка: Pictures/" + folder, Toast.LENGTH_LONG).show();
                 }
             });
             return "ok";
@@ -422,7 +430,49 @@ public class YurecOffline {
         return r;
     }
 
-    private String writePostcardNow(String base64) {
+    private String folderFrom(String meta) {
+        try {
+            if (meta == null || meta.length() == 0) return "Yurec_Xuec";
+            JSONObject o = new JSONObject(meta);
+            return cleanFolder(o.optString("folder", "Yurec_Xuec"));
+        } catch (Exception e) {
+            return "Yurec_Xuec";
+        }
+    }
+
+    private String extFrom(String meta) {
+        try {
+            if (meta == null || meta.length() == 0) return "jpg";
+            String ext = new JSONObject(meta).optString("ext", "jpg");
+            return "png".equals(ext) ? "png" : "jpg";
+        } catch (Exception e) {
+            return "jpg";
+        }
+    }
+
+    private String mimeFrom(String meta) {
+        return "png".equals(extFrom(meta)) ? "image/png" : "image/jpeg";
+    }
+
+    private String cleanFolder(String raw) {
+        if (raw == null) return "Yurec_Xuec";
+        String s = raw.replace('\\', '/').trim();
+        while (s.startsWith("/")) s = s.substring(1);
+        s = s.replace("..", "");
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < s.length() && b.length() < 80; i++) {
+            char c = s.charAt(i);
+            if (Character.isLetterOrDigit(c) || c == ' ' || c == '_' || c == '-' || c == '/' || c == '.' || c == 'ё' || c == 'Ё') {
+                b.append(c);
+            }
+        }
+        s = b.toString().replaceAll("/+", "/");
+        if (s.endsWith("/")) s = s.substring(0, s.length() - 1);
+        s = s.trim();
+        return s.length() == 0 ? "Yurec_Xuec" : s;
+    }
+
+    private String writePostcardNow(String base64, String folder, String ext, String mime) {
         if (base64 == null || base64.length() == 0) return "fail";
         byte[] bytes;
         try {
@@ -431,13 +481,16 @@ public class YurecOffline {
             return "fail";
         }
         if (bytes == null || bytes.length == 0) return "fail";
-        String name = "shotman-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US).format(new java.util.Date()) + ".jpg";
+        if (folder == null || folder.length() == 0) folder = "Yurec_Xuec";
+        if (!"png".equals(ext)) ext = "jpg";
+        if (mime == null || mime.length() == 0) mime = "png".equals(ext) ? "image/png" : "image/jpeg";
+        String name = "shotman-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US).format(new java.util.Date()) + "." + ext;
         if (Build.VERSION.SDK_INT >= 29) {
             try {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
-                values.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/Yurec_Xuec");
+                values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/" + folder);
                 values.put(MediaStore.MediaColumns.IS_PENDING, 1);
                 Uri uri = ctx.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
                 if (uri != null) {
@@ -458,7 +511,7 @@ public class YurecOffline {
             }
         }
         if (!canWritePublic()) return "need";
-        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Yurec_Xuec");
+        File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), folder);
         try {
             if (!dir.exists() && !dir.mkdirs()) return "fail";
             File f = new File(dir, name);
@@ -468,7 +521,7 @@ public class YurecOffline {
             } finally {
                 out.close();
             }
-            MediaScannerConnection.scanFile(ctx, new String[]{ f.getAbsolutePath() }, new String[]{ "image/jpeg" }, null);
+            MediaScannerConnection.scanFile(ctx, new String[]{ f.getAbsolutePath() }, new String[]{ mime }, null);
             return "ok";
         } catch (Exception e) {
             return "fail";
