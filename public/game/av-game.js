@@ -2573,10 +2573,10 @@
         ctx.font = "600 13px Manrope, sans-serif";
         ctx.textAlign = "center";
         if (stickyMode || pillSticky) {
-          ctx.fillText("липучка · ткни выше прицела", W / 2, NET + 22);
+          ctx.fillText("липучка · ткни выше морды", W / 2, NET + 22);
         } else {
           var left = Math.max(0, 10 - serveT);
-          ctx.fillText(left <= 3.2 ? "авто " + Math.ceil(left) + "с" : "пунктир — куда полетит", W / 2, NET + 22);
+          ctx.fillText(left <= 3.2 ? "авто " + Math.ceil(left) + "с" : "морда двигает, выше — пуск", W / 2, NET + 22);
         }
       }
       drawFireHud();
@@ -2652,7 +2652,7 @@
       return clamp((e.clientY - rect.top) * (H / rect.height), 0, H);
     }
     function inFaceZone(y) {
-      return y >= yurec.y - yurec.r * 1.15;
+      return y >= yurec.y - yurec.r * 0.82;
     }
 
     function onDown(e) {

@@ -1479,13 +1479,26 @@ function postRound(ctx, x, y, w, h, r) {
 }
 function postWrap(ctx, text, max) {
   var words = String(text || "").split(/\s+/);
-  var lines = [], line = "", i, w, tryLine;
+  var lines = [], line = "", i, w, tryLine, cur, ch, next;
+  function pushChunks(word) {
+    if (ctx.measureText(word).width <= max) { lines.push(word); return; }
+    cur = "";
+    for (var n = 0; n < word.length; n++) {
+      ch = word.charAt(n);
+      next = cur + ch;
+      if (ctx.measureText(next).width > max && cur) { lines.push(cur); cur = ch; }
+      else cur = next;
+    }
+    if (cur) lines.push(cur);
+  }
   for (i = 0; i < words.length; i++) {
     w = words[i];
     if (!w) continue;
     tryLine = line ? line + " " + w : w;
-    if (ctx.measureText(tryLine).width > max && line) { lines.push(line); line = w; }
-    else line = tryLine;
+    if (ctx.measureText(tryLine).width <= max) { line = tryLine; continue; }
+    if (line) lines.push(line);
+    if (ctx.measureText(w).width <= max) line = w;
+    else { line = ""; pushChunks(w); }
   }
   if (line) lines.push(line);
   return lines.length ? lines : [String(text || "")];
@@ -1629,13 +1642,23 @@ function paintPostcard(ctx, img, text, speaker, prefs, seed) {
   ctx.strokeStyle = paper.mute; ctx.globalAlpha = 0.55; ctx.lineWidth = 2;
   postRound(ctx, photoX, plateY, photoW, plateH, 28); ctx.stroke();
   ctx.globalAlpha = 1;
+  ctx.save();
+  postRound(ctx, photoX, plateY, photoW, plateH, 28);
+  ctx.clip();
   ctx.fillStyle = paper.mute; ctx.textAlign = "center";
   ctx.font = "600 26px sans-serif";
   ctx.fillText(String(speaker || "Юрец").toUpperCase(), 540, plateY + 48);
   ctx.fillStyle = paper.ink;
   ctx.font = fontTpl.replace("{s}", String(size));
   var textTop = plateY + 48 + Math.max(28, (plateH - 48 - block) / 2) + size;
-  for (i = 0; i < lines.length; i++) ctx.fillText(lines[i], 540, textTop + i * step);
+  var textBottom = plateY + plateH - 16;
+  var ty;
+  for (i = 0; i < lines.length; i++) {
+    ty = textTop + i * step;
+    if (ty > textBottom) break;
+    ctx.fillText(lines[i], 540, ty);
+  }
+  ctx.restore();
   ctx.fillStyle = paper.mute;
   ctx.font = "600 22px sans-serif";
   ctx.textAlign = "left";
@@ -1848,7 +1871,7 @@ function sharePostcard(text, speaker, speakerId, done) {
       }
       var file = new File([blob], "shotman-otkrytka." + ext, { type: mime });
       var shared = false;
-      if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+      if (!saved && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
         shared = true;
         navigator.share({ files: [file], title: "Открытка со Шотмана", text: body }).catch(function () {});
       } else if (!saved) {
@@ -4400,22 +4423,33 @@ function bindFontCard() {
   });
 }
 
+function foldSet(s) {
+  return String(s || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+}
+function settingsHit(hay, q) {
+  var n = foldSet(hay);
+  var parts = foldSet(q).split(" ");
+  var i, p;
+  for (i = 0; i < parts.length; i++) {
+    p = parts[i];
+    if (p && n.indexOf(p) === -1) return false;
+  }
+  return true;
+}
 function applySettingsFilter() {
-  var q = String(settingsQuery || "").toLowerCase().replace(/^\s+|\s+$/g, "");
+  var q = foldSet(settingsQuery);
   var cards = document.querySelectorAll(".set-card");
-  var i, card, hay, hide;
+  var i, card, hide;
   for (i = 0; i < cards.length; i++) {
     card = cards[i];
     if (card.id === "set-search") continue;
-    hay = (card.textContent || "").toLowerCase();
-    hide = !!q && hay.indexOf(q) === -1;
+    hide = !!q && !settingsHit(card.textContent || "", q);
     if (hide) card.setAttribute("hidden", "");
     else card.removeAttribute("hidden");
   }
   var extras = document.querySelectorAll(".set-rule");
   for (i = 0; i < extras.length; i++) {
-    hay = (extras[i].textContent || "").toLowerCase();
-    hide = !!q && hay.indexOf(q) === -1;
+    hide = !!q && !settingsHit(extras[i].textContent || "", q);
     if (hide) extras[i].setAttribute("hidden", "");
     else extras[i].removeAttribute("hidden");
   }
@@ -5334,6 +5368,15 @@ function cwHintBag() {
   try { localStorage.setItem(cwHintKey(CW.id), JSON.stringify(raw)); } catch (e2) {}
   return raw;
 }
+function cwHintOpen() {
+  var g = cwGrid(), n = 0, r, c, cell;
+  for (r = 0; r < g.length; r++) for (c = 0; c < g[r].length; c++) {
+    cell = g[r][c];
+    if (!cell) continue;
+    if (cwFill[cwKey(r, c)] !== cell.ch) n++;
+  }
+  return n;
+}
 function cwRevealHint() {
   var bag = cwHintBag();
   if (bag.used >= bag.cap) return;
@@ -5557,9 +5600,14 @@ function renderCrossword() {
   var html = '<a class="back" href="#/game/crosswords">← Кроссворды</a>' +
     "<h2 style=\"margin-top:16px\">" + esc(CW.title) + "</h2>" +
     '<p class="subtle">клеток ' + cnt.f + " / " + cnt.n + "</p>" +
-    '<div class="xwrap"><div class="xhelp-row"><button type="button" class="xhelp" id="cw-hint"' +
-    (cwHintBag().used >= cwHintBag().cap ? " disabled" : "") +
-    ' aria-label="Подсказка">? ' + Math.max(0, cwHintBag().cap - cwHintBag().used) + '</button></div>' +
+    (function () {
+      var bag = cwHintBag();
+      var left = Math.max(0, bag.cap - bag.used);
+      var dead = left <= 0 || cwHintOpen() <= 0;
+      return '<div class="xwrap"><div class="xhelp-row"><button type="button" class="xhelp" id="cw-hint"' +
+        (dead ? " disabled" : "") +
+        ' aria-label="Подсказка">? ' + left + "</button></div>";
+    })() +
     '<div class="xgrid" id="cw-grid" style="grid-template-columns:repeat(' + CW.cols + ',minmax(0,1fr))">';
   var r, c, cell, k, cls, done;
   for (r = 0; r < CW.rows; r++) {

@@ -399,7 +399,6 @@ public class YurecOffline {
         return "need";
     }
 
-    @JavascriptInterface
     public String savePostcard(final String base64) {
         return savePostcard(base64, "");
     }
@@ -490,7 +489,9 @@ public class YurecOffline {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
                 values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
-                values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/" + folder);
+                String rel = "Pictures/" + folder;
+                if (!rel.endsWith("/")) rel = rel + "/";
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, rel);
                 values.put(MediaStore.MediaColumns.IS_PENDING, 1);
                 Uri uri = ctx.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
                 if (uri != null) {

@@ -144,11 +144,12 @@ function SettingsPage() {
   useLayoutEffect(() => {
     const root = mainRef.current;
     if (!root) return;
-    const q = setQ.trim().toLowerCase();
+    const q = setQ.trim().toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ");
+    const parts = q.split(" ").filter(Boolean);
     root.querySelectorAll<HTMLElement>("section, [data-set-find]").forEach((el) => {
       if (el.id === "set-search") return;
-      const text = (el.textContent || "").toLowerCase();
-      el.hidden = Boolean(q) && !text.includes(q);
+      const text = (el.textContent || "").toLowerCase().replace(/ё/g, "е");
+      el.hidden = parts.length > 0 && parts.some((part) => !text.includes(part));
     });
   });
 
@@ -1002,6 +1003,7 @@ function Chip({
 function PostcardCard() {
   const [post, setPost] = useState<PostcardPrefs>(() => readPostcard());
   const [note, setNote] = useState("");
+  const [pathDraft, setPathDraft] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -1136,12 +1138,17 @@ function PostcardCard() {
       <p className="mt-4 text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Папка</p>
       <p className="mt-1 text-center text-[13px] text-subtle">Куда класть в галерее. По умолчанию Pictures/Yurec_Xuec.</p>
       <input
-        value={post.path}
-        onChange={(e) => patch({ path: e.target.value })}
+        value={pathDraft ?? post.path}
+        onChange={(e) => setPathDraft(e.target.value)}
+        onBlur={() => {
+          if (pathDraft == null) return;
+          patch({ path: pathDraft });
+          setPathDraft(null);
+        }}
         className="mt-2 h-11 w-full rounded-xl bg-elevated px-3 text-center text-sm text-fg outline-none"
         aria-label="Папка открыток"
       />
-      <p className="mt-1 text-center text-[12px] text-muted">{postcardFolder(post)}</p>
+      <p className="mt-1 text-center text-[12px] text-muted">{postcardFolder({ ...post, path: pathDraft ?? post.path })}</p>
 
       <canvas ref={canvasRef} className="mx-auto mt-4 block w-[240px] max-w-full rounded-2xl shadow-[0_0_0_1px_rgba(255,255,255,0.08)]" />
       <button

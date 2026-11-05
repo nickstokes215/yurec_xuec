@@ -462,6 +462,18 @@ function CrosswordPlay({
   const across = data.words.filter((w) => w.dir === "across");
   const down = data.words.filter((w) => w.dir === "down");
   const gold = goldLetters(data, fill);
+  let openCells = 0;
+  for (let r = 0; r < grid.length; r++) {
+    const row = grid[r];
+    if (!row) continue;
+    for (let c = 0; c < row.length; c++) {
+      const cell = row[c];
+      if (!cell) continue;
+      if (fill[cellKey(r, c)] !== cell.ch) openCells += 1;
+    }
+  }
+  const hintLeft = Math.max(0, hint.cap - hint.used);
+  const hintDead = hintLeft <= 0 || openCells <= 0;
 
   return (
     <main className="px-4 pt-4 pb-10">
@@ -479,11 +491,11 @@ function CrosswordPlay({
         <button
           type="button"
           className="xhelp"
-          disabled={hint.used >= hint.cap}
+          disabled={hintDead}
           aria-label="Подсказка"
           onClick={revealHint}
         >
-          ? {Math.max(0, hint.cap - hint.used)}
+          ? {hintLeft}
         </button>
       </div>
       <div

@@ -176,12 +176,33 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, max: number) {
   const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let line = "";
+  function pushChunks(word: string) {
+    if (ctx.measureText(word).width <= max) {
+      lines.push(word);
+      return;
+    }
+    let cur = "";
+    for (const ch of word) {
+      const next = cur + ch;
+      if (ctx.measureText(next).width > max && cur) {
+        lines.push(cur);
+        cur = ch;
+      } else cur = next;
+    }
+    if (cur) lines.push(cur);
+  }
   for (const w of words) {
     const tryLine = line ? line + " " + w : w;
-    if (ctx.measureText(tryLine).width > max && line) {
-      lines.push(line);
-      line = w;
-    } else line = tryLine;
+    if (ctx.measureText(tryLine).width <= max) {
+      line = tryLine;
+      continue;
+    }
+    if (line) lines.push(line);
+    if (ctx.measureText(w).width <= max) line = w;
+    else {
+      line = "";
+      pushChunks(w);
+    }
   }
   if (line) lines.push(line);
   return lines.length ? lines : [text];
@@ -372,6 +393,9 @@ export function paintPostcard(
   ctx.stroke();
   ctx.globalAlpha = 1;
 
+  ctx.save();
+  roundRect(ctx, photoX, plateY, photoW, plateH, 28);
+  ctx.clip();
   ctx.fillStyle = paper.mute;
   ctx.textAlign = "center";
   ctx.font = "600 26px Manrope, sans-serif";
@@ -381,9 +405,13 @@ export function paintPostcard(
   ctx.fillStyle = paper.ink;
   ctx.font = fontTpl.replace("{s}", String(size));
   const textTop = plateY + 48 + Math.max(28, (plateH - 48 - block) / 2) + size;
+  const textBottom = plateY + plateH - 16;
   lines.forEach((row, i) => {
-    ctx.fillText(row, 540, textTop + i * step);
+    const y = textTop + i * step;
+    if (y > textBottom) return;
+    ctx.fillText(row, 540, y);
   });
+  ctx.restore();
 
   ctx.fillStyle = paper.mute;
   ctx.font = "600 22px Manrope, sans-serif";
@@ -484,11 +512,18 @@ export async function sharePostcard(opts: { text: string; speaker: string; speak
   }
   const file = new File([blob], "shotman-otkrytka." + ext, { type: mime });
   const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
-  if (nav.canShare && nav.canShare({ files: [file] }) && navigator.share) {
-    await navigator.share({ files: [file], title: "Открытка со Шотмана", text: body });
-    return { how: (saved ? "gallery" : "shared") as "gallery" | "shared", folder };
+  let shared = false;
+  if (!saved && nav.canShare && nav.canShare({ files: [file] }) && navigator.share) {
+    try {
+      await navigator.share({ files: [file], title: "Открытка со Шотмана", text: body });
+      shared = true;
+    } catch (e) {
+      const name = e instanceof Error ? e.name : "";
+      if (name !== "AbortError" && !saved) throw e;
+    }
   }
   if (saved) return { how: "gallery" as const, folder };
+  if (shared) return { how: "shared" as const, folder };
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
