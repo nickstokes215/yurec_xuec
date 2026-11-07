@@ -155,7 +155,7 @@ function SettingsPage() {
 
   return (
     <main ref={mainRef} className="px-4 pt-4 pb-10">
-      <section id="set-search" className="rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+      <section id="set-search" data-tour="set-search" className="rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Поиск</p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
           Ключевое слово: звук, открытка, читы, виджет. Карточки без этого слова прячутся.
@@ -175,7 +175,7 @@ function SettingsPage() {
         Тема на весь сборник, письма о багах и пара кнопок, которые нужны автору, а не двору.
       </p>
 
-      <section className="mt-6 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+      <section data-tour="set-theme" className="mt-6 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
           <Palette className="size-3.5" />
           Тема оформления
@@ -203,13 +203,13 @@ function SettingsPage() {
       <FontSizeCard />
       <PostcardCard />
 
-      <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+      <section data-tour="set-tour" className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
           <GraduationCap className="size-3.5" />
           Обучение
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          Первый запуск сам водит по двору. Потом больше не лезет. Если хочешь ещё раз — кнопка ниже.
+          Первый заход сам водит по двору и заходит в разделы. Дойдёшь до конца — будет медаль. Потом само не лезет.
         </p>
         <button
           type="button"
@@ -223,7 +223,7 @@ function SettingsPage() {
         </button>
       </section>
 
-      <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+      <section data-tour="set-dock" className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
           <Columns3 className="size-3.5" />
           Нижнее меню
@@ -1028,7 +1028,7 @@ function PostcardCard() {
   }, [post]);
 
   return (
-    <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+    <section data-tour="set-post" className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
       <p className="flex items-center justify-center gap-1.5 text-[11px] font-medium tracking-[0.14em] text-muted uppercase">
         <ImagePlus className="size-3.5" />
         Открытка

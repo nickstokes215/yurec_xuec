@@ -193,6 +193,7 @@ function Home() {
         </Link>
       )}
 
+      <div data-tour="home-tools">
       <SortSticky
         count={ruCount(list.length, kind)}
         mode={mode}
@@ -234,6 +235,7 @@ function Home() {
           </>
         }
       />
+      </div>
 
       <div className="board mt-3">
         {list.map((story) => (

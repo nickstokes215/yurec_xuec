@@ -1723,7 +1723,7 @@ function postChip(key, val, label, cur) {
 }
 function postcardSettingsHtml() {
   var p = readPostcard();
-  var html = '<section class="set-card">' +
+  var html = '<section class="set-card" data-tour="set-post">' +
     '<p class="set-head">' + setIco('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 3-3 5 5"/>') + "Открытка</p>" +
     '<p class="subtle">Цитата дня собирается в карточку. Текст и фото одной ширины. Фон, узор и шрифт можно закрепить или оставить случайными.</p>' +
     '<button type="button" class="set-switch" data-post="on" role="switch" aria-checked="' + (p.on ? "true" : "false") + '">' +
@@ -1968,7 +1968,7 @@ function renderHome() {
     html += '<a class="card" href="#/story/' + esc(cont.slug) + '"><div class="kicker">Продолжить</div><h2>' +
       esc(cont.title) + "</h2></a>";
   }
-  html += '<div class="home-sticky">';
+  html += '<div class="home-sticky" data-tour="home-tools">';
   html += '<input class="search" id="q" placeholder="Найти Юрца, Зинаиду, Гошу…" value="' + esc(state.q) + '" />';
   html += '<div class="chips" id="chips">';
   for (var i = 0; i < KINDS.length; i++) {
@@ -2429,7 +2429,7 @@ function renderMediaHub() {
     html += "</div>";
     return shell(html, "videos");
   }
-  html += '<div class="mgrid">';
+  html += '<div class="mgrid" data-tour="media-grid">';
   var cats = mediaCats();
   for (var i = 0; i < cats.length; i++) {
     var c = cats[i];
@@ -2965,6 +2965,7 @@ function achQualified(id) {
     return !!meta.f.sezon;
   }
   if (id === "dvornik") return !!meta.f.zash;
+  if (id === "ekskurs") return !!meta.f.tour;
   if (id === "proigral") {
     try {
       var avs = JSON.parse(localStorage.getItem("yurec-av-stats") || "{}");
@@ -3491,7 +3492,7 @@ function renderChat() {
         chips.map(function (c) { return '<button type="button" class="chat-chip" data-chip="' + esc(c) + '">' + esc(c) + "</button>"; }).join("") +
         '<button type="button" class="chat-chip gold" id="chat-random">Случайный звонок</button>' +
       "</div>" +
-      '<form class="chat-composer" id="chat-form">' +
+      '<form class="chat-composer" id="chat-form" data-tour="chat-box">' +
       '<button type="button" class="chat-wipe' + (chatWipeAsk ? " armed" : "") + '" id="chat-wipe" aria-label="' + (chatWipeAsk ? "Ещё раз — стереть" : "Стереть переписку") + '">' + (chatWipeAsk ? "!" : "×") + "</button>" +
       '<textarea id="chat-input" rows="1" maxlength="500" placeholder="' + (chatMode === "sms" ? "пиши смс…" : "Написать Юрцу…") + '">' + esc(chatDraft) + "</textarea>" +
       '<button type="submit" class="chat-send" ' + (chatBusy ? "disabled" : "") + ' aria-label="Отправить">➤</button>' +
@@ -3861,12 +3862,12 @@ function renderSettings() {
   var html = '<p class="kicker" style="text-align:center">Приложение</p>' +
     '<h2 style="font-size:28px;margin-top:4px;text-align:center">Настройки</h2>' +
     '<p class="muted" style="margin-top:8px;text-align:center">Тема на весь сборник, письма о багах и пара кнопок, которые нужны автору, а не двору.</p>' +
-    '<section class="set-card" id="set-search">' +
+    '<section class="set-card" id="set-search" data-tour="set-search">' +
       '<p class="set-head">' + setIco('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/>') + "Поиск</p>" +
       '<p class="subtle">Ключевое слово: звук, открытка, читы, виджет. Карточки без этого слова прячутся.</p>' +
       '<input id="set-q" class="search" placeholder="Найти настройку…" value="' + esc(settingsQuery) + '" />' +
     "</section>" +
-    '<section class="set-card">' +
+    '<section class="set-card" data-tour="set-theme">' +
       '<p class="set-head">' + setIco('<circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="17" r="2"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.7-.7 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.5-.7-.5-1.1a1.6 1.6 0 0 1 1.7-1.7h2c3 0 5.5-2.5 5.5-5.5C22 6 17.5 2 12 2z"/>') + "Тема оформления</p>" +
       '<p class="subtle">Светлая — бумага. Тёмная — сумерки. Чёрная — OLED. «Как в системе» слушает телефон.</p>' +
       '<div class="theme-grid">' +
@@ -3878,12 +3879,12 @@ function renderSettings() {
     "</section>" +
     fontCardHtml() +
     postcardSettingsHtml() +
-    '<section class="set-card">' +
+    '<section class="set-card" data-tour="set-tour">' +
       '<p class="set-head">' + setIco('<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>') + "Обучение</p>" +
-      '<p class="subtle">Первый запуск сам водит по двору. Потом больше не лезет. Если хочешь ещё раз — кнопка ниже.</p>' +
+      '<p class="subtle">Первый заход сам водит по двору и заходит в разделы. Дойдёшь до конца — будет медаль. Потом само не лезет.</p>' +
       '<button type="button" class="btn wide gold" id="tour-again" style="margin-top:8px">Пройти обучение заново</button>' +
     "</section>" +
-    '<section class="set-card">' +
+    '<section class="set-card" data-tour="set-dock">' +
       '<p class="set-head">' + setIco('<rect x="4" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="4" height="16" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/>') + "Нижнее меню</p>" +
       '<p class="subtle">Закладки, Цитатник, Зашквары и Инфо можно убрать из нижнего ряда — остальные кнопки растянутся. По умолчанию Зашквары на месте, Цитатник и Закладки спрятаны. Цитатник всё равно открывается с «Цитаты дня».</p>' +
       '<button type="button" class="set-switch" id="book-nav" role="switch" aria-checked="' + (booksOn ? "true" : "false") + '">' +
@@ -4756,7 +4757,7 @@ function renderAbout() {
     "<p>Теперь появилось это приложение (с помощью «Grok Build: Create apps»). Теперь есть возможность читать всю «комедийную сагу» прямо с телефона, будучи оффлайн. Без ленты. Без рекламы. Все рассказы, ссылки на ролики и песни, закладки, поиск, карточки персонажей и вкладка «Игры». Игра полностью переписана с нуля (в отличие от версии для Windows) и интегрирована в приложение — " +
     '<a href="https://t.me/yurec_xuec/479">https://t.me/yurec_xuec/479</a></p>' +
     "</div>";
-  html += '<div class="links about-btns">' +
+  html += '<div class="links about-btns" data-tour="about-links">' +
     '<a class="btn tg wide" href="' + TG + '">Telegram · t.me/yurec_xuec</a>' +
     '<a class="btn yt wide" href="' + YT + '">YouTube · @yurec_xuec</a>' +
     '<a class="btn pass wide" href="#/passport">Паспорт двора</a>' +
@@ -4838,7 +4839,7 @@ function renderZashkvary() {
     '<p class="subtle" style="text-align:center;margin-top:12px">открыто ' + achCount() + " / " + ACH_ITEMS.length +
     (isAchPeek() ? '<span style="display:block;margin-top:4px;color:#c9a227;font-size:11px">просмотр ворона · до перезахода</span>' : "") +
     "</p>" +
-    '<ul class="ach-board">';
+    '<ul class="ach-board" data-tour="zash-board">';
   var i, a, on;
   for (i = 0; i < ACH_ITEMS.length; i++) {
     a = ACH_ITEMS[i];
@@ -5834,7 +5835,7 @@ function renderGamesHub() {
   var html = '<p class="kicker">Игры</p>' +
     '<h2 style="font-size:28px;margin-top:6px">Игры двора</h2>' +
     '<p class="muted" style="font-family:var(--serif);font-size:16px;line-height:1.6;margin-top:8px">Пять игр. На телефоне столбик, на планшете — два ряда. Зажми карточку — перетащи любимую наверх.</p>' +
-    '<a class="card pass-hub" href="#/passport"><div class="pass-hub-body">' +
+    '<a class="card pass-hub" href="#/passport" data-tour="game-pass"><div class="pass-hub-body">' +
       '<div class="kicker">Справка</div><h2>Паспорт двора</h2>' +
       '<p class="subtle" style="margin-top:4px">Что уже прочитано, отбито и разгадано.</p></div>' +
       '<span class="subtle">▸</span></a>' +
@@ -5842,7 +5843,7 @@ function renderGamesHub() {
   for (i = 0; i < ids.length; i++) {
     var g = catalog[ids[i]];
     if (!g) continue;
-    html += '<li data-gid="' + g.id + '"><article class="game-row">' +
+    html += '<li data-gid="' + g.id + '"' + (i === 0 ? ' data-tour="game-card"' : "") + '><article class="game-row">' +
       '<button type="button" class="game-row-pic" data-zoom="' + g.cover + '" aria-label="Открыть обложку">' +
       '<img src="' + g.cover + '" alt="" /></button>' +
       '<div class="game-row-body"><h3>' + g.title + "</h3>" +
@@ -7216,7 +7217,7 @@ function setYardLayer(id) {
   try { sessionStorage.setItem("yurec-yard-layer", id); } catch (e) {}
 }
 function yardTeaserHtml() {
-  return '<article class="lcard" style="margin-top:16px">' +
+  return '<article class="lcard" data-tour="yard-map" style="margin-top:16px">' +
     '<a class="pic" href="#/characters/map" aria-label="Открыть карту двора">' +
     '<img src="maps/yard.jpg" alt="" />' +
     '<div class="cap"><div class="kicker">Карта двора</div><h3>Петербург · Шотмана · трёшка</h3></div></a>' +
@@ -7390,7 +7391,7 @@ function renderCharacters() {
   html += '<div class="cgrid">';
   for (var j = 0; j < list.length; j++) {
     var c = list[j];
-    html += '<div class="ccard" role="link" tabindex="0" data-cid="' + esc(c.id) + '">' +
+    html += '<div class="ccard" role="link" tabindex="0" data-cid="' + esc(c.id) + '"' + (j === 0 ? ' data-tour="char-card"' : "") + '>' +
       '<img src="' + esc(photoSrc(c.photo)) + '" alt="' + esc(c.name) + '" draggable="false" />' +
       "<b>" + esc(c.name) + "</b><span>" + esc(c.role) + "</span>" +
       '<p>«' + esc(c.quote) + "»</p></div>";
@@ -8764,27 +8765,36 @@ var tourOn = false;
 var tourIdx = 0;
 var tourTriedAuto = false;
 var TOUR_STEPS = [
-  { id: "hello", title: "Алё, двор открыт", text: "Это Жизнь Юрца. Сборник с Шотмана: рассказы, ролики, игры и болтовня со мной. Сейчас ткну пальцем — где что лежит." },
-  { id: "brand", title: "Шапка", text: "Слева — двор. Справа тема (солнце/луна) и шестерёнка. Шестерёнка — настройки. Если заблудился, всегда сюда.", target: "brand" },
-  { id: "citat", title: "Цитата дня", text: "Каждый заход новая. Ткнул карточку — весь цитатник. В нижнем меню его можно спрятать, вход всё равно здесь.", target: "citat-day" },
-  { id: "home", title: "Сборник", text: "Серии, песни, визиты, бонусы. Ищи Юрца, Зинаиду, Гошу. Отметил «прочитано» — двор помнит.", target: "nav:/" },
-  { id: "media", title: "Медиа", text: "Ролики, шортсы, песни, газета, звонки. Киоск в кармане, можно и без интернета — если скачал.", target: "nav:/videos" },
-  { id: "games", title: "Игры", text: "Помойкобол, Алконоид, кроссворды, квест, своя игра. Проиграл — тоже бывает медаль. Двор уважает лузеров.", target: "nav:/game" },
-  { id: "ai", title: "Юрец AI", text: "Пишешь — орёт в ответ. Бета, хамоватый, свой. Кнопка есть и внизу, и сверху, если не выключил.", target: "nav:/chat" },
-  { id: "chars", title: "Герои", text: "Карточки двора и карта Шотмана. Сосед, НЛО, граната, Светка — все на месте.", target: "nav:/characters" },
-  { id: "zash", title: "Зашквары", text: "Медали. За подвиг и за то, что просто ткнул не туда. Пятьдесят штук. Двор выдаёт сам.", target: "nav:/zashkvary" },
-  { id: "settings", title: "Настройки", text: "Тема, нижнее меню, справка, обучение. Это окно больше само не вылезет. Захочешь ещё раз — кнопка «Пройти обучение заново».", target: "settings" }
+  { id: "hello", path: "/", title: "Алё, двор открыт", text: "Это Жизнь Юрца. Сборник с Шотмана: рассказы, ролики, игры и болтовня. Сейчас коротко по важным местам, в том числе туда, куда сам не догадаешься зайти. Дойдёшь до конца — двор выдаст медаль. Смахнёшь раньше — медали нет." },
+  { id: "brand", path: "/", target: "brand", title: "Шапка", text: "Слева баннер двора: тап — картинка на весь экран. Справа солнце или луна меняет тему. Шестерёнка — настройки. Заблудился — всегда сюда." },
+  { id: "citat", path: "/", target: "citat-day", title: "Цитата дня", text: "Каждый заход новая. Тап по тексту открывает цитатник: фраза ведёт в рассказ, откуда ор. Кнопка «Открытка» собирает картинку в галерею. Если кнопки нет — открытки выключены в настройках." },
+  { id: "find", path: "/", target: "home-tools", title: "Поиск сборника", text: "Поле ищет по текстам. Чипы режут на серии, песни, визиты и бонусы. «Случайный» кидает в любой рассказ. Сортировка крутит порядок: старые, новые, по алфавиту. В самом рассказе есть «прочитано», закладка и лупа на картинке. Ушёл на середине — здесь появится «Продолжить»." },
+  { id: "media", path: "/videos", target: "media-grid", title: "Медиа", text: "Плитки: видео, шортсы, песни, газета, звонки. Внутри свой поиск и сортировка. У ролика бывает скачивание — тогда смотрится без сети. Газета листается разворотами. Нижняя полоска разделов появляется, когда уже зашёл внутрь." },
+  { id: "games", path: "/game", target: "game-card", title: "Игры двигаются", text: "Зажми карточку примерно на полсекунды и тащи — игры меняются местами. Короткий тап открывает, не двигает. Заводской порядок вернёт кнопка внизу или пункт в настройках. В Помойкоболе и Алконоиде «ПАУЗА» справа от названия. В кроссворде «?» открывает одну букву, от пяти до семи раз. В «Юрца игре» кот и аукцион спрятаны, пока клетку не вскроешь." },
+  { id: "pass", path: "/game", target: "game-pass", title: "Паспорт двора", text: "Сводка: что прочитано, какие уровни отбиты, сколько зашкваров открыто. Это не настройки. Сюда, когда хочешь увидеть двор целиком, а не крутить тумблеры." },
+  { id: "map", path: "/characters", target: "yard-map", title: "Карта и стена", text: "Карта: сначала город, потом двор, потом трёшка. Жми на огни — откроется точка и карточка героя. Под картой «Стена подъезда»: мел только на этом телефоне, чужих надписей нет. Уезжает вместе со справкой из настроек." },
+  { id: "chars", path: "/characters", target: "char-card", title: "Карточки героев", text: "Короткий тап открывает героя: биография и ещё фразы, если жать на цитату. Зажми карточку и тащи — порядок меняется, как у игр. Чипы сверху режут двор, банду, семью и остальное. Сбросить порядок можно в настройках, пункт «Герои»." },
+  { id: "zash", path: "/zashkvary", target: "zash-board", title: "Зашквары", text: "Медали. Часть за подвиг, часть за то, что просто ткнул не туда. Закрытая показывает подсказку, открытая — картинку, ор и дату. Двор выдаёт сам, руками список не отмечают. Если кнопки внизу нет — вход через «Инфо»." },
+  { id: "chat", path: "/chat", target: "chat-box", title: "Юрец AI", text: "Пишешь — орёт в ответ. Есть «Разговор» и «SMS-ки». Чипы подставляют готовый вопрос. Шаринг сохраняет переписку. По умолчанию чат сгорает, когда закрыл сборник: хранение включается в настройках. Кнопку чата можно убрать сверху или снизу." },
+  { id: "info", path: "/about", target: "about-links", title: "Инфо", text: "Канал, донат, журнал версий, идеи, паспорт и зашквары. Название саги можно потыкать — двор это замечает, но не говорит, сколько раз. Иконку приложения и подпись ярлыка меняют в настройках." },
+  { id: "set-find", path: "/settings", target: "set-search", title: "Поиск настроек", text: "Настроек много. Поле сверху прячет карточки, в которых нет твоих слов. «Ё» и «е» для него одно и то же. Несколько слов ищутся сразу все." },
+  { id: "set-look", path: "/settings", target: "set-theme", title: "Тема и шрифт", text: "Светлая, тёмная, чёрная или как в системе. Ниже — размер шрифта в читалке. Солнце в шапке крутит тему, не заходя сюда." },
+  { id: "set-post", path: "/settings", target: "set-post", title: "Открытка", text: "Шрифт, свой текст или цитата дня, чья картинка, JPG или PNG, папка в галерее. Можно выключить совсем. Фон и узор — случайные каждый раз или закреплённые. PNG тяжелее, JPG надёжнее." },
+  { id: "set-dock", path: "/settings", target: "set-dock", title: "Нижнее меню и быт", text: "Закладки, цитатник, зашквары и инфо можно убрать из нижнего ряда. По умолчанию цитатник и закладки спрятаны: цитатник всё равно открывается с цитаты дня, закладка ставится в рассказе. Рядом лежат звук, вибрация, «не гасить экран», полоса в тексте, виджет на стол и справка двора — файл, которым двор переезжает на другой телефон." },
+  { id: "medal", path: "/settings", target: "set-tour", title: "Медаль двора", text: "Обучение само больше не вылезет. Ещё раз — эта кнопка. Раз дошёл до конца, а не смахнул, двор выдаёт зашквар «Экскурсия». Он уже твой." }
 ];
 
+
 function tourSeen() {
-  try { return localStorage.getItem(TOUR_KEY) === "1"; } catch (e) { return true; }
+  try { return localStorage.getItem(TOUR_KEY) === "2"; } catch (e) { return true; }
 }
 function markTourSeen() {
-  try { localStorage.setItem(TOUR_KEY, "1"); } catch (e) {}
+  try { localStorage.setItem(TOUR_KEY, "2"); } catch (e) {}
 }
 function shouldAutoTour() {
   if (tourSeen()) return false;
   try {
+    if (localStorage.getItem(TOUR_KEY) === "1") return true;
     if (localStorage.getItem("yurec-last")) return false;
     var read = JSON.parse(localStorage.getItem(READ_KEY) || "[]");
     if (read && read.length) return false;
@@ -8794,57 +8804,79 @@ function shouldAutoTour() {
   } catch (e) { return false; }
   return true;
 }
-function tourLive() {
-  var out = [], i, s;
-  for (i = 0; i < TOUR_STEPS.length; i++) {
-    s = TOUR_STEPS[i];
-    if (!s.target || document.querySelector('[data-tour="' + s.target + '"]')) out.push(s);
+function tourNorm(p) {
+  var x = String(p || "/").split("?")[0];
+  if (x.length > 1 && x.charAt(x.length - 1) === "/") x = x.slice(0, -1);
+  return x || "/";
+}
+function tourFocus(el) {
+  var top = document.body.style.top || "";
+  if (document.documentElement.classList.contains("modal-lock")) {
+    modalLockY = top ? Math.abs(parseInt(top, 10) || 0) : (window.scrollY || 0);
+    lockModal(false);
   }
-  return out;
+  if (el) {
+    var b = el.getBoundingClientRect();
+    window.scrollTo(0, Math.max(0, b.top + (window.scrollY || 0) - 120));
+  } else {
+    window.scrollTo(0, 0);
+  }
+  lockModal(true);
+}
+function tourHole(el) {
+  if (!el) return null;
+  var b = el.getBoundingClientRect();
+  if (b.width < 4 || b.height < 4) return null;
+  var pad = 6;
+  return {
+    top: Math.max(6, b.top - pad),
+    left: Math.max(6, b.left - pad),
+    width: Math.min(window.innerWidth - 12, b.width + pad * 2),
+    height: Math.min(280, Math.min(window.innerHeight - 12, b.height + pad * 2)),
+    r: Math.min(18, Math.round(Math.min(b.width, b.height) / 4) + 8)
+  };
 }
 function startTour(force) {
   if (force) {
     try { localStorage.removeItem(TOUR_KEY); } catch (e) {}
   }
-  if (route() !== "/") go("/");
   tourOn = true;
   tourIdx = 0;
-  lockModal(true);
-  window.setTimeout(drawTour, 80);
+  drawTour();
 }
-function stopTour() {
+function stopTour(award) {
   tourOn = false;
   tourIdx = 0;
   markTourSeen();
   lockModal(false);
   var el = document.getElementById("tour-root");
   if (el && el.parentNode) el.parentNode.removeChild(el);
+  if (award) {
+    try { noteAchFlag("tour"); } catch (e2) {}
+  }
 }
 function drawTour() {
   if (!tourOn) return;
-  var pack = tourLive();
-  if (!pack.length) { stopTour(); return; }
-  if (tourIdx >= pack.length) tourIdx = pack.length - 1;
+  if (tourIdx >= TOUR_STEPS.length) tourIdx = TOUR_STEPS.length - 1;
   if (tourIdx < 0) tourIdx = 0;
-  var cur = pack[tourIdx];
-  var last = tourIdx >= pack.length - 1;
-  var hole = null;
-  if (cur.target) {
-    var t = document.querySelector('[data-tour="' + cur.target + '"]');
-    if (t) {
-      var b = t.getBoundingClientRect();
-      if (b.width >= 4 && b.height >= 4) {
-        var pad = 6;
-        hole = {
-          top: Math.max(6, b.top - pad),
-          left: Math.max(6, b.left - pad),
-          width: Math.min(window.innerWidth - 12, b.width + pad * 2),
-          height: Math.min(window.innerHeight - 12, b.height + pad * 2),
-          r: Math.min(18, Math.round(Math.min(b.width, b.height) / 4) + 8)
-        };
-      }
+  var cur = TOUR_STEPS[tourIdx];
+  var want = tourNorm(cur.path || "/");
+  if (want === "/settings" && settingsQuery) {
+    settingsQuery = "";
+    if (tourNorm(route()) === "/settings") {
+      paint();
+      return;
     }
   }
+  if (tourNorm(route()) !== want) {
+    go(want);
+    return;
+  }
+  var el = cur.target ? document.querySelector('[data-tour="' + cur.target + '"]') : null;
+  tourFocus(el);
+  el = cur.target ? document.querySelector('[data-tour="' + cur.target + '"]') : null;
+  var hole = tourHole(el);
+  var last = tourIdx >= TOUR_STEPS.length - 1;
   var root = document.getElementById("tour-root");
   if (!root) {
     root = document.createElement("div");
@@ -8861,31 +8893,31 @@ function drawTour() {
     cardStyle = "bottom:" + Math.max(16, window.innerHeight - hole.top + 12) + "px";
   } else {
     cardClass += " tour-card-down";
-    cardStyle = "top:" + Math.min(window.innerHeight - 200, hole.top + hole.height + 12) + "px";
+    cardStyle = "top:" + Math.min(window.innerHeight - 220, hole.top + hole.height + 12) + "px";
   }
   var html = '<button type="button" class="tour-dim" aria-label="Пропустить обучение"></button>';
   if (hole) {
     html += '<span class="tour-hole" style="top:' + hole.top + "px;left:" + hole.left + "px;width:" + hole.width + "px;height:" + hole.height + "px;border-radius:" + hole.r + 'px"></span>';
   }
   html += '<div class="' + cardClass + '" style="' + cardStyle + '">' +
-    '<p class="tour-kicker">Обучение · ' + (tourIdx + 1) + " / " + pack.length + "</p>" +
+    '<p class="tour-kicker">Обучение · ' + (tourIdx + 1) + " / " + TOUR_STEPS.length + "</p>" +
     '<p class="tour-title">' + esc(cur.title) + "</p>" +
     '<p class="tour-text">' + esc(cur.text) + "</p>" +
     '<div class="tour-row">' +
-      '<button type="button" class="tour-skip" id="tour-skip">' + (last ? "Закрыть" : "Пропустить") + "</button>" +
+      '<button type="button" class="tour-skip" id="tour-skip">' + (last ? "Без медали" : "Пропустить") + "</button>" +
       (tourIdx > 0 ? '<button type="button" class="tour-next ghost" id="tour-back">Назад</button>' : "") +
-      '<button type="button" class="tour-next" id="tour-next">' + (last ? "Понял, пошёл" : "Дальше") + "</button>" +
+      '<button type="button" class="tour-next" id="tour-next">' + (last ? "Забрать медаль" : "Дальше") + "</button>" +
     "</div></div>";
   root.innerHTML = html;
   var skip = document.getElementById("tour-skip");
   var next = document.getElementById("tour-next");
   var back = document.getElementById("tour-back");
   var dim = root.querySelector(".tour-dim");
-  if (skip) skip.onclick = function () { stopTour(); };
-  if (dim) dim.onclick = function () { stopTour(); };
+  if (skip) skip.onclick = function () { stopTour(false); };
+  if (dim) dim.onclick = function () { stopTour(false); };
   if (back) back.onclick = function () { tourIdx = Math.max(0, tourIdx - 1); drawTour(); };
   if (next) next.onclick = function () {
-    if (last) stopTour();
+    if (last) stopTour(true);
     else { tourIdx += 1; drawTour(); }
   };
 }

@@ -1,4 +1,5 @@
 const KEY = "yurec-tour";
+const TOUR_VER = "2";
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -7,7 +8,7 @@ function emit() {
 
 export function tourSeen(): boolean {
   try {
-    return localStorage.getItem(KEY) === "1";
+    return localStorage.getItem(KEY) === TOUR_VER;
   } catch {
     return true;
   }
@@ -15,7 +16,7 @@ export function tourSeen(): boolean {
 
 export function markTourSeen() {
   try {
-    localStorage.setItem(KEY, "1");
+    localStorage.setItem(KEY, TOUR_VER);
   } catch {
     /* ignore */
   }
@@ -25,6 +26,7 @@ export function markTourSeen() {
 export function shouldAutoTour(): boolean {
   if (tourSeen()) return false;
   try {
+    if (localStorage.getItem(KEY) === "1") return true;
     const last = localStorage.getItem("yurec-last");
     if (last) return false;
     const read = JSON.parse(localStorage.getItem("yurec-read") || "[]") as unknown;

@@ -65,7 +65,7 @@ function CharactersPage() {
 
 function YardTeaser() {
   return (
-    <section className="mt-4 overflow-hidden rounded-2xl bg-surface shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+    <section data-tour="yard-map" className="mt-4 overflow-hidden rounded-2xl bg-surface shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
       <Link to="/characters/map" className="block">
         <span className="relative block aspect-video w-full bg-elevated">
           <img
@@ -218,8 +218,8 @@ function CharGrid({ group, list }: { group: string; list: Character[] }) {
 
   return (
     <ul className="mt-3 grid grid-cols-2 gap-2 wide:grid-cols-3 board:grid-cols-4">
-      {list.map((c) => (
-        <li key={c.id} data-cid={c.id} className={cn(dragId === c.id && "is-dragging")}>
+      {list.map((c, i) => (
+        <li key={c.id} data-cid={c.id} data-tour={i === 0 ? "char-card" : undefined} className={cn(dragId === c.id && "is-dragging")}>
           <div
             role="link"
             tabIndex={0}

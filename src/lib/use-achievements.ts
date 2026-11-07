@@ -334,6 +334,8 @@ function qualified(id: string): boolean {
     }
     case "dvornik":
       return flag("zash");
+    case "ekskurs":
+      return flag("tour");
     case "proigral":
       return lostAny();
     case "svoya":

@@ -316,6 +316,7 @@ function ChatPage() {
           </div>
           <form
             className="chat-composer"
+            data-tour="chat-box"
             onSubmit={(e) => {
               e.preventDefault();
               void send();

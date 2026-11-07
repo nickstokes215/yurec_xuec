@@ -75,7 +75,7 @@ function ZashkvaryPage() {
         открыто {count} / {ACH_TOTAL}
         {peek ? <span className="block mt-1 text-[11px] text-[#c9a227]">просмотр ворона · до перезахода</span> : null}
       </p>
-      <ul className="ach-board mt-4">
+      <ul className="ach-board mt-4" data-tour="zash-board">
         {ACHIEVEMENTS.map((a) => {
           const on = opened(a.id);
           return (

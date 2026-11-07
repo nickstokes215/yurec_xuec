@@ -76,7 +76,7 @@ function MediaHub() {
         </ul>
       ) : (
         <section className="mt-3">
-          <ul className="grid grid-cols-2 gap-3 wide:grid-cols-3">
+          <ul className="grid grid-cols-2 gap-3 wide:grid-cols-3" data-tour="media-grid">
             {MEDIA_CATS.map((cat) => {
               const n = cat.id === "press" ? PRESS_ISSUES.length : mediaByCat(cat.id).length;
               return (

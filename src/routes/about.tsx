@@ -124,7 +124,7 @@ function AboutPage() {
         </p>
       </section>
 
-      <div className="mt-6 grid gap-4">
+      <div className="mt-6 grid gap-4" data-tour="about-links">
         <a
           href={TELEGRAM_URL}
           target="_blank"

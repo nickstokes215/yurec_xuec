@@ -97,6 +97,7 @@ function GamesHub() {
       </p>
       <Link
         to="/passport"
+        data-tour="game-pass"
         className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]"
       >
         <div className="min-w-0">
@@ -236,8 +237,8 @@ function GameGrid({ list }: { list: GameMeta[] }) {
 
   return (
     <ul className="game-board mt-4">
-      {list.map((g) => (
-        <li key={g.id} data-gid={g.id} className={cn(dragId === g.id && "is-dragging")}>
+      {list.map((g, i) => (
+        <li key={g.id} data-gid={g.id} data-tour={i === 0 ? "game-card" : undefined} className={cn(dragId === g.id && "is-dragging")}>
           <article
             className={cn(
               "game-row overflow-hidden rounded-2xl bg-surface shadow-[0_0_0_1px_rgba(255,255,255,0.06)]",
