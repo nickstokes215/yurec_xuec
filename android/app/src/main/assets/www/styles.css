@@ -1467,6 +1467,50 @@ html[data-wide="1"] .ends li { margin-top: 0; }
   height: 44px;
   accent-color: #c9a227;
 }
+.notes-lane {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+.notes-when {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  min-height: 48px;
+}
+.notes-when span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.notes-when input[type="time"] {
+  width: 128px;
+  height: 40px;
+  flex: 0 0 128px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--elevated);
+  color: var(--fg);
+  padding: 0 8px;
+}
+.notes-pair {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.notes-pair .btn {
+  flex: 1;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--elevated);
+  color: var(--fg);
+}
+.notes-ask {
+  margin-top: 18px;
+}
 .font-sample {
   margin: 12px 0 0;
   text-align: center;

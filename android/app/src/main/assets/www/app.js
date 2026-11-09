@@ -487,6 +487,7 @@ function tryUnlock(v) {
   if (window.YurecGate && window.YurecGate.dev(s)) return unlockDeveloper(s);
   if (!(window.YurecGate && window.YurecGate.paid(s))) return false;
   try { localStorage.setItem(PAID_KEY, "1"); } catch (e) {}
+  try { noteAchRedo("relic"); } catch (e2) {}
   return true;
 }
 function unlockDeveloper(v) {
@@ -496,6 +497,7 @@ function unlockDeveloper(v) {
     localStorage.setItem(DEV_KEY, "1");
     localStorage.setItem(PAID_KEY, "1");
   } catch (e) {}
+  try { noteAchRedo("relic"); } catch (e2) {}
   return true;
 }
 function lockPaid() {
@@ -535,6 +537,7 @@ function setAppIcon(id) {
   try { localStorage.setItem(ICON_KEY, v); } catch (e) {}
   pushLauncher(v, readAppName());
   try { evaluateAchievements(); } catch (e2) {}
+  if (v === "horror") { try { noteAchRedo("rehorror"); } catch (e3) {} }
 }
 function setAppName(id) {
   var v = (id === "saga" || id === "arthouse") ? id : "short";
@@ -648,6 +651,7 @@ function showSound() {
 function setSound(on) {
   try { localStorage.setItem(SOUND_KEY, on ? "1" : "0"); } catch (e) {}
   try { evaluateAchievements(); } catch (e2) {}
+  if (!on) { try { noteAchRedo("requiet"); } catch (e3) {} }
 }
 function showKeepAwake() {
   try { return localStorage.getItem(AWAKE_KEY) !== "0"; } catch (e) { return true; }
@@ -768,6 +772,7 @@ function setTheme(next) {
   try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
   applyTheme(next);
   try { noteAchFlag("theme"); } catch (e2) {}
+  if (next === "black") { try { noteAchRedo("reblack"); } catch (e3) {} }
 }
 function cycleTheme() {
   setTheme(resolveTheme() === "light" ? "dark" : "light");
@@ -868,6 +873,7 @@ function markRead(slug, force) {
     localStorage.setItem(READ_KEY, JSON.stringify(list));
     localStorage.setItem(READ_SKIP, JSON.stringify(skip));
   } catch (e) {}
+  try { noteAchSeen(slug); } catch (eSeen) {}
 }
 function unmarkRead(slug) {
   if (!slug) return;
@@ -2725,14 +2731,17 @@ var achWait = [];
 var achShowing = false;
 
 var ACH_META_KEY = "yurec-ach-meta";
-function emptyAchMeta() { return { f: {}, quotes: 0, chars: {} }; }
+var ACH_BASE_KEY = "yurec-ach-base";
+function emptyAchMeta() { return { f: {}, quotes: 0, chars: {}, seen: [], replay: {} }; }
 function readAchMeta() {
   try {
     var raw = JSON.parse(localStorage.getItem(ACH_META_KEY) || "{}");
     return {
       f: raw.f && typeof raw.f === "object" ? raw.f : {},
       quotes: Number(raw.quotes) || 0,
-      chars: raw.chars && typeof raw.chars === "object" ? raw.chars : {}
+      chars: raw.chars && typeof raw.chars === "object" ? raw.chars : {},
+      seen: Array.isArray(raw.seen) ? raw.seen : [],
+      replay: raw.replay && typeof raw.replay === "object" ? raw.replay : {}
     };
   } catch (e) { return emptyAchMeta(); }
 }
@@ -2764,6 +2773,12 @@ function noteAchChar(id) {
 }
 function noteAchVisit(path) {
   var p = String(path || "").split("?")[0];
+  if (p.length > 1 && p.charAt(p.length - 1) === "/") p = p.slice(0, -1);
+  try {
+    var hold = sessionStorage.getItem("yurec-ach-hold") || "";
+    if (hold && hold === p) return;
+    if (hold) sessionStorage.removeItem("yurec-ach-hold");
+  } catch (eHold) {}
   if (p === "/characters/map" || p.indexOf("/characters/map/") === 0) noteAchFlag("map");
   else if (p === "/citats" || p.indexOf("/citats/") === 0) noteAchFlag("citats");
   else if (p === "/settings") noteAchFlag("settings");
@@ -2812,7 +2827,52 @@ function achCount() {
   for (i = 0; i < ACH_ITEMS.length; i++) if (s[ACH_ITEMS[i].id]) n++;
   return n;
 }
-function endingsOf(id) {
+function wipeAchievements() {
+  var ends = {};
+  var buckets = ["day", "olimpik", "tsar", "mirage", "dinner", "crossword"];
+  var cws = window.YUREC_CROSSWORDS || [];
+  var i, id;
+  for (i = 0; i < cws.length; i++) if (cws[i] && cws[i].id) buckets.push(cws[i].id);
+  for (i = 0; i < buckets.length; i++) ends[buckets[i]] = endingsRaw(buckets[i]);
+  var paid = false, theme = "", icon = "", sound = "", chat = false;
+  try {
+    paid = localStorage.getItem(PAID_KEY) === "1" || localStorage.getItem(DEV_KEY) === "1";
+    theme = localStorage.getItem(THEME_KEY) || "";
+    icon = localStorage.getItem(ICON_KEY) || "";
+    sound = localStorage.getItem(SOUND_KEY) || "";
+  } catch (e) {}
+  try {
+    var log = JSON.parse(localStorage.getItem("yurec-ai-log") || sessionStorage.getItem("yurec-ai-log") || "[]");
+    if (Array.isArray(log)) for (i = 0; i < log.length; i++) if (log[i] && log[i].role === "user") chat = true;
+  } catch (e2) {}
+  if (readAchMeta().f.chat) chat = true;
+  var base = {
+    v: 1,
+    read: readSlugs(),
+    books: books(),
+    av: winsOf("yurec-av-wins"),
+    ark: winsOf("yurec-ark-wins"),
+    ends: ends,
+    plays: Number(localStorage.getItem("yurec-svoya-plays") || "0") || 0,
+    loss: achLossCount(),
+    egg: localStorage.getItem(EGG_KEY) === "1",
+    paid: paid,
+    theme: theme,
+    icon: icon,
+    sound: sound,
+    chat: chat
+  };
+  try {
+    localStorage.setItem(ACH_BASE_KEY, JSON.stringify(base));
+    localStorage.setItem(ACH_KEY, "{}");
+    localStorage.setItem(ACH_META_KEY, JSON.stringify(emptyAchMeta()));
+  } catch (e3) {}
+  try {
+    sessionStorage.setItem("yurec-ach-hold", (route() || "/"));
+    sessionStorage.removeItem(PEEK_KEY);
+  } catch (e4) {}
+}
+function endingsRaw(id) {
   try {
     if (id === "day" && !localStorage.getItem("yurec-game-endings:day")) {
       var old = localStorage.getItem("yurec-game-endings");
@@ -2822,6 +2882,68 @@ function endingsOf(id) {
     return Array.isArray(raw) ? raw : [];
   } catch (e) { return []; }
 }
+function achBase() {
+  try {
+    var raw = JSON.parse(localStorage.getItem(ACH_BASE_KEY) || "null");
+    if (!raw || raw.v !== 1) return null;
+    return raw;
+  } catch (e) { return null; }
+}
+function endingsOf(id) {
+  var cur = endingsRaw(id);
+  var b = achBase();
+  if (!b) return cur;
+  var prev = (b.ends && b.ends[id]) || [];
+  var prevSet = {};
+  var i, fresh = [];
+  for (i = 0; i < prev.length; i++) prevSet[prev[i]] = 1;
+  for (i = 0; i < cur.length; i++) if (!prevSet[cur[i]]) fresh.push(cur[i]);
+  var meta = readAchMeta();
+  var extra = meta.replay && meta.replay[id] ? Number(meta.replay[id]) : 0;
+  for (i = 0; i < extra; i++) fresh.push("~" + i);
+  return fresh;
+}
+function noteAchReplay(bucket) {
+  if (!bucket || !achBase()) return;
+  var m = readAchMeta();
+  if (!m.replay) m.replay = {};
+  m.replay[bucket] = (Number(m.replay[bucket]) || 0) + 1;
+  writeAchMeta(m);
+  evaluateAchievements();
+}
+function noteAchSeen(slug) {
+  if (!slug || !achBase()) return;
+  var m = readAchMeta();
+  var i;
+  for (i = 0; i < m.seen.length; i++) if (m.seen[i] === slug) return;
+  m.seen.push(slug);
+  writeAchMeta(m);
+  evaluateAchievements();
+}
+function noteAchRedo(id) {
+  if (!id || !achBase()) return;
+  noteAchFlag(id);
+}
+function achLossCount() {
+  var n = 0, k;
+  try {
+    var avs = JSON.parse(localStorage.getItem("yurec-av-stats") || "{}");
+    var arks = JSON.parse(localStorage.getItem("yurec-ark-stats") || "{}");
+    for (k in avs) if (avs[k] && typeof avs[k] === "object") n += Number(avs[k].l) || 0;
+    for (k in arks) if (arks[k] && typeof arks[k] === "object") n += Number(arks[k].l) || 0;
+  } catch (e) {}
+  return n;
+}
+function liveWins(key, prev) {
+  var cur = winsOf(key);
+  if (!prev) return cur;
+  var out = {}, k, d;
+  for (k in cur) if (Object.prototype.hasOwnProperty.call(cur, k)) {
+    d = Number(cur[k]) - Number(prev[k] || 0);
+    if (d > 0) out[k] = d;
+  }
+  return out;
+}
 function winsOf(key) {
   try {
     var raw = JSON.parse(localStorage.getItem(key) || "{}");
@@ -2829,12 +2951,14 @@ function winsOf(key) {
   } catch (e) { return {}; }
 }
 function achQualified(id) {
-  var read = readSlugs();
+  var b = achBase();
+  var metaEarly = readAchMeta();
+  var read = b ? (metaEarly.seen || []) : readSlugs();
   var set = {};
   var i;
   for (i = 0; i < read.length; i++) set[read[i]] = 1;
-  var av = winsOf("yurec-av-wins");
-  var ark = winsOf("yurec-ark-wins");
+  var av = liveWins("yurec-av-wins", b ? b.av : null);
+  var ark = liveWins("yurec-ark-wins", b ? b.ark : null);
   var stories = window.STORIES || [];
   var cws = window.YUREC_CROSSWORDS || [];
   var quests = ["day", "olimpik", "tsar", "mirage", "dinner"];
@@ -2893,9 +3017,11 @@ function achQualified(id) {
     return true;
   }
   if (id === "zhilet") {
+    if (b) return !!metaEarly.f.relic;
     try { return localStorage.getItem(PAID_KEY) === "1" || localStorage.getItem(DEV_KEY) === "1"; } catch (e) { return false; }
   }
   if (id === "groza") {
+    if (b) return !!metaEarly.f.reegg;
     try { return localStorage.getItem(EGG_KEY) === "1"; } catch (e) { return false; }
   }
   var meta = readAchMeta();
@@ -2913,8 +3039,15 @@ function achQualified(id) {
   if (id === "citata") return !!meta.f.citats;
   if (id === "zakladka") {
     try {
-      var b = JSON.parse(localStorage.getItem(BOOK_KEY) || "[]");
-      return Array.isArray(b) && b.length >= 1;
+      var books = JSON.parse(localStorage.getItem(BOOK_KEY) || "[]");
+      if (!Array.isArray(books)) return false;
+      if (!b) return books.length >= 1;
+      var prevB = {};
+      var bi;
+      var oldBooks = b.books || [];
+      for (bi = 0; bi < oldBooks.length; bi++) prevB[oldBooks[bi]] = 1;
+      for (bi = 0; bi < books.length; bi++) if (!prevB[books[bi]]) return true;
+      return false;
     } catch (e) { return false; }
   }
   if (id === "geroi") return Object.keys(meta.chars).length >= 5;
@@ -2928,16 +3061,20 @@ function achQualified(id) {
   if (id === "nastroika") return !!meta.f.settings;
   if (id === "tema") return !!meta.f.theme;
   if (id === "chernota") {
+    if (b) return !!meta.f.reblack;
     try { return localStorage.getItem(THEME_KEY) === "black"; } catch (e) { return false; }
   }
   if (id === "uzhas") {
+    if (b) return !!meta.f.rehorror;
     try { return localStorage.getItem(ICON_KEY) === "horror"; } catch (e) { return false; }
   }
   if (id === "tikhii") {
+    if (b) return !!meta.f.requiet;
     try { return localStorage.getItem(SOUND_KEY) === "0"; } catch (e) { return false; }
   }
   if (id === "spravka") return !!meta.f.backup;
   if (id === "chatok") {
+    if (b) return !!meta.f.chat;
     if (meta.f.chat) return true;
     try {
       var log = JSON.parse((localStorage.getItem("yurec-ai-log") || sessionStorage.getItem("yurec-ai-log") || "[]"));
@@ -2967,6 +3104,7 @@ function achQualified(id) {
   if (id === "dvornik") return !!meta.f.zash;
   if (id === "ekskurs") return !!meta.f.tour;
   if (id === "proigral") {
+    if (b) return achLossCount() > Number(b.loss || 0);
     try {
       var avs = JSON.parse(localStorage.getItem("yurec-av-stats") || "{}");
       var arks = JSON.parse(localStorage.getItem("yurec-ark-stats") || "{}");
@@ -2977,7 +3115,11 @@ function achQualified(id) {
     return false;
   }
   if (id === "svoya") {
-    try { return Number(localStorage.getItem("yurec-svoya-plays") || "0") >= 1; } catch (e) { return false; }
+    try {
+      var plays = Number(localStorage.getItem("yurec-svoya-plays") || "0");
+      if (b) return plays > Number(b.plays || 0);
+      return plays >= 1;
+    } catch (e) { return false; }
   }
   return false;
 }
@@ -3776,7 +3918,7 @@ function applyBackup(pack) {
 }
 
 function notesHint(how) {
-  if (how === "ok") return "Ушло. Три проверки: обновление, двор и игра. Настоящий стук — не чаще раза в сутки.";
+  if (how === "ok") return "Ушло. Можно проверить каждый канал отдельно: двор, разработка, обновление.";
   if (how === "ask") return "Система спрашивает доступ. Разреши — и проверка сработает.";
   if (how === "settings") return "Android больше не спрашивает. Включи уведомления в настройках системы.";
   if (how === "denied") return "Доступ закрыт. Без него стук в дверь не доходит.";
@@ -3784,15 +3926,14 @@ function notesHint(how) {
   if (how === "нет") return "Этот браузер уведомления не умеет. На телефоне — умеет.";
   return "Не вышло. На телефоне это системный запрос.";
 }
-function notesWeb(test) {
+function notesWeb(kind) {
   if (typeof Notification === "undefined") return "нет";
   function fire() {
-    if (!test) return "ok";
-    var lines = [
-      ["Проверка: новая сборка", "Так выглядит канал обновлений. Это диагностика, не настоящий релиз.", "/apk"],
-      ["Кроссворд стынет", "В киоске пустая сетка. Карандаш на месте.", "/"],
-      ["Помойкобол", "Бабка размялась. Один матч, и можно закрыть.", "/game/av"]
-    ];
+    if (!kind) return "ok";
+    var lines = [];
+    if (kind === "all" || kind === "upd") lines.push(["Проверка: обновление", "Так выглядит канал обновлений. Это диагностика, не настоящий релиз. Настоящий стук скажет, что сборку можно скачать с официального источника автора.", "/apk"]);
+    if (kind === "all" || kind === "day") lines.push(["Кроссворд стынет", "В киоске пустая сетка. Карандаш на месте.", "/"]);
+    if (kind === "all" || kind === "dev") lines.push(["Проверка: разработка", "Так выглядит канал разработки. Настоящий стук позовёт в Grok продолжить двор.", "/settings"]);
     for (var i = 0; i < lines.length; i++) {
       (function (line, n) {
         setTimeout(function () {
@@ -3815,20 +3956,21 @@ function notesWeb(test) {
   } catch (e) { return "fail"; }
   return "ask";
 }
-function notesRun(test) {
+function notesRun(kind) {
   var native = window.YurecNative;
   try {
-    if (test && native && typeof native.notesTest === "function") return String(native.notesTest() || "ok");
-    if (!test && native && typeof native.notesAsk === "function") return String(native.notesAsk() || "ok");
+    if (!kind && native && typeof native.notesAsk === "function") return String(native.notesAsk() || "ok");
+    if (kind && native && typeof native.notesTestKind === "function") return String(native.notesTestKind(kind) || "ok");
+    if (kind === "all" && native && typeof native.notesTest === "function") return String(native.notesTest() || "ok");
   } catch (e) { return "fail"; }
-  return notesWeb(test);
+  return notesWeb(kind);
 }
+var NOTES_PLAN_KEY = "yurec-notes-plan";
 var NOTES_CLOCK_KEY = "yurec-notes-clock";
-function readNotesClock() {
-  try {
-    var v = localStorage.getItem(NOTES_CLOCK_KEY) || "";
-    return /^\d{2}:\d{2}$/.test(v) ? v : "";
-  } catch (e) { return ""; }
+function notesHHMM(min) {
+  if (min < 0 || min > 1439) return "08:00";
+  var h = Math.floor(min / 60), m = min % 60;
+  return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
 }
 function notesClockMinutes(hhmm) {
   var m = /^(\d{2}):(\d{2})$/.exec(hhmm || "");
@@ -3837,15 +3979,90 @@ function notesClockMinutes(hhmm) {
   if (h > 23 || min > 59) return -1;
   return h * 60 + min;
 }
-function setNotesClock(hhmm) {
-  var mins = notesClockMinutes(hhmm);
+function notesBlank() {
+  var clock = "";
+  try { clock = localStorage.getItem(NOTES_CLOCK_KEY) || ""; } catch (e) {}
+  var mins = notesClockMinutes(clock);
+  return {
+    day: mins >= 0 ? { on: true, mode: "clock", min: mins } : { on: true, mode: "span", min: -1 },
+    dev: { on: false, mode: "clock", min: 480 },
+    upd: { on: true, mode: "clock", min: 480 }
+  };
+}
+function notesChan(raw, fb) {
+  if (!raw || typeof raw !== "object") return fb;
+  var mode = raw.mode === "span" || raw.mode === "clock" || raw.mode === "random" ? raw.mode : fb.mode;
+  var min = typeof raw.min === "number" && raw.min >= -1 && raw.min <= 1439 ? raw.min : fb.min;
+  return { on: typeof raw.on === "boolean" ? raw.on : fb.on, mode: mode, min: min };
+}
+function readNotesPlan() {
+  var fb = notesBlank();
   try {
-    if (mins < 0) localStorage.removeItem(NOTES_CLOCK_KEY);
-    else localStorage.setItem(NOTES_CLOCK_KEY, hhmm);
-  } catch (e) {}
+    var raw = JSON.parse(localStorage.getItem(NOTES_PLAN_KEY) || "null");
+    if (!raw) return fb;
+    var dev = notesChan(raw.dev, fb.dev);
+    var upd = notesChan(raw.upd, fb.upd);
+    if (dev.mode === "span") dev.mode = "clock";
+    if (upd.mode === "span") upd.mode = "clock";
+    return { day: notesChan(raw.day, fb.day), dev: dev, upd: upd };
+  } catch (e) { return fb; }
+}
+function writeNotesPlan(plan) {
+  try { localStorage.setItem(NOTES_PLAN_KEY, JSON.stringify(plan)); } catch (e) {}
   try {
-    if (window.YurecNative && typeof window.YurecNative.notesClock === "function") window.YurecNative.notesClock(mins);
+    if (plan.day.on && plan.day.mode !== "span" && plan.day.min >= 0) localStorage.setItem(NOTES_CLOCK_KEY, notesHHMM(plan.day.min));
+    else localStorage.removeItem(NOTES_CLOCK_KEY);
   } catch (e2) {}
+}
+function pushNotesPlan(plan) {
+  writeNotesPlan(plan);
+  try {
+    if (window.YurecNative && typeof window.YurecNative.notesPlan === "function") {
+      var back = window.YurecNative.notesPlan(JSON.stringify(plan));
+      var parsed = JSON.parse(String(back || ""));
+      if (parsed && parsed.day) {
+        plan = { day: notesChan(parsed.day, plan.day), dev: notesChan(parsed.dev, plan.dev), upd: notesChan(parsed.upd, plan.upd) };
+        writeNotesPlan(plan);
+      }
+      return plan;
+    }
+    if (window.YurecNative && typeof window.YurecNative.notesClock === "function") {
+      window.YurecNative.notesClock(plan.day.on && plan.day.mode !== "span" ? plan.day.min : -1);
+    }
+  } catch (e) {}
+  return plan;
+}
+function readNotesClock() {
+  var day = readNotesPlan().day;
+  if (!day.on || day.mode === "span" || day.min < 0) return "";
+  return notesHHMM(day.min);
+}
+function setNotesClock(hhmm) {
+  var plan = readNotesPlan();
+  var mins = notesClockMinutes(hhmm);
+  plan.day = mins < 0 ? { on: true, mode: "span", min: -1 } : { on: true, mode: "clock", min: mins };
+  pushNotesPlan(plan);
+}
+function notesLane(id, title, text, allowSpan) {
+  var plan = readNotesPlan();
+  var chan = plan[id];
+  var timed = chan.on && chan.mode !== "span";
+  var shown = timed && chan.min >= 0 ? notesHHMM(chan.min) : "08:00";
+  var html = '<div class="notes-lane">' +
+    '<button type="button" class="set-switch" data-note-on="' + id + '" role="switch" aria-checked="' + (chan.on ? "true" : "false") + '">' +
+      '<span>' + title + '</span><span class="pill' + (chan.on ? " on" : "") + '">' + (chan.on ? "включено" : "выключено") + "</span></button>" +
+    '<p class="subtle">' + text + "</p>";
+  if (allowSpan) {
+    var own = chan.on && chan.mode !== "span";
+    html += '<button type="button" class="set-switch" data-note-span="' + id + '" role="switch" aria-checked="' + (own ? "true" : "false") + '" style="margin-top:8px">' +
+      '<span>Своё время</span><span class="pill' + (own ? " on" : "") + '">' + (own ? "включено" : "выключено") + "</span></button>";
+  }
+  html += '<div class="notes-when"><span>Когда стучать</span><input type="time" data-note-time="' + id + '" value="' + shown + '"' + (timed ? "" : " disabled") + " /></div>" +
+    '<div class="notes-pair"><button type="button" class="btn" data-note-rand="' + id + '">Рандом</button>' +
+    '<button type="button" class="btn" data-note-def="' + id + '">По умолчанию</button></div>' +
+    (chan.mode === "random" && chan.on ? '<p class="subtle" style="text-align:center">Случайный час на эти сутки: ' + shown + ". Завтра выпадет другой.</p>" : "") +
+    '<button type="button" class="btn wide off" data-note-test="' + id + '" style="margin-top:8px">Проверить «' + title + "»</button></div>";
+  return html;
 }
 function renderSettings() {
   var choice = readTheme();
@@ -3995,12 +4212,12 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>') + "Уведомления</p>" +
-      '<p class="subtle">При запуске телефон спрашивает доступ. Два канала: новая сборка, когда она правда вышла, и один стук в сутки — то про двор, то про игру. Своё время необязательно: выключишь — стук через сутки после прошлого.</p>' +
-      '<button type="button" class="set-switch" id="notes-clock-on" role="switch" aria-checked="' + (readNotesClock() ? "true" : "false") + '">' +
-        '<span>Своё время</span><span class="pill' + (readNotesClock() ? " on" : "") + '">' + (readNotesClock() ? "включено" : "выключено") + "</span></button>" +
-      '<div class="font-row" style="margin-top:8px"><span>Когда стучать</span><input type="time" id="notes-clock" value="' + (readNotesClock() || "09:00") + '"' + (readNotesClock() ? "" : " disabled") + " /></div>" +
-      '<button type="button" class="btn wide off" id="notes-ask">Разрешить уведомления</button>' +
-      '<button type="button" class="btn wide gold" id="notes-test" style="margin-top:8px">Проверить уведомления</button>' +
+      '<p class="subtle">Три канала, у каждого свой час. Двор стучит раз в сутки. Разработка зовёт в Grok. Обновления смотрят GitHub и пишут, если сборку можно скачать с официального источника автора.</p>' +
+      notesLane("day", "Двор", "Один стук: то про сборник, то про игру. Выключишь своё время — стук через сутки после прошлого.", true) +
+      '<button type="button" class="btn wide off notes-ask" id="notes-ask">Разрешить уведомления</button>' +
+      notesLane("dev", "Разработка", "Зайти в Grok и продолжить двор. Лимиты сбрасываются в разное время, поэтому час подводится вручную. Канал по умолчанию выключен.", false) +
+      notesLane("upd", "Обновления", "В выбранный час телефон проверяет GitHub. Если версия новее — придёт стук: скачать можно с официального источника автора.", false) +
+      '<button type="button" class="btn wide gold" id="notes-test" style="margin-top:16px">Проверить все уведомления</button>' +
       (notesNote ? '<p class="bak-note">' + esc(notesNote) + "</p>" : "") +
     "</section>" +
     '<section class="set-card">' +
@@ -4501,19 +4718,54 @@ function bindSettings() {
     paint();
   });
   on($("#notes-test"), "click", function () {
-    notesNote = notesHint(notesRun(true));
+    notesNote = notesHint(notesRun("all"));
     paint();
   });
-  on($("#notes-clock-on"), "click", function () {
-    var cur = readNotesClock();
-    var field = document.getElementById("notes-clock");
-    setNotesClock(cur ? "" : ((field && field.value) || "09:00"));
+  function patchNote(id, fn) {
+    var plan = readNotesPlan();
+    if (!plan[id]) return;
+    plan[id] = fn(plan[id]);
+    pushNotesPlan(plan);
     paint();
-  });
-  on($("#notes-clock"), "change", function (e) {
-    var v = (e.target && e.target.value) || "09:00";
-    setNotesClock(v);
-  });
+  }
+  var noteNodes = document.querySelectorAll("[data-note-on],[data-note-span],[data-note-rand],[data-note-def],[data-note-test]");
+  var ni;
+  for (ni = 0; ni < noteNodes.length; ni++) {
+    noteNodes[ni].addEventListener("click", function () {
+      var id = this.getAttribute("data-note-on") || this.getAttribute("data-note-span") || this.getAttribute("data-note-rand") || this.getAttribute("data-note-def") || this.getAttribute("data-note-test");
+      if (this.hasAttribute("data-note-test")) {
+        notesNote = notesHint(notesRun(id));
+        paint();
+        return;
+      }
+      if (this.hasAttribute("data-note-on")) {
+        patchNote(id, function (c) { return { on: !c.on, mode: c.mode, min: c.min }; });
+        return;
+      }
+      if (this.hasAttribute("data-note-span")) {
+        patchNote(id, function (c) {
+          var own = c.on && c.mode !== "span";
+          if (own) return { on: true, mode: "span", min: -1 };
+          return { on: true, mode: "clock", min: c.min >= 0 ? c.min : 480 };
+        });
+        return;
+      }
+      if (this.hasAttribute("data-note-rand")) {
+        patchNote(id, function () { return { on: true, mode: "random", min: Math.floor(Math.random() * 1440) }; });
+        return;
+      }
+      patchNote(id, function () { return { on: true, mode: "clock", min: 480 }; });
+    });
+  }
+  var noteTimes = document.querySelectorAll("[data-note-time]");
+  for (ni = 0; ni < noteTimes.length; ni++) {
+    noteTimes[ni].addEventListener("change", function () {
+      var id = this.getAttribute("data-note-time");
+      var mins = notesClockMinutes(this.value || "08:00");
+      if (mins < 0) mins = 480;
+      patchNote(id, function () { return { on: true, mode: "clock", min: mins }; });
+    });
+  }
   on($("#widget-pin"), "click", function () {
     var how = pinQuoteWidget();
     widgetNote = how === "ok" ? "Android спросит: добавить виджет на рабочий стол." : (how === "old" ? "Зажми пустое место на рабочем столе → Виджеты → Жизнь Юрца." : (how === "need" ? "Добавь вручную: долгий тап по столу → виджеты." : "Виджет ставится в телефонной сборке."));
@@ -4849,8 +5101,48 @@ function renderZashkvary() {
       (on ? "" : '<span class="ach-lock-label">???</span>') + "</span>" +
       '<span class="ach-name">' + esc(on ? a.title : "Закрыто") + "</span></button></li>";
   }
-  html += "</ul>";
+  html += "</ul>" +
+    '<button type="button" class="btn wide danger" id="ach-wipe" style="margin-top:28px">Обнулиться</button>' +
+    (window.__achWiped ? '<p class="subtle" style="text-align:center;margin-top:8px">Список пуст. Двор продал медали.</p>' : "");
   return shell(html, showZashNav() ? "zash" : "about");
+}
+
+function openAchWipe() {
+  var old = document.getElementById("ach-wipe-modal");
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  var overlay = document.createElement("div");
+  overlay.id = "ach-wipe-modal";
+  overlay.className = "ach-modal";
+  overlay.innerHTML = '<form class="ach-modal-card" style="padding:16px 16px 18px">' +
+    '<p class="starfall-title" style="margin-top:0">Медали продадут</p>' +
+    '<p class="starfall-flavor">Это не шутка. Весь список исчезнет. Двор забудет, за что они висели. Прочитанное и победы в играх останутся, но старые медали сами не вернутся — только за новые дела.</p>' +
+    '<p class="subtle" style="text-align:center;margin-top:10px">Напиши слово обнулиться.</p>' +
+    '<input class="av-cheat-in" id="ach-wipe-in" type="text" autocomplete="off" placeholder="обнулиться" style="margin-top:12px" />' +
+    '<p class="hint err" id="ach-wipe-err" style="display:none">Не то слово. Нужно ровно: обнулиться.</p>' +
+    '<div class="row" style="margin-top:14px"><button type="button" class="btn" id="ach-wipe-no">Отмена</button>' +
+    '<button type="submit" class="btn gold">Обнулить</button></div></form>';
+  function close() {
+    lockModal(false);
+    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  }
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+  overlay.querySelector("#ach-wipe-no").addEventListener("click", close);
+  overlay.querySelector("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = String((document.getElementById("ach-wipe-in") || {}).value || "").replace(/^\s+|\s+$/g, "").toLowerCase();
+    if (v !== "обнулиться") {
+      var err = document.getElementById("ach-wipe-err");
+      if (err) err.style.display = "block";
+      return;
+    }
+    wipeAchievements();
+    window.__achWiped = true;
+    close();
+    paint();
+  });
+  document.body.appendChild(overlay);
+  lockModal(true);
+  try { document.getElementById("ach-wipe-in").focus(); } catch (e2) {}
 }
 
 function bindZashkvary() {
@@ -4859,6 +5151,7 @@ function bindZashkvary() {
   for (i = 0; i < zooms.length; i++) {
     on(zooms[i], "click", function () { openZoom(this.getAttribute("data-zoom")); });
   }
+  on($("#ach-wipe"), "click", openAchWipe);
   var btns = document.querySelectorAll("[data-ach]");
   var i;
   for (i = 0; i < btns.length; i++) {
@@ -5163,7 +5456,7 @@ function gEndings() {
 function gRecord(id) {
   var lid = gLevelId || "day";
   var cur = gEndingsId(lid);
-  if (cur.indexOf(id) !== -1) return;
+  if (cur.indexOf(id) !== -1) { try { noteAchReplay(lid); } catch (e) {} return; }
   cur.push(id);
   try { localStorage.setItem(endKey(lid), JSON.stringify(cur)); } catch (e) {}
 }
@@ -5453,6 +5746,8 @@ function cwSolvedMark() {
     if (raw.indexOf(endId) === -1) {
       raw.push(endId);
       localStorage.setItem(endKey(CW.id), JSON.stringify(raw));
+    } else {
+      try { noteAchReplay(CW.id); } catch (e2) {}
     }
   } catch (e) {}
 }
@@ -7748,6 +8043,7 @@ function bindAbout() {
       aboutTaps.n = 0;
       aboutEgg = true;
       try { localStorage.setItem(EGG_KEY, "1"); } catch (e) {}
+      try { noteAchRedo("reegg"); } catch (e2) {}
       paint();
       window.setTimeout(function () {
         var storm = document.getElementById("egg-storm");
@@ -9094,7 +9390,7 @@ function boot() {
     gStats = gFresh();
   }
   applyTheme();
-  setNotesClock(readNotesClock());
+  pushNotesPlan(readNotesPlan());
   syncWideLayout();
   try {
     window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function () {

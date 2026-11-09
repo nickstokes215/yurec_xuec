@@ -850,8 +850,23 @@ public class YurecOffline {
     }
 
     @JavascriptInterface
+    public String notesPlan(String json) {
+        return YurecNotes.setPlan(ctx, json);
+    }
+
+    @JavascriptInterface
+    public String notesState() {
+        return YurecNotes.state(ctx);
+    }
+
+    @JavascriptInterface
     public String notesTest() {
         return YurecNotes.test(ctx);
+    }
+
+    @JavascriptInterface
+    public String notesTestKind(String kind) {
+        return YurecNotes.testOne(ctx, kind);
     }
 
     private IconCompat chatShortcutIcon() {

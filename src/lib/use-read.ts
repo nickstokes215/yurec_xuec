@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { noteSeen } from "@/lib/use-achievements";
 
 const KEY = "yurec-read";
 const SKIP = "yurec-read-skip";
@@ -47,6 +48,7 @@ export function markStoryRead(slug: string) {
   const skip = readArr(SKIP).filter((s) => s !== slug);
   writeArr(SKIP, skip);
   if (!read.includes(slug)) writeArr(KEY, [slug, ...read]);
+  noteSeen(slug);
   emit();
 }
 

@@ -20,7 +20,29 @@ type AchMeta = {
   f: Record<string, number>;
   quotes: number;
   chars: Record<string, number>;
+  seen: string[];
+  replay: Record<string, number>;
 };
+
+type AchBase = {
+  v: 1;
+  read: string[];
+  books: string[];
+  av: Record<string, number>;
+  ark: Record<string, number>;
+  ends: Record<string, string[]>;
+  plays: number;
+  loss: number;
+  egg: boolean;
+  paid: boolean;
+  theme: string;
+  icon: string;
+  sound: string;
+  chat: boolean;
+};
+
+const BASE_KEY = "yurec-ach-base";
+const HOLD_KEY = "yurec-ach-hold";
 
 function emit() {
   for (const fn of listeners) fn();
@@ -56,7 +78,7 @@ function writeStore(next: Record<string, number>) {
 }
 
 function emptyMeta(): AchMeta {
-  return { f: {}, quotes: 0, chars: {} };
+  return { f: {}, quotes: 0, chars: {}, seen: [], replay: {} };
 }
 
 function readMeta(): AchMeta {
@@ -67,6 +89,8 @@ function readMeta(): AchMeta {
       f: raw.f && typeof raw.f === "object" ? raw.f : {},
       quotes: Number(raw.quotes) || 0,
       chars: raw.chars && typeof raw.chars === "object" ? raw.chars : {},
+      seen: Array.isArray(raw.seen) ? raw.seen.filter((x): x is string => typeof x === "string") : [],
+      replay: raw.replay && typeof raw.replay === "object" ? raw.replay : {},
     };
   } catch {
     metaCache = emptyMeta();
@@ -109,8 +133,21 @@ export function noteCharOpen(id: string) {
   evaluateAchievements();
 }
 
+function normPath(path: string) {
+  const p = (path || "/").split("?")[0] || "/";
+  if (p.length > 1 && p.endsWith("/")) return p.slice(0, -1);
+  return p;
+}
+
 export function noteVisit(path: string) {
-  const p = (path || "").split("?")[0];
+  const p = normPath(path);
+  try {
+    const hold = sessionStorage.getItem(HOLD_KEY) || "";
+    if (hold && hold === p) return;
+    if (hold) sessionStorage.removeItem(HOLD_KEY);
+  } catch {
+    /* ignore */
+  }
   if (p === "/characters/map" || p.startsWith("/characters/map/")) noteFlag("map");
   else if (p === "/citats" || p.startsWith("/citats/")) noteFlag("citats");
   else if (p === "/settings" || p.startsWith("/settings/")) noteFlag("settings");
@@ -135,7 +172,7 @@ function readSlugs(key: string): string[] {
   }
 }
 
-function endingsOf(id: string): string[] {
+function endingsRaw(id: string): string[] {
   if (id === "day") {
     try {
       if (!localStorage.getItem("yurec-game-endings:day")) {
@@ -147,6 +184,76 @@ function endingsOf(id: string): string[] {
     }
   }
   return readSlugs(`yurec-game-endings:${id}`);
+}
+
+function readBase(): AchBase | null {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BASE_KEY) || "null") as AchBase | null;
+    if (!raw || raw.v !== 1) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
+
+function endingsOf(id: string): string[] {
+  const cur = endingsRaw(id);
+  const base = readBase();
+  if (!base) return cur;
+  const prev = new Set((base.ends && base.ends[id]) || []);
+  const fresh = cur.filter((s) => !prev.has(s));
+  const extra = Number(readMeta().replay[id] || 0);
+  for (let i = 0; i < extra; i++) fresh.push("~" + i);
+  return fresh;
+}
+
+function liveWins(key: string, prev: Record<string, number> | undefined): Record<string, number> {
+  const cur = winsOf(key);
+  if (!prev) return cur;
+  const out: Record<string, number> = {};
+  for (const id of Object.keys(cur)) {
+    const d = Number(cur[id]) - Number(prev[id] || 0);
+    if (d > 0) out[id] = d;
+  }
+  return out;
+}
+
+function lossCount(): number {
+  let n = 0;
+  try {
+    const av = JSON.parse(localStorage.getItem("yurec-av-stats") || "{}") as Record<string, { l?: number }>;
+    const ark = JSON.parse(localStorage.getItem("yurec-ark-stats") || "{}") as Record<string, { l?: number }>;
+    for (const row of Object.values(av)) n += Number(row && row.l) || 0;
+    for (const row of Object.values(ark)) n += Number(row && row.l) || 0;
+  } catch {
+    /* ignore */
+  }
+  return n;
+}
+
+/** Повтор уже известной концовки после продажи медалей. */
+export function noteReplay(bucket: string) {
+  if (!bucket || !readBase()) return;
+  const m = readMeta();
+  m.replay = { ...m.replay, [bucket]: (Number(m.replay[bucket]) || 0) + 1 };
+  writeMeta(m);
+  evaluateAchievements();
+}
+
+/** Рассказ открыт заново. Старая полка в зачёт не идёт. */
+export function noteSeen(slug: string) {
+  if (!slug || !readBase()) return;
+  const m = readMeta();
+  if (m.seen.includes(slug)) return;
+  m.seen = m.seen.concat(slug);
+  writeMeta(m);
+  evaluateAchievements();
+}
+
+/** Жест, который уже был до продажи: тема, яйцо, ключ. */
+export function noteRedo(id: string) {
+  if (!id || !readBase()) return;
+  noteFlag(id);
 }
 
 function winsOf(key: string): Record<string, number> {
@@ -193,10 +300,11 @@ function chatHasUser(): boolean {
 }
 
 function qualified(id: string): boolean {
-  const read = new Set(readSlugs("yurec-read"));
-  const av = winsOf("yurec-av-wins");
-  const ark = winsOf("yurec-ark-wins");
+  const base = readBase();
   const meta = readMeta();
+  const read = new Set(base ? meta.seen : readSlugs("yurec-read"));
+  const av = liveWins("yurec-av-wins", base ? base.av : undefined);
+  const ark = liveWins("yurec-ark-wins", base ? base.ark : undefined);
   switch (id) {
     case "rjumka":
       return read.size >= 1;
@@ -247,12 +355,14 @@ function qualified(id: string): boolean {
     case "arkall":
       return ARK_CHAIN.every((xid) => Number(ark[xid]) > 0);
     case "zhilet":
+      if (base) return flag("relic");
       try {
         return localStorage.getItem("yurec-license") === "1" || localStorage.getItem("yurec-dev") === "1";
       } catch {
         return false;
       }
     case "groza":
+      if (base) return flag("reegg");
       return eggOn();
     case "karta":
       return flag("map");
@@ -262,8 +372,12 @@ function qualified(id: string): boolean {
       return meta.quotes >= 10;
     case "citata":
       return flag("citats");
-    case "zakladka":
-      return readSlugs("yurec-bookmarks").length >= 1;
+    case "zakladka": {
+      const books = readSlugs("yurec-bookmarks");
+      if (!base) return books.length >= 1;
+      const prev = new Set(base.books);
+      return books.some((s) => !prev.has(s));
+    }
     case "geroi":
       return Object.keys(meta.chars).length >= 5;
     case "sosed":
@@ -285,18 +399,21 @@ function qualified(id: string): boolean {
     case "tema":
       return flag("theme");
     case "chernota":
+      if (base) return flag("reblack");
       try {
         return localStorage.getItem("yurec-theme") === "black";
       } catch {
         return false;
       }
     case "uzhas":
+      if (base) return flag("rehorror");
       try {
         return localStorage.getItem("yurec-app-icon") === "horror";
       } catch {
         return false;
       }
     case "tikhii":
+      if (base) return flag("requiet");
       try {
         return localStorage.getItem("yurec-sound") === "0";
       } catch {
@@ -305,6 +422,7 @@ function qualified(id: string): boolean {
     case "spravka":
       return flag("backup");
     case "chatok":
+      if (base) return flag("chat");
       return flag("chat") || chatHasUser();
     case "donate":
       return flag("donate");
@@ -337,9 +455,11 @@ function qualified(id: string): boolean {
     case "ekskurs":
       return flag("tour");
     case "proigral":
+      if (base) return lossCount() > base.loss;
       return lostAny();
     case "svoya":
       try {
+        if (base) return playsCount() > base.plays;
         return playsCount() >= 1;
       } catch {
         return false;
@@ -391,8 +511,70 @@ export function markEgg() {
   } catch {
     /* ignore */
   }
+  if (readBase()) noteRedo("reegg");
+  else {
+    pingProgress();
+    evaluateAchievements();
+  }
+}
+
+function numMap(key: string): Record<string, number> {
+  const raw = winsOf(key);
+  const out: Record<string, number> = {};
+  for (const id of Object.keys(raw)) out[id] = Number(raw[id]) || 0;
+  return out;
+}
+
+/** Продажа всего списка. Старые дела остаются, медали за них не возвращаются. */
+export function wipeAchievements() {
+  const ends: Record<string, string[]> = {};
+  const buckets = ["day", "olimpik", "tsar", "mirage", "dinner", "crossword", ...CROSSWORDS.map((c) => c.id)];
+  for (const id of buckets) ends[id] = endingsRaw(id);
+  let theme = "";
+  let icon = "";
+  let sound = "";
+  let paid = false;
+  try {
+    theme = localStorage.getItem("yurec-theme") || "";
+    icon = localStorage.getItem("yurec-app-icon") || "";
+    sound = localStorage.getItem("yurec-sound") || "";
+    paid = localStorage.getItem("yurec-license") === "1" || localStorage.getItem("yurec-dev") === "1";
+  } catch {
+    /* ignore */
+  }
+  const base: AchBase = {
+    v: 1,
+    read: readSlugs("yurec-read"),
+    books: readSlugs("yurec-bookmarks"),
+    av: numMap("yurec-av-wins"),
+    ark: numMap("yurec-ark-wins"),
+    ends,
+    plays: playsCount(),
+    loss: lossCount(),
+    egg: eggOn(),
+    paid,
+    theme,
+    icon,
+    sound,
+    chat: chatHasUser() || Boolean(readMeta().f.chat),
+  };
+  try {
+    localStorage.setItem(BASE_KEY, JSON.stringify(base));
+    localStorage.setItem(KEY, "{}");
+    localStorage.setItem(META_KEY, JSON.stringify(emptyMeta()));
+  } catch {
+    /* ignore */
+  }
+  cache = {};
+  metaCache = emptyMeta();
+  try {
+    sessionStorage.setItem(HOLD_KEY, normPath(window.location.pathname));
+    sessionStorage.removeItem(PEEK_KEY);
+  } catch {
+    /* ignore */
+  }
+  emit();
   pingProgress();
-  evaluateAchievements();
 }
 
 export function evaluateAchievements(): Achievement[] {

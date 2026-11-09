@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
+import { noteRedo } from "@/lib/use-achievements";
 import { matchPaid } from "@/lib/secret-gate";
 
 const KEY = "yurec-license";
@@ -50,7 +51,10 @@ export function unlockPaid(input: string): boolean {
   }
   // Не размонтировать поле ввода в том же тике, что и keydown/input —
   // на Android WebView это нативный краш.
-  later(emit);
+  later(() => {
+    emit();
+    noteRedo("relic");
+  });
   return true;
 }
 
@@ -93,7 +97,10 @@ export function grantPaidSilent() {
   } catch {
     /* ignore */
   }
-  later(emit);
+  later(() => {
+    emit();
+    noteRedo("relic");
+  });
 }
 
 const getServerPaid = () => false;

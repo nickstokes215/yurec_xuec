@@ -2,7 +2,7 @@ import { useCallback, useSyncExternalStore } from "react";
 import { grantPaidSilent } from "@/lib/use-paid";
 import { matchDev } from "@/lib/secret-gate";
 import changelogJson from "@/data/changelog.json";
-import { evaluateAchievements } from "@/lib/use-achievements";
+import { evaluateAchievements, noteRedo } from "@/lib/use-achievements";
 
 const BOOK_NAV_KEY = "yurec-bookmarks-nav";
 const CITATS_NAV_KEY = "yurec-citats-nav";
@@ -335,6 +335,7 @@ export function setSoundOn(on: boolean) {
   emit(soundListeners);
   try {
     evaluateAchievements();
+    if (!on) noteRedo("requiet");
   } catch {
     /* ignore */
   }
@@ -529,6 +530,7 @@ export function setAppIcon(id: AppIconId) {
   emit(iconListeners);
   try {
     evaluateAchievements();
+    if (iconCache === "horror") noteRedo("rehorror");
   } catch {
     /* ignore */
   }

@@ -1,5 +1,6 @@
 import { CROSSWORDS } from "@/data/crossword";
 import { type GameSave } from "@/data/game";
+import { noteReplay } from "@/lib/use-achievements";
 import { clearCrosswordTimer, clearQuestTimer } from "@/lib/game-stats";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 
@@ -99,7 +100,10 @@ export function writeGameSave(id: string, save: GameSave | null) {
 
 export function recordEnding(id: string, endId: string) {
   const cur = readEndings(id);
-  if (cur.includes(endId)) return;
+  if (cur.includes(endId)) {
+    noteReplay(id);
+    return;
+  }
   endingsCache[id] = cur.concat(endId);
   try {
     localStorage.setItem(endKey(id), JSON.stringify(endingsCache[id]));

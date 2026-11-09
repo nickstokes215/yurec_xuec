@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import androidx.core.app.NotificationCompat;
@@ -23,15 +24,19 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Calendar;
 
-/** Два канала: обновление (когда вышла сборка) и один стук в сутки. */
+/** Три канала: двор раз в сутки, разработка и обновление с GitHub. */
 public class YurecNotes {
     public static final int REQ_NOTES = 4402;
     private static final String PREF = "yurec-notes";
     private static final String CH_UPD = "yurec_updates";
     private static final String CH_DAY = "yurec_daily";
+    private static final String CH_DEV = "yurec_dev";
     private static final String ACTION_DAILY = "ru.yurec.xuec.NOTES_DAILY";
+    private static final String ACTION_DEV = "ru.yurec.xuec.NOTES_DEV";
+    private static final String ACTION_UPD = "ru.yurec.xuec.NOTES_UPD";
     private static final long DAY = 24L * 60L * 60L * 1000L;
     private static final String LATEST = "https://api.github.com/repos/nickstokes215/yurec_xuec/releases/latest";
+    private static final String GROK = "https://grok.com/c/bd6138f0-50b2-46ff-ad22-78e3151fb58f";
     private static WeakReference<Activity> host = new WeakReference<Activity>(null);
 
     private static final String[][] LINES = new String[][] {
@@ -108,14 +113,28 @@ public class YurecNotes {
     }
 
     public static String test(Context ctx) {
+        return testOne(ctx, "all");
+    }
+
+    public static String testOne(Context ctx, String kind) {
+        if (ctx == null) return "fail";
         if (!canPost(ctx)) return "denied";
         ensureChannels(ctx);
-        post(ctx, CH_UPD, 701, "Проверка: новая сборка",
-                "Так выглядит канал обновлений. Это диагностика, не настоящий релиз.", "/apk");
-        String[] day = LINES[0];
-        String[] game = LINES[1];
-        post(ctx, CH_DAY, 702, day[0], day[1], day[2]);
-        post(ctx, CH_DAY, 703, game[0], game[1], game[2]);
+        if (kind == null || kind.length() == 0) kind = "all";
+        if ("all".equals(kind) || "upd".equals(kind)) {
+            post(ctx, CH_UPD, 701, "Проверка: обновление",
+                    "Так выглядит канал обновлений. Это диагностика, не настоящий релиз. Настоящий стук скажет, что сборку можно скачать с официального источника автора.",
+                    "/apk");
+        }
+        if ("all".equals(kind) || "day".equals(kind)) {
+            String[] day = LINES[0];
+            post(ctx, CH_DAY, 702, day[0], day[1], day[2]);
+        }
+        if ("all".equals(kind) || "dev".equals(kind)) {
+            post(ctx, CH_DEV, 703, "Проверка: разработка",
+                    "Так выглядит канал разработки. Настоящий стук позовёт в Grok продолжить двор.",
+                    GROK);
+        }
         return "ok";
     }
 
@@ -124,49 +143,140 @@ public class YurecNotes {
         SharedPreferences p = prefs(ctx);
         long now = System.currentTimeMillis();
         if (p.getLong("since", 0L) == 0L) p.edit().putLong("since", now).apply();
-        if (p.getInt("clock", -1) >= 0) {
-            schedule(ctx, nextWhen(ctx));
-            return;
-        }
-        long since = p.getLong("since", 0L);
-        long last = p.getLong("last", 0L);
-        long mark = Math.max(since, last);
-        if (now - mark >= DAY) {
-            postDaily(ctx);
-            p.edit().putLong("last", now).apply();
-            schedule(ctx, now + DAY);
-            return;
-        }
-        schedule(ctx, mark + DAY);
+        scheduleChan(ctx, "day", ACTION_DAILY, 81, false);
+        scheduleChan(ctx, "dev", ACTION_DEV, 82, false);
+        scheduleChan(ctx, "upd", ACTION_UPD, 83, false);
+        if (chanOn(ctx, "upd", true)) checkUpdate(ctx);
     }
 
-    /** Минуты от полуночи, 0–1439. Меньше нуля — своего времени нет, стук раз в сутки как раньше. */
+    /** Старый мост: минуты двора. Меньше нуля — стук через сутки, без своего часа. */
     public static String setClock(Context ctx, int minutes) {
         if (ctx == null) return "fail";
-        if (minutes < 0 || minutes > 1439) minutes = -1;
-        prefs(ctx).edit().putInt("clock", minutes).apply();
-        if (canPost(ctx)) schedule(ctx, nextWhen(ctx));
+        if (minutes < 0 || minutes > 1439) {
+            prefs(ctx).edit().putBoolean("day_on", true).putString("day_mode", "span").putInt("day_min", -1).putInt("clock", -1).apply();
+        } else {
+            prefs(ctx).edit().putBoolean("day_on", true).putString("day_mode", "clock").putInt("day_min", minutes).putInt("clock", minutes).apply();
+        }
+        if (canPost(ctx)) arm(ctx);
         return minutes < 0 ? "off" : "ok";
     }
 
-    private static long nextWhen(Context ctx) {
+    public static String setPlan(Context ctx, String json) {
+        if (ctx == null) return "fail";
+        try {
+            if (json != null && json.length() > 0 && json.charAt(0) == '{') {
+                JSONObject root = new JSONObject(json);
+                applyChan(ctx, root, "day", true, "span", -1);
+                applyChan(ctx, root, "dev", false, "clock", 480);
+                applyChan(ctx, root, "upd", true, "clock", 480);
+            }
+        } catch (Exception ignored) {
+        }
+        if (canPost(ctx)) arm(ctx);
+        return state(ctx);
+    }
+
+    public static String state(Context ctx) {
+        try {
+            JSONObject o = new JSONObject();
+            o.put("day", chanJson(ctx, "day", true, "span", -1));
+            o.put("dev", chanJson(ctx, "dev", false, "clock", 480));
+            o.put("upd", chanJson(ctx, "upd", true, "clock", 480));
+            return o.toString();
+        } catch (Exception e) {
+            return "{}";
+        }
+    }
+
+    private static void applyChan(Context ctx, JSONObject root, String id, boolean defOn, String defMode, int defMin) {
+        JSONObject o = root.optJSONObject(id);
+        if (o == null) return;
+        boolean on = o.optBoolean("on", defOn);
+        String mode = o.optString("mode", defMode);
+        if (!"span".equals(mode) && !"clock".equals(mode) && !"random".equals(mode)) mode = defMode;
+        if (!"day".equals(id) && "span".equals(mode)) mode = "clock";
+        int min = o.optInt("min", defMin);
+        if (min < -1 || min > 1439) min = defMin;
+        SharedPreferences.Editor ed = prefs(ctx).edit();
+        ed.putBoolean(id + "_on", on);
+        ed.putString(id + "_mode", mode);
+        ed.putInt(id + "_min", min);
+        if ("random".equals(mode) && min >= 0) ed.putInt(id + "_roll", min);
+        if ("day".equals(id)) ed.putInt("clock", "span".equals(mode) ? -1 : min);
+        ed.apply();
+    }
+
+    private static JSONObject chanJson(Context ctx, String id, boolean defOn, String defMode, int defMin) throws Exception {
+        SharedPreferences p = prefs(ctx);
+        JSONObject o = new JSONObject();
+        if ("day".equals(id) && !p.contains("day_mode")) {
+            int clock = p.getInt("clock", -1);
+            o.put("on", true);
+            if (clock >= 0 && clock <= 1439) {
+                o.put("mode", "clock");
+                o.put("min", clock);
+            } else {
+                o.put("mode", "span");
+                o.put("min", -1);
+            }
+            return o;
+        }
+        String mode = p.getString(id + "_mode", defMode);
+        int min = p.getInt(id + "_min", defMin);
+        if ("random".equals(mode)) {
+            int roll = p.getInt(id + "_roll", min);
+            if (roll >= 0 && roll <= 1439) min = roll;
+        }
+        o.put("on", p.getBoolean(id + "_on", defOn));
+        o.put("mode", mode);
+        o.put("min", min);
+        return o;
+    }
+
+    private static boolean chanOn(Context ctx, String id, boolean defOn) {
+        SharedPreferences p = prefs(ctx);
+        if ("day".equals(id) && !p.contains("day_on")) return true;
+        return p.getBoolean(id + "_on", defOn);
+    }
+
+    private static long nextWhen(Context ctx, String id, boolean forceNextDay) {
+        if (!chanOn(ctx, id, "dev".equals(id) ? false : true)) return 0L;
+        SharedPreferences p = prefs(ctx);
+        String mode = p.getString(id + "_mode", "day".equals(id) ? "span" : "clock");
+        if ("day".equals(id) && !p.contains("day_mode")) mode = p.getInt("clock", -1) >= 0 ? "clock" : "span";
         long now = System.currentTimeMillis();
-        int clock = prefs(ctx).getInt("clock", -1);
-        if (clock < 0 || clock > 1439) {
-            long last = prefs(ctx).getLong("last", 0L);
-            long since = prefs(ctx).getLong("since", 0L);
+        if ("span".equals(mode)) {
+            long last = p.getLong("last", 0L);
+            long since = p.getLong("since", 0L);
             long mark = Math.max(last, since);
             long when = mark <= 0L ? now + DAY : mark + DAY;
-            if (when < now + 60000L) when = now + 60000L;
+            if (when < now + 60000L) when = now + DAY;
             return when;
         }
+        int clock = p.getInt(id + "_min", 480);
+        if ("random".equals(mode)) {
+            int roll = p.getInt(id + "_roll", -1);
+            if (roll < 0 || roll > 1439) {
+                roll = (int) (Math.random() * 1440);
+                p.edit().putInt(id + "_roll", roll).putInt(id + "_min", roll).apply();
+            }
+            clock = roll;
+        }
+        if (clock < 0 || clock > 1439) clock = 480;
         Calendar c = Calendar.getInstance();
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
         c.set(Calendar.HOUR_OF_DAY, clock / 60);
         c.set(Calendar.MINUTE, clock % 60);
-        if (c.getTimeInMillis() <= now + 60000L) c.add(Calendar.DAY_OF_YEAR, 1);
+        if (forceNextDay || c.getTimeInMillis() <= now + 60000L) c.add(Calendar.DAY_OF_YEAR, 1);
         return c.getTimeInMillis();
+    }
+
+    private static void reroll(Context ctx, String id) {
+        SharedPreferences p = prefs(ctx);
+        if (!"random".equals(p.getString(id + "_mode", ""))) return;
+        int roll = (int) (Math.random() * 1440);
+        p.edit().putInt(id + "_roll", roll).putInt(id + "_min", roll).apply();
     }
 
     private static void postDaily(Context ctx) {
@@ -183,14 +293,15 @@ public class YurecNotes {
             public void run() {
                 try {
                     if (!canPost(ctx)) return;
+                if (!chanOn(ctx, "upd", true)) return;
                     String tag = latestTag();
                     if (tag == null || tag.length() == 0) return;
                     String mine = versionName(ctx);
                     if (cmpVer(tag, mine) <= 0) return;
                     SharedPreferences p = prefs(ctx);
                     if (tag.equals(p.getString("told", ""))) return;
-                    post(ctx, CH_UPD, 720, "Новая сборка " + tag,
-                            "Вышла свежая версия. Старая уже орёт из подвала.", "/apk");
+                    post(ctx, CH_UPD, 720, "Обновление " + tag,
+                            "Доступна новая сборка. Скачать можно с официального источника автора.", "/apk");
                     p.edit().putString("told", tag).apply();
                 } catch (Exception ignored) {
                 }
@@ -256,35 +367,26 @@ public class YurecNotes {
         return v;
     }
 
-    private static void schedule(Context ctx, long when) {
+    private static void scheduleChan(Context ctx, String id, String action, int req, boolean forceNextDay) {
+        PendingIntent pi = pingIntent(ctx, action, req);
         try {
             AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
             if (am == null) return;
-            if (when < System.currentTimeMillis() + 60000L && prefs(ctx).getInt("clock", -1) < 0) {
-                when = System.currentTimeMillis() + DAY;
-            }
-            PendingIntent pi = dailyIntent(ctx);
             am.cancel(pi);
-            if (Build.VERSION.SDK_INT >= 23) {
-                am.setAndAllowWhileIdle(AlarmManager.RTC, when, pi);
-            } else {
-                am.set(AlarmManager.RTC, when, pi);
-            }
+            long when = nextWhen(ctx, id, forceNextDay);
+            if (when <= 0L) return;
+            if (Build.VERSION.SDK_INT >= 23) am.setAndAllowWhileIdle(AlarmManager.RTC, when, pi);
+            else am.set(AlarmManager.RTC, when, pi);
         } catch (Exception ignored) {
-            try {
-                AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
-                if (am != null) am.set(AlarmManager.RTC, when, dailyIntent(ctx));
-            } catch (Exception ignored2) {
-            }
         }
     }
 
-    private static PendingIntent dailyIntent(Context ctx) {
+    private static PendingIntent pingIntent(Context ctx, String action, int req) {
         Intent i = new Intent(ctx, Ping.class);
-        i.setAction(ACTION_DAILY);
+        i.setAction(action);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
-        return PendingIntent.getBroadcast(ctx, 81, i, flags);
+        return PendingIntent.getBroadcast(ctx, req, i, flags);
     }
 
     private static void ensureChannels(Context ctx) {
@@ -296,8 +398,12 @@ public class YurecNotes {
         day.enableVibration(false);
         nm.createNotificationChannel(day);
         NotificationChannel upd = new NotificationChannel(CH_UPD, "Обновления", NotificationManager.IMPORTANCE_DEFAULT);
-        upd.setDescription("Новая сборка, когда она правда вышла.");
+        upd.setDescription("Новая сборка на GitHub. Скачать можно с официального источника автора.");
         nm.createNotificationChannel(upd);
+        NotificationChannel dev = new NotificationChannel(CH_DEV, "Разработка", NotificationManager.IMPORTANCE_DEFAULT);
+        dev.setDescription("Напоминание зайти в Grok и продолжить двор. Свой час.");
+        dev.enableVibration(false);
+        nm.createNotificationChannel(dev);
     }
 
     private static boolean canPost(Context ctx) {
@@ -325,11 +431,16 @@ public class YurecNotes {
     }
 
     private static PendingIntent openIntent(Context ctx, String route, int id) {
-        Intent open = new Intent(ctx, MainActivity.class);
-        open.setAction("ru.yurec.xuec.NOTE");
-        open.putExtra("open", "route");
-        open.putExtra("route", safeRoute(route));
-        open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        Intent open;
+        if (route != null && route.startsWith("https://grok.com")) {
+            open = new Intent(Intent.ACTION_VIEW, Uri.parse(route));
+        } else {
+            open = new Intent(ctx, MainActivity.class);
+            open.setAction("ru.yurec.xuec.NOTE");
+            open.putExtra("open", "route");
+            open.putExtra("route", safeRoute(route));
+            open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        }
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
         return PendingIntent.getActivity(ctx, 90 + id, open, flags);
@@ -352,24 +463,42 @@ public class YurecNotes {
     public static class Ping extends BroadcastReceiver {
         @Override
         public void onReceive(Context ctx, Intent intent) {
-            if (intent == null || !ACTION_DAILY.equals(intent.getAction())) return;
+            if (intent == null || ctx == null) return;
+            String action = intent.getAction();
             if (!canPost(ctx)) return;
             ensureChannels(ctx);
-            postDaily(ctx);
-            prefs(ctx).edit().putLong("last", System.currentTimeMillis()).apply();
-            schedule(ctx, nextWhen(ctx));
+            if (ACTION_DAILY.equals(action)) {
+                if (chanOn(ctx, "day", true)) {
+                    postDaily(ctx);
+                    prefs(ctx).edit().putLong("last", System.currentTimeMillis()).apply();
+                }
+                reroll(ctx, "day");
+                scheduleChan(ctx, "day", ACTION_DAILY, 81, true);
+            } else if (ACTION_DEV.equals(action)) {
+                if (chanOn(ctx, "dev", false)) {
+                    post(ctx, CH_DEV, 730, "Разработка",
+                            "Лимит мог отпуститься. Зайди в Grok и продолжи работу над двором.", GROK);
+                }
+                reroll(ctx, "dev");
+                scheduleChan(ctx, "dev", ACTION_DEV, 82, true);
+            } else if (ACTION_UPD.equals(action)) {
+                if (chanOn(ctx, "upd", true)) checkUpdate(ctx);
+                reroll(ctx, "upd");
+                scheduleChan(ctx, "upd", ACTION_UPD, 83, true);
+            }
         }
     }
 
     public static class Boot extends BroadcastReceiver {
         @Override
         public void onReceive(Context ctx, Intent intent) {
-            if (intent == null) return;
+            if (intent == null || ctx == null) return;
             if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
             if (!canPost(ctx)) return;
-            long when = nextWhen(ctx);
-            if (when < System.currentTimeMillis() + 60000L) when = System.currentTimeMillis() + 60000L;
-            schedule(ctx, when);
+            ensureChannels(ctx);
+            scheduleChan(ctx, "day", ACTION_DAILY, 81, false);
+            scheduleChan(ctx, "dev", ACTION_DEV, 82, false);
+            scheduleChan(ctx, "upd", ACTION_UPD, 83, false);
         }
     }
 }

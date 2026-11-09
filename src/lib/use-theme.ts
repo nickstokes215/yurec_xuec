@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
-import { noteFlag } from "@/lib/use-achievements";
+import { noteFlag, noteRedo } from "@/lib/use-achievements";
 
 export type ThemeChoice = "light" | "dark" | "black" | "system";
 export type ThemeResolved = "light" | "dark" | "black";
@@ -58,6 +58,7 @@ export function setTheme(next: ThemeChoice) {
   emit();
   try {
     noteFlag("theme");
+    if (next === "black") noteRedo("reblack");
   } catch {
     /* ignore */
   }

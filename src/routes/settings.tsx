@@ -48,7 +48,7 @@ import {
   type PostcardPrefs,
 } from "@/lib/postcard";
 import { APP_VERSION, GITHUB_APK_URL } from "@/data/catalog";
-import { notesAsk, notesHint, notesTest, readNotesClock, setNotesClock } from "@/lib/notes";
+import { notesAsk, notesHHMM, notesHint, notesMinutes, notesTest, readNotesPlan, rollMinute, setNotesPlan, type NoteChan, type NotePlan } from "@/lib/notes";
 import { useTheme, type ThemeChoice } from "@/lib/use-theme";
 import { FONT_DEFAULT, FONT_MAX, FONT_MIN, setReaderFont, useReaderFont, type FontSource } from "@/lib/use-font";
 import {
@@ -99,6 +99,91 @@ import { startTour } from "@/lib/use-tour";
 import { applyAdminCheat, CHEAT_BOOK, CHEAT_MSG, type CheatKind } from "@/lib/use-cheat";
 import { playFireworks } from "@/components/fireworks";
 
+function NoteLane({
+  title,
+  text,
+  chan,
+  allowSpan,
+  onChange,
+  onTest,
+}: {
+  title: string;
+  text: string;
+  chan: NoteChan;
+  allowSpan?: boolean;
+  onChange: (next: NoteChan) => void;
+  onTest: () => void;
+}) {
+  const timed = chan.on && chan.mode !== "span";
+  const shown = timed && chan.min >= 0 ? notesHHMM(chan.min) : "08:00";
+  return (
+    <div className="mt-3 rounded-xl bg-elevated px-3 py-3">
+      <label className="flex items-center justify-between gap-3">
+        <span className="text-sm font-medium">{title}</span>
+        <input
+          type="checkbox"
+          checked={chan.on}
+          onChange={(e) => onChange({ ...chan, on: e.target.checked })}
+          className="size-5 accent-[var(--color-gold,#c9a227)]"
+        />
+      </label>
+      <p className="mt-1 text-[12px] leading-relaxed text-subtle">{text}</p>
+      {allowSpan ? (
+        <label className="mt-3 flex items-center justify-between gap-3">
+          <span className="text-sm text-subtle">Своё время</span>
+          <input
+            type="checkbox"
+            checked={chan.on && chan.mode !== "span"}
+            onChange={(e) =>
+              onChange(
+                e.target.checked
+                  ? { on: true, mode: "clock", min: chan.min >= 0 ? chan.min : 8 * 60 }
+                  : { on: true, mode: "span", min: -1 },
+              )
+            }
+            className="size-5 accent-[var(--color-gold,#c9a227)]"
+          />
+        </label>
+      ) : null}
+      <label className="mt-3 flex min-h-12 items-center justify-between gap-3">
+        <span className="text-sm text-subtle">Когда стучать</span>
+        <input
+          type="time"
+          value={shown}
+          disabled={!timed}
+          onChange={(e) => {
+            const min = notesMinutes(e.target.value || "08:00");
+            onChange({ on: true, mode: "clock", min: min < 0 ? 8 * 60 : min });
+          }}
+          className="h-10 w-32 shrink-0 rounded-lg bg-surface px-2 text-sm text-fg disabled:opacity-40"
+        />
+      </label>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={() => onChange({ on: true, mode: "random", min: rollMinute() })}
+          className="h-10 flex-1 rounded-xl bg-surface text-sm font-medium"
+        >
+          Рандом
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange({ on: true, mode: "clock", min: 8 * 60 })}
+          className="h-10 flex-1 rounded-xl bg-surface text-sm font-medium"
+        >
+          По умолчанию
+        </button>
+      </div>
+      {chan.mode === "random" && chan.on ? (
+        <p className="mt-2 text-center text-[11px] text-subtle">Случайный час на эти сутки: {shown}. Завтра выпадет другой.</p>
+      ) : null}
+      <button type="button" onClick={onTest} className="mt-3 flex h-10 w-full items-center justify-center rounded-xl bg-surface text-sm font-medium">
+        Проверить «{title}»
+      </button>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
 function SettingsPage() {
@@ -134,7 +219,7 @@ function SettingsPage() {
   const [bakAsk, setBakAsk] = useState(false);
   const [wipeChat, setWipeChat] = useState(false);
   const [notesMsg, setNotesMsg] = useState("");
-  const [notesClock, setNotesClockUi] = useState(readNotesClock);
+  const [notesPlan, setNotesPlanUi] = useState<NotePlan>(readNotesPlan);
   const [aiNote, setAiNote] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -782,48 +867,52 @@ function SettingsPage() {
           Уведомления
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          При запуске телефон спрашивает доступ. Два канала: новая сборка, когда она правда вышла, и один стук в сутки — то про двор, то про игру. Своё время необязательно: выключишь — стук через сутки после прошлого.
+          Три канала, у каждого свой час. Двор стучит раз в сутки. Разработка зовёт в Grok, когда лимит мог отпуститься. Обновления сами смотрят GitHub и пишут, если сборку можно скачать с официального источника автора.
         </p>
-        <label className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-elevated px-3 py-2">
-          <span className="text-sm">Своё время</span>
-          <input
-            type="checkbox"
-            checked={notesClock.length > 0}
-            onChange={(e) => {
-              const next = e.target.checked ? notesClock || "09:00" : "";
-              setNotesClockUi(next);
-              setNotesClock(next);
-            }}
-            className="size-5 accent-[var(--color-gold,#c9a227)]"
-          />
-        </label>
-        <label className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-elevated px-3 py-2">
-          <span className="text-sm text-subtle">Когда стучать</span>
-          <input
-            type="time"
-            value={notesClock || "09:00"}
-            disabled={notesClock.length === 0}
-            onChange={(e) => {
-              const next = e.target.value || "09:00";
-              setNotesClockUi(next);
-              setNotesClock(next);
-            }}
-            className="h-10 rounded-lg bg-surface px-2 text-sm text-fg disabled:opacity-40"
-          />
-        </label>
+        <NoteLane
+          title="Двор"
+          text="Один стук: то про сборник, то про игру. Выключишь своё время — стук через сутки после прошлого."
+          chan={notesPlan.day}
+          allowSpan
+          onChange={(chan) => {
+            const next = setNotesPlan({ ...notesPlan, day: chan });
+            setNotesPlanUi(next);
+          }}
+          onTest={() => void notesTest("day").then((how) => setNotesMsg(notesHint(how)))}
+        />
         <button
           type="button"
           onClick={() => void notesAsk().then((how) => setNotesMsg(notesHint(how)))}
-          className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
+          className="notes-ask mt-5 flex h-11 w-full items-center justify-center rounded-xl bg-elevated px-4 text-sm font-medium"
         >
           Разрешить уведомления
         </button>
+        <NoteLane
+          title="Разработка"
+          text="Зайти в Grok и продолжить двор. Лимиты сбрасываются в разное время, поэтому час подводится вручную. Канал по умолчанию выключен."
+          chan={notesPlan.dev}
+          onChange={(chan) => {
+            const next = setNotesPlan({ ...notesPlan, dev: chan });
+            setNotesPlanUi(next);
+          }}
+          onTest={() => void notesTest("dev").then((how) => setNotesMsg(notesHint(how)))}
+        />
+        <NoteLane
+          title="Обновления"
+          text="В выбранный час телефон проверяет GitHub. Если версия новее — придёт стук: скачать можно с официального источника автора."
+          chan={notesPlan.upd}
+          onChange={(chan) => {
+            const next = setNotesPlan({ ...notesPlan, upd: chan });
+            setNotesPlanUi(next);
+          }}
+          onTest={() => void notesTest("upd").then((how) => setNotesMsg(notesHint(how)))}
+        />
         <button
           type="button"
-          onClick={() => void notesTest().then((how) => setNotesMsg(notesHint(how)))}
-          className="mt-2 flex h-11 w-full items-center justify-center rounded-xl bg-gold px-4 text-sm font-medium text-gold-fg"
+          onClick={() => void notesTest("all").then((how) => setNotesMsg(notesHint(how)))}
+          className="mt-4 flex h-11 w-full items-center justify-center rounded-xl bg-gold px-4 text-sm font-medium text-gold-fg"
         >
-          Проверить уведомления
+          Проверить все уведомления
         </button>
         {notesMsg ? <p className="mt-2 text-center text-[12px] text-gold">{notesMsg}</p> : null}
       </section>

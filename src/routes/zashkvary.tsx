@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ACH_COVER, ACH_LOCKED, ACH_PITCH, ACH_TOTAL, ACHIEVEMENTS, type Achievement } from "@/data/achievements";
-import { useAchievements, isAchPeek } from "@/lib/use-achievements";
+import { useAchievements, isAchPeek, setAchPeek, wipeAchievements } from "@/lib/use-achievements";
 import { openZoom } from "@/lib/zoom";
 import { cn } from "@/lib/utils";
 
@@ -27,10 +27,14 @@ function ZashkvaryPage() {
   const { opened, when, count } = useAchievements();
   const peek = isAchPeek();
   const [pick, setPick] = useState<Achievement | null>(null);
+  const [wipeOpen, setWipeOpen] = useState(false);
+  const [wipeWord, setWipeWord] = useState("");
+  const [wipeErr, setWipeErr] = useState(false);
+  const [wipeDone, setWipeDone] = useState("");
   const pickOpen = pick ? opened(pick.id) : false;
 
   useEffect(() => {
-    if (!pick) return;
+    if (!pick && !wipeOpen) return;
     const html = document.documentElement;
     const body = document.body;
     const y = window.scrollY;
@@ -48,7 +52,7 @@ function ZashkvaryPage() {
       document.removeEventListener("touchmove", block);
       window.scrollTo(0, y);
     };
-  }, [pick]);
+  }, [pick, wipeOpen]);
 
   return (
     <main className="px-4 pt-4 pb-10 wide:px-6">
@@ -106,6 +110,68 @@ function ZashkvaryPage() {
           );
         })}
       </ul>
+      <button
+        type="button"
+        onClick={() => {
+          setWipeWord("");
+          setWipeErr(false);
+          setWipeOpen(true);
+        }}
+        className="mt-8 flex h-12 w-full items-center justify-center rounded-2xl bg-elevated text-sm font-medium text-danger"
+      >
+        Обнулиться
+      </button>
+      {wipeDone ? <p className="mt-2 text-center text-[12px] text-subtle">{wipeDone}</p> : null}
+
+      {wipeOpen ? (
+        <div
+          className="ach-modal fixed inset-0 z-[120] grid place-items-center bg-void/80 px-6"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.target === e.currentTarget && setWipeOpen(false)}
+        >
+          <form
+            className="ach-modal-card w-full max-w-[340px] rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (wipeWord.trim().toLowerCase() !== "обнулиться") {
+                setWipeErr(true);
+                return;
+              }
+              wipeAchievements();
+              setAchPeek(false);
+              setWipeOpen(false);
+              setWipeDone("Список пуст. Двор продал медали.");
+            }}
+          >
+            <p className="text-center font-sans text-[15px] font-semibold">Медали продадут</p>
+            <p className="mt-2 text-center text-[13px] leading-relaxed text-subtle">
+              Это не шутка. Весь список исчезнет. Двор забудет, за что они висели. Прочитанное и победы в играх останутся, но старые медали сами не вернутся — только за новые дела.
+            </p>
+            <p className="mt-2 text-center text-[13px] text-fg">Напиши слово обнулиться.</p>
+            <input
+              autoFocus
+              value={wipeWord}
+              onChange={(e) => {
+                setWipeWord(e.target.value);
+                setWipeErr(false);
+              }}
+              autoComplete="off"
+              placeholder="обнулиться"
+              className="mt-3 h-12 w-full rounded-xl bg-elevated px-3 text-center text-sm"
+            />
+            {wipeErr ? <p className="mt-2 text-center text-[12px] text-danger">Не то слово. Нужно ровно: обнулиться.</p> : null}
+            <div className="mt-4 flex gap-2">
+              <button type="button" onClick={() => setWipeOpen(false)} className="h-11 flex-1 rounded-xl bg-elevated text-sm font-medium">
+                Отмена
+              </button>
+              <button type="submit" className="h-11 flex-1 rounded-xl bg-gold text-sm font-medium text-gold-fg">
+                Обнулить
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
 
       {pick ? (
         <div
