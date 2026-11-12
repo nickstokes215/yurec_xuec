@@ -2,10 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { catTitle, ensureSvoya, svoyaReady } from "@/data/svoya";
-import { SVOYA_COVER, SVOYA_HUB_BLURB, SVOYA_PITCH, SVOYA_PRIZE_LOSE, SVOYA_RULES, SVOYA_TITLE, svoyaPrize, svoyaPrizeSrc } from "@/data/svoya-meta";
+import { SVOYA_COVER, SVOYA_HUB_BLURB, SVOYA_PITCH, SVOYA_PRIZE_LOSE, SVOYA_PRIZES, SVOYA_RULES, SVOYA_TITLE, svoyaPrize, svoyaPrizeSrc, type SvoyaPrizeId } from "@/data/svoya-meta";
 import { playFireworks } from "@/components/fireworks";
 import { playRain } from "@/components/rain";
 import { isSoundOn, isVibrateOn } from "@/lib/use-settings";
+import { isMaster, readFeathers } from "@/lib/svoya-stats";
 import { openZoom } from "@/lib/zoom";
 import { cn } from "@/lib/utils";
 import {
@@ -33,7 +34,7 @@ import {
 
 export const Route = createFileRoute("/game/svoya")({ component: SvoyaPage });
 
-type Screen = "hub" | "board" | "q" | "gap" | "bet" | "auc" | "fin" | "hall" | "rules";
+type Screen = "hub" | "board" | "q" | "gap" | "bet" | "auc" | "fin" | "hall" | "fame" | "aim" | "rules";
 
 function lastOf(run: SvoyaRun | null) {
   if (!run) return 3;
@@ -76,6 +77,37 @@ function beep(ok: boolean) {
   }
 }
 
+function spiceNoise(kind: "cat" | "auc") {
+  if (!isSoundOn()) return;
+  try {
+    const AC = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const notes = kind === "cat" ? [520, 340, 760] : [140, 90];
+    notes.forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = kind === "cat" ? "triangle" : "square";
+      o.frequency.value = freq;
+      g.gain.value = 0.06;
+      o.connect(g);
+      g.connect(ctx.destination);
+      const t = ctx.currentTime + i * 0.22;
+      o.start(t);
+      o.stop(t + 0.18);
+    });
+    window.setTimeout(() => {
+      try {
+        void ctx.close();
+      } catch {
+        /* ignore */
+      }
+    }, 1200);
+  } catch {
+    /* ignore */
+  }
+}
+
 function vibe(ok: boolean) {
   try {
     if (isVibrateOn()) navigator.vibrate?.(ok ? 18 : [40, 30, 40]);
@@ -108,6 +140,9 @@ function SvoyaPage() {
   const [giveAsk, setGiveAsk] = useState(false);
   const [packOn, setPackOn] = useState(() => svoyaReady());
   const [packErr, setPackErr] = useState(false);
+  const [spice, setSpice] = useState<null | "cat" | "auc">(null);
+  const spiceTimer = useMemo(() => ({ id: 0 }), []);
+  const master = isMaster();
   const q = qid ? svoyaById(qid) : undefined;
   const openCell = q && run && run.round !== 4 ? round?.cells.find((c) => c.qid === q.id) : undefined;
 
@@ -132,8 +167,8 @@ function SvoyaPage() {
     else playRain();
   }, [screen, run?.ended, run?.score, finFx]);
 
-  function startNew() {
-    if (!packOn) return;
+  function begin(aim: SvoyaPrizeId | "random") {
+    if (!packOn || !dealRun(aim)) return;
     setNewAsk(false);
     setNamed(false);
     setPicked(null);
@@ -141,7 +176,7 @@ function SvoyaPage() {
     setFinFx(false);
     setGiveAsk(false);
     setBet(0);
-    if (!dealRun()) return;
+    setSpice(null);
     setScreen("board");
   }
 
@@ -151,7 +186,7 @@ function SvoyaPage() {
     setQid(null);
     const cur = readRun();
     if (!cur) {
-      startNew();
+      setScreen("aim");
       return;
     }
     if (cur.ended) {
@@ -173,9 +208,19 @@ function SvoyaPage() {
     setQid(id);
     setPicked(null);
     setGiveAsk(false);
-    if (cell.kind === "auc" && cell.bet == null) {
-      setBet(cell.v);
-      setScreen("auc");
+    const spicy = cell.kind === "cat" || (cell.kind === "auc" && cell.bet == null);
+    if (spicy && cell.kind) {
+      const kind = cell.kind;
+      setSpice(kind);
+      spiceNoise(kind);
+      window.clearTimeout(spiceTimer.id);
+      spiceTimer.id = window.setTimeout(() => {
+        setSpice(null);
+        if (kind === "auc") {
+          setBet(cell.v);
+          setScreen("auc");
+        } else setScreen("q");
+      }, 1700);
       return;
     }
     setScreen("q");
@@ -245,7 +290,7 @@ function SvoyaPage() {
   const vals = round?.values || [100, 200, 300, 400, 500];
 
   return (
-    <main className="svoya-page">
+    <main className={cn("svoya-page", master && "is-master")}>
       <Link to="/game" className="av-back">
         <ArrowLeft className="size-3.5" />
         Игры
@@ -287,18 +332,21 @@ function SvoyaPage() {
                   setNewAsk(true);
                   return;
                 }
-                startNew();
+                setScreen("aim");
               }}
             >
               {newAsk ? "Точно сначала? Партия сгорит" : "Начать заново"}
             </button>
           ) : (
-            <button type="button" className="svoya-btn gold" disabled={!packOn} onClick={startNew}>
+            <button type="button" className="svoya-btn gold" disabled={!packOn} onClick={() => setScreen("aim")}>
               {packOn ? "Играть" : "Колода грузится…"}
             </button>
           )}
           <button type="button" className="svoya-btn tg" onClick={() => setScreen("hall")}>
             Таблица рекордов
+          </button>
+          <button type="button" className="svoya-btn gold" onClick={() => setScreen("fame")}>
+            Зал славы
           </button>
           <button type="button" className="svoya-btn off" onClick={() => setScreen("rules")}>
             Правила
@@ -338,12 +386,25 @@ function SvoyaPage() {
                 {vals.map((v, i) => {
                   const cell = round.cells.find((c) => c.cat === cat && (c.row ?? c.t - 1) === i);
                   if (!cell) return null;
-                  const face = cell.done ? (cell.ok ? "✓" : "✗") : v;
+                  const face = cell.done
+                    ? cell.ok
+                      ? "✓"
+                      : "✗"
+                    : master && cell.kind === "cat"
+                      ? "кот"
+                      : master && cell.kind === "auc"
+                        ? "аук"
+                        : v;
                   return (
                     <button
                       key={cell.qid}
                       type="button"
-                      className={cn("svoya-cell", cell.done && (cell.ok ? "ok" : "bad"))}
+                      className={cn(
+                        "svoya-cell",
+                        cell.done && (cell.ok ? "ok" : "bad"),
+                        master && !cell.done && cell.kind === "cat" && "cat",
+                        master && !cell.done && cell.kind === "auc" && "auc",
+                      )}
                       disabled={!!cell.done}
                       onClick={() => openQ(cell.qid)}
                     >
@@ -365,6 +426,7 @@ function SvoyaPage() {
           <p className="svoya-kicker">Раунд {Math.min(run.round, lastOf(run))} сыгран</p>
           <h2>{run.score}</h2>
           <p className="svoya-blurb">верно {run.right} · мимо {run.wrong}</p>
+          {run.note ? <p className="svoya-pitch">{run.note}</p> : null}
           {run.round >= lastOf(run) && run.score <= 0 ? (
             <p className="svoya-pitch">Ноль или минус. Финала не будет, перо останется в серванте.</p>
           ) : run.round >= lastOf(run) ? (
@@ -547,7 +609,7 @@ function SvoyaPage() {
               {run.forfeit ? "На хаб" : "К таблице"}
             </button>
           )}
-          <button type="button" className="svoya-btn" onClick={startNew}>
+          <button type="button" className="svoya-btn" onClick={() => setScreen("aim")}>
             Ещё круг
           </button>
         </div>
@@ -574,6 +636,65 @@ function SvoyaPage() {
           <button type="button" className="svoya-btn gold" onClick={() => setScreen("hub")}>
             Назад
           </button>
+        </div>
+      ) : null}
+
+      {screen === "aim" ? (
+        <div className="svoya-hub">
+          <p className="svoya-kicker">Сервант</p>
+          <h2>За какое перо сегодня</h2>
+          <p className="svoya-pitch">Пять перьев или случайное. Выигрыш в плюсе отдаст именно его.</p>
+          {SVOYA_PRIZES.map((p) => (
+            <button key={p.id} type="button" className="svoya-aim" disabled={!packOn} onClick={() => begin(p.id)}>
+              <img src={svoyaPrizeSrc(p.id)} alt="" />
+              <span>{p.title}</span>
+            </button>
+          ))}
+          <button type="button" className="svoya-btn gold" disabled={!packOn} onClick={() => begin("random")}>
+            Рандом
+          </button>
+          <button type="button" className="svoya-btn" onClick={() => setScreen("hub")}>
+            Назад
+          </button>
+        </div>
+      ) : null}
+
+      {screen === "fame" ? (
+        <div className="svoya-hub">
+          <p className="svoya-kicker">{master ? "Магистр" : "Сервант"}</p>
+          <h2>Зал славы</h2>
+          <p className="svoya-pitch">
+            {master
+              ? "Все перья твои. Кот и аукцион подписаны, форма золотая, как у магистра в телеке."
+              : "Тёмные ещё в серванте. Собери все пять — и клетки кота с аукционом перестанут прятаться."}
+          </p>
+          <div className="svoya-fame-grid">
+            {SVOYA_PRIZES.map((p) => {
+              const on = readFeathers().includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={cn("svoya-fame", !on && "is-dim")}
+                  disabled={!on}
+                  onClick={() => openZoom(svoyaPrizeSrc(p.id))}
+                >
+                  <img src={svoyaPrizeSrc(p.id)} alt="" />
+                  <span>{on ? p.title : "ещё в серванте"}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button type="button" className="svoya-btn gold" onClick={() => setScreen("hub")}>
+            Назад
+          </button>
+        </div>
+      ) : null}
+
+      {spice ? (
+        <div className={cn("svoya-spice", spice)} role="status">
+          <b>{spice === "cat" ? "Кот в мешке" : "Аукцион"}</b>
+          <span>{spice === "cat" ? "Тема чужая. Цена двойная." : "Ставка от номинала. Вопрос ещё закрыт."}</span>
         </div>
       ) : null}
 

@@ -308,6 +308,7 @@ function CrosswordPlay({
   const [cheat, setCheat] = useState(false);
   const [cheatVal, setCheatVal] = useState("");
   const [cheatErr, setCheatErr] = useState(false);
+  const crownTaps = useRef({ n: 0, t: 0 });
   const secretRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const cellCount = grid.flat().filter(Boolean).length;
@@ -481,7 +482,23 @@ function CrosswordPlay({
         <ArrowLeft className="size-3.5" />
         Кроссворды
       </Link>
-      <h2 className="mt-3 font-sans text-xl font-semibold leading-tight">{data.title}</h2>
+      <h2
+        className="mt-3 cursor-pointer font-sans text-xl font-semibold leading-tight"
+        onClick={() => {
+          const now = Date.now();
+          if (now - crownTaps.current.t > 1600) crownTaps.current.n = 0;
+          crownTaps.current.t = now;
+          crownTaps.current.n += 1;
+          if (crownTaps.current.n < 5) return;
+          crownTaps.current.n = 0;
+          if (hint.used < hint.cap || openCells <= 0) return;
+          const bag = { cap: 5 + Math.floor(Math.random() * 3), used: 0 };
+          writeJson(hintKey(data.id), bag);
+          setHint(bag);
+        }}
+      >
+        {data.title}
+      </h2>
       <p className="mt-1 text-[11px] tabular-nums text-subtle">
         клеток {filledN} / {cellCount}
       </p>

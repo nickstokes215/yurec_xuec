@@ -8,6 +8,8 @@ import {
   PLAYS_KEY,
   RUN_KEY,
   USED_KEY,
+  HALL_CAP,
+  rememberFeather,
   type SvoyaHall,
 } from "@/lib/svoya-stats";
 
@@ -31,6 +33,7 @@ export type SvoyaRound = {
   cats: string[];
   cells: SvoyaCell[];
   values: number[];
+  x2?: boolean;
 };
 
 export type SvoyaFinal = {
@@ -58,6 +61,8 @@ export type SvoyaRun = {
   story?: string;
   ended?: boolean;
   prize?: SvoyaPrizeId;
+  aim?: SvoyaPrizeId | "random";
+  note?: string;
 };
 
 export type { SvoyaHall };
@@ -227,7 +232,14 @@ function rollPrize(): SvoyaPrizeId {
   return PRIZE_IDS[Math.floor(Math.random() * PRIZE_IDS.length)]!;
 }
 
-export function dealRun(): SvoyaRun | null {
+function grantPrize(run: SvoyaRun) {
+  if (!(run.score > 0) || run.forfeit || run.prize) return;
+  const aim = run.aim && run.aim !== "random" ? run.aim : rollPrize();
+  run.prize = aim;
+  rememberFeather(aim);
+}
+
+export function dealRun(aim?: SvoyaPrizeId | "random"): SvoyaRun | null {
   if (!svoyaReady()) return null;
   const used = new Set(readUsed());
   const bag = [...readUsed()];
@@ -244,6 +256,7 @@ export function dealRun(): SvoyaRun | null {
     usedCats: r1.cats.slice(),
     rounds: [r1],
     final: null,
+    aim: aim || "random",
   };
   writeRun(run);
   return run;
@@ -274,6 +287,7 @@ export function advanceRound(): SvoyaRun | null {
     return run;
   }
   if (run.round < last) {
+    run.note = "";
     const used = new Set(readUsed());
     const bag = [...readUsed()];
     const next = run.v === 4
@@ -304,7 +318,7 @@ export function answerCell(qid: string, pick: number): { run: SvoyaRun; q: Svoya
     else run.wrong += 1;
     run.ended = true;
     run.story = svoyaStory(run.score, run.started + run.score);
-    if (run.score > 0 && !run.forfeit && !run.prize) run.prize = rollPrize();
+    grantPrize(run);
     writeRun(run);
     return { run, q, correct, delta };
   }
@@ -319,6 +333,11 @@ export function answerCell(qid: string, pick: number): { run: SvoyaRun; q: Svoya
   run.score += delta;
   if (correct) run.right += 1;
   else run.wrong += 1;
+  if (round && round.cells.every((c) => c.done && c.ok) && !round.x2) {
+    round.x2 = true;
+    run.score *= 2;
+    run.note = "Чистый раунд. Баланс удвоен.";
+  }
   writeRun(run);
   return { run, q, correct, delta };
 }
@@ -356,7 +375,7 @@ export function setFinalBet(bet: number): SvoyaRun | null {
 
 export function qualifies(score: number): boolean {
   const hall = readHall();
-  if (hall.length < 5) return true;
+  if (hall.length < HALL_CAP) return true;
   return score > (hall[hall.length - 1]?.score ?? -Infinity);
 }
 
@@ -364,7 +383,7 @@ export function submitHall(name: string, score: number): SvoyaHall[] {
   const hall = readHall();
   hall.push({ name: (name || "Юрец").trim().slice(0, 16) || "Юрец", score, at: Date.now() });
   hall.sort((a, b) => b.score - a.score || a.at - b.at);
-  const next = hall.slice(0, 5);
+  const next = hall.slice(0, HALL_CAP);
   try {
     localStorage.setItem(HALL_KEY, JSON.stringify(next));
   } catch {

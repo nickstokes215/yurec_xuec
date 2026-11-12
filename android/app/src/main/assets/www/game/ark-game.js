@@ -647,7 +647,7 @@
         var list = JSON.parse(localStorage.getItem("yurec-ark-hall") || "[]");
         if (!Array.isArray(list)) return [];
         list.sort(function (a, b) { return (b.score - a.score) || ((a.at || 0) - (b.at || 0)); });
-        return list.slice(0, 8);
+        return list.slice(0, 10);
       } catch (e) { return []; }
     }
     function hallNick() {
@@ -655,7 +655,7 @@
     }
     function hallFits(points) {
       var list = hallRead();
-      if (list.length < 8) return true;
+      if (list.length < 10) return true;
       return points > (list[list.length - 1].score || 0);
     }
     function hallPush(name, points, line) {
@@ -664,7 +664,7 @@
       var list = hallRead();
       list.push({ name: nick, score: points, line: line, at: Date.now() });
       list.sort(function (a, b) { return (b.score - a.score) || ((a.at || 0) - (b.at || 0)); });
-      try { localStorage.setItem("yurec-ark-hall", JSON.stringify(list.slice(0, 8))); } catch (e2) {}
+      try { localStorage.setItem("yurec-ark-hall", JSON.stringify(list.slice(0, 10))); } catch (e2) {}
     }
     function openHall() {
       var list = hallRead();
@@ -784,6 +784,7 @@
         localStorage.removeItem("yurec-ark-stats");
         localStorage.removeItem("yurec-ark-all");
         localStorage.removeItem("yurec-ark-hall");
+        localStorage.removeItem("yurec-ark-live");
       } catch (e) {}
       try { window.dispatchEvent(new Event("yurec-ark-wins")); } catch (e2) {}
       confirmEl.hidden = true;
@@ -974,16 +975,45 @@
       beep(520, 0.08, 0.05);
     }
 
+    var SNAP = "yurec-ark-live";
+    function readSnap() {
+      try {
+        var s = JSON.parse(localStorage.getItem(SNAP) || "null");
+        if (!s || s.v !== 1 || !LEVELS[s.id]) return null;
+        return s;
+      } catch (e) { return null; }
+    }
+    function clearSnap() { try { localStorage.removeItem(SNAP); } catch (e) {} }
+    function saveSnap() {
+      if (phase !== "play" && phase !== "serve") return;
+      var s = {
+        v: 1, id: levelId, phase: phase, score: score, lives: lives,
+        px: paddle.x, pw: paddle.w,
+        balls: balls.map(function (b) { return { x: b.x, y: b.y, vx: b.vx, vy: b.vy, stuck: !!b.stuck }; }),
+        bricks: bricks.map(function (b) {
+          return { c: b.c, r: b.r, x: b.x, y: b.y, w: b.w, h: b.h, hp: b.hp, max: b.max, gold: !!b.gold, ufo: !!b.ufo, shell: !!b.shell, alive: b.alive !== false };
+        }),
+        boss: boss ? { x: boss.x, y: boss.y, vx: boss.vx, r: boss.r, hp: boss.hp, max: boss.max, t: boss.t || 0, kind: boss.kind, spit: boss.spit, regen: boss.regen || 0 } : null,
+        laserShots: laserShots, glue: !!glue, glueT: glueT, fireball: fireball, freeze: freeze, vodkaT: vodkaT, magnet: magnet,
+        serveStuck: !!serveStuck, helpFlags: helpFlags, matchAt: matchAt
+      };
+      try { localStorage.setItem(SNAP, JSON.stringify(s)); } catch (e) {}
+    }
     function syncPause() {
-      var live = phase !== "menu" && phase !== "over";
+      var live = phase === "play" || phase === "serve";
       if (!live) paused = false;
-      if (pauseBtn) {
-        pauseBtn.hidden = false;
-        pauseBtn.removeAttribute("hidden");
+      if (pauseVeil) pauseVeil.hidden = !(paused && live);
+      if (!pauseBtn) return;
+      if (phase === "over") { pauseBtn.hidden = true; return; }
+      pauseBtn.hidden = false;
+      pauseBtn.removeAttribute("hidden");
+      if (live) {
         pauseBtn.textContent = "ПАУЗА";
-        pauseBtn.classList.toggle("is-on", !!(paused && live));
+        pauseBtn.classList.toggle("is-on", !!paused);
+      } else {
+        pauseBtn.textContent = "ИГРАТЬ";
+        pauseBtn.classList.remove("is-on");
       }
-      if (pauseVeil) pauseVeil.hidden = !paused;
     }
     function setPause(on) {
       paused = !!on && phase !== "menu" && phase !== "over";
@@ -992,7 +1022,8 @@
       if (!paused && phase !== "menu" && phase !== "over" && !raf) raf = requestAnimationFrame(loop);
     }
 
-    function startLevel(id) {
+    function startLevel(id, keep) {
+      if (!keep) clearSnap();
       unlockAudio();
       levelId = id;
       cfg = LEVELS[id];
@@ -1052,6 +1083,38 @@
       if (vodkaT > 0) say("ВОДКА! Щит " + Math.round(vodkaT) + " с. Мяч не падает.", 3.2);
       else say(cfg.label);
       if (!raf) loop(0);
+      if (!keep) saveSnap();
+    }
+    function resumeSnap(s) {
+      if (!s) return;
+      startLevel(s.id, true);
+      score = s.score || 0;
+      lives = s.lives == null ? lives : s.lives;
+      paddle.x = s.px || paddle.x;
+      if (s.pw) paddle.w = s.pw;
+      if (s.balls && s.balls.length) {
+        balls = s.balls.map(function (b) {
+          var nb = makeBall(b.x, b.y, b.vx, b.vy);
+          nb.stuck = !!b.stuck;
+          return nb;
+        });
+      }
+      if (s.bricks && s.bricks.length) bricks = s.bricks;
+      boss = s.boss || null;
+      laserShots = s.laserShots || 0;
+      glue = !!s.glue; glueT = s.glueT || 0;
+      fireball = s.fireball || 0; freeze = s.freeze || 0;
+      vodkaT = s.vodkaT || 0; magnet = s.magnet || 0;
+      serveStuck = !!s.serveStuck;
+      if (s.helpFlags) helpFlags = s.helpFlags;
+      matchAt = s.matchAt || Date.now();
+      phase = s.phase === "serve" ? "serve" : "play";
+      paused = false;
+      paintHud();
+      syncPause();
+      last = 0;
+      if (!raf) raf = requestAnimationFrame(loop);
+      saveSnap();
     }
 
     function saveWin() {
@@ -1129,6 +1192,7 @@
     function finish(won) {
       if (phase === "over" || phase === "menu") return;
       phase = "over";
+      clearSnap();
       syncPause();
       shotBtn.hidden = true;
       kitEl.hidden = true;
@@ -2266,7 +2330,16 @@
     if (pauseBtn) pauseBtn.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
-      setPause(!paused);
+      if (phase === "menu") {
+        var snap = readSnap();
+        if (snap) resumeSnap(snap);
+        else startLevel(levelId || "flat");
+        return;
+      }
+      if (phase === "play" || phase === "serve") {
+        setPause(!paused);
+        if (paused) saveSnap();
+      }
     });
     canvas.style.touchAction = "none";
     shotBtn.addEventListener("click", function (e) {
@@ -2293,8 +2366,33 @@
     layout();
     raf = requestAnimationFrame(loop);
 
+    function gameBack() {
+      if (cheatModal && !cheatModal.hidden) { cheatModal.hidden = true; return true; }
+      if (hallEl && !hallEl.hidden) { hallEl.hidden = true; return true; }
+      if (manual && !manual.hidden) { manual.hidden = true; return true; }
+      if (phase === "over") { goMenu(); return true; }
+      if ((phase === "play" || phase === "serve") && !paused) { setPause(true); saveSnap(); return true; }
+      if (phase === "play" || phase === "serve") { saveSnap(); goMenu(); return true; }
+      return false;
+    }
+    window.__yurecPlayBack = gameBack;
+    window.__arkSave = saveSnap;
+    var saveTimer = window.setInterval(function () {
+      if (running && (phase === "play" || phase === "serve")) saveSnap();
+    }, 2000);
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) saveSnap();
+    });
+    var bootSnap = readSnap();
+    if (bootSnap) resumeSnap(bootSnap);
+    else syncPause();
+
     function destroy() {
       running = false;
+      saveSnap();
+      if (saveTimer) window.clearInterval(saveTimer);
+      if (window.__arkSave === saveSnap) window.__arkSave = null;
+      if (window.__yurecPlayBack === gameBack) window.__yurecPlayBack = null;
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("keydown", kd);
       window.removeEventListener("keyup", ku);

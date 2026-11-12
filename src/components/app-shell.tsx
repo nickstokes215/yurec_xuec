@@ -198,6 +198,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     const w = window as Window & { yurecBack?: () => boolean };
     const prev = w.yurecBack;
     const onBack = () => {
+      const play = (window as Window & { __yurecPlayBack?: () => boolean }).__yurecPlayBack;
+      if (typeof play === "function" && play()) return true;
       if (typeof prev === "function" && prev()) return true;
       const p = pathRef.current;
       if (p.startsWith("/game/crossword") && p !== "/game/crosswords") {

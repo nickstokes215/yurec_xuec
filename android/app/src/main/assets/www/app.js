@@ -5894,7 +5894,7 @@ function renderCrossword() {
   var g = cwGrid();
   var cnt = cwCount();
   var html = '<a class="back" href="#/game/crosswords">← Кроссворды</a>' +
-    "<h2 style=\"margin-top:16px\">" + esc(CW.title) + "</h2>" +
+    '<button type="button" class="cw-crown" id="cw-crown">' + esc(CW.title) + "</button>" +
     '<p class="subtle">клеток ' + cnt.f + " / " + cnt.n + "</p>" +
     (function () {
       var bag = cwHintBag();
@@ -5964,6 +5964,20 @@ function bindCrossword() {
   on($("#cw-wipe"), "click", function () { openWipeModal("crossword"); });
   on($("#cw-cheat"), "click", function () { openCheatModal("cw"); });
   on($("#cw-hint"), "click", function () { cwRevealHint(); });
+  on($("#cw-crown"), "click", function () {
+    var now = Date.now();
+    if (!window.__cwCrown) window.__cwCrown = { n: 0, t: 0 };
+    if (now - window.__cwCrown.t > 1600) window.__cwCrown.n = 0;
+    window.__cwCrown.t = now;
+    window.__cwCrown.n += 1;
+    if (window.__cwCrown.n < 5) return;
+    window.__cwCrown.n = 0;
+    var bag = cwHintBag();
+    if (!CW || bag.used < bag.cap || cwHintOpen() <= 0) return;
+    bag = { cap: 5 + Math.floor(Math.random() * 3), used: 0 };
+    try { localStorage.setItem(cwHintKey(CW.id), JSON.stringify(bag)); } catch (e) {}
+    paint();
+  });
   var grid = document.getElementById("cw-grid");
   if (!grid) {
     var z = document.querySelectorAll("[data-zoom]");
@@ -6092,7 +6106,7 @@ function svoyaHall() {
   var list = svoyaRead("yurec-svoya-hall", []);
   if (!list || !list.length) return [];
   list.sort(function (a, b) { return (b.score - a.score) || (a.at - b.at); });
-  return list.slice(0, 5);
+  return list.slice(0, 10);
 }
 function svoyaBest() {
   var h = svoyaHall();
@@ -6534,9 +6548,55 @@ function svoyaPrizeMeta(id) {
   };
   return map[id] || map.shotman;
 }
+function svoyaFeatherIds() {
+  var ids = ["shotman", "gosha", "sveta", "lysy", "batya"];
+  var raw = svoyaRead("yurec-svoya-feathers", []);
+  var out = [], i;
+  if (!raw || !raw.length) return out;
+  for (i = 0; i < ids.length; i++) if (raw.indexOf(ids[i]) !== -1) out.push(ids[i]);
+  return out;
+}
+function svoyaMaster() { return svoyaFeatherIds().length >= 5; }
+function svoyaRememberFeather(id) {
+  var ids = ["shotman", "gosha", "sveta", "lysy", "batya"];
+  if (ids.indexOf(id) < 0) return;
+  var cur = svoyaFeatherIds();
+  if (cur.indexOf(id) !== -1) return;
+  cur.push(id);
+  svoyaWrite("yurec-svoya-feathers", cur);
+}
 function svoyaRollPrize() {
   var ids = ["shotman", "gosha", "sveta", "lysy", "batya"];
   return ids[Math.floor(Math.random() * ids.length)];
+}
+function svoyaGrant(run) {
+  if (!(run.score > 0) || run.forfeit || run.prize) return;
+  var aim = run.aim && run.aim !== "random" ? run.aim : svoyaRollPrize();
+  run.prize = aim;
+  svoyaRememberFeather(aim);
+}
+function svoyaSpiceNoise(kind) {
+  if (!showSound()) return;
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    var ctx = new AC();
+    var notes = kind === "cat" ? [520, 340, 760] : [140, 90];
+    var i;
+    for (i = 0; i < notes.length; i++) {
+      (function (freq, n) {
+        var o = ctx.createOscillator();
+        var g = ctx.createGain();
+        o.type = kind === "cat" ? "triangle" : "square";
+        o.frequency.value = freq;
+        g.gain.value = 0.06;
+        o.connect(g); g.connect(ctx.destination);
+        var t = ctx.currentTime + n * 0.22;
+        o.start(t); o.stop(t + 0.18);
+      })(notes[i], i);
+    }
+    window.setTimeout(function () { try { ctx.close(); } catch (e) {} }, 1200);
+  } catch (e2) {}
 }
 function svoyaLast(run) {
   if (!run) return 3;
@@ -6561,14 +6621,14 @@ function svoyaForfeit() {
   svoyaUi.screen = "fin";
   return run;
 }
-function svoyaDeal() {
+function svoyaDeal(aim) {
   var usedList = svoyaRead("yurec-svoya-used", []) || [];
   var used = {}, i;
   for (i = 0; i < usedList.length; i++) used[usedList[i]] = 1;
   var bag = usedList.slice();
   var r1 = svoyaDealRound(1, [], used, bag);
   svoyaWrite("yurec-svoya-used", bag.slice(-10000));
-  var run = { v: 3, last: 3, round: 1, score: 0, right: 0, wrong: 0, started: Date.now(), usedCats: r1.cats.slice(), rounds: [r1], final: null };
+  var run = { v: 3, last: 3, round: 1, score: 0, right: 0, wrong: 0, started: Date.now(), usedCats: r1.cats.slice(), rounds: [r1], final: null, aim: aim || "random", note: "" };
   svoyaWrite("yurec-svoya-run", run);
   return run;
 }
@@ -6627,7 +6687,7 @@ function svoyaAnswer(qid, pick) {
     run.final.done = true; run.final.ok = ok; run.score += delta;
     if (ok) run.right += 1; else run.wrong += 1;
     run.ended = true; run.story = svoyaStory(run.score, run.started + run.score);
-    if (run.score > 0 && !run.forfeit && !run.prize) run.prize = svoyaRollPrize();
+    svoyaGrant(run);
     svoyaWrite("yurec-svoya-run", run);
     return { run: run, q: q, correct: ok };
   }
@@ -6641,6 +6701,13 @@ function svoyaAnswer(qid, pick) {
   delta = ok ? stake : -stake;
   run.score += delta;
   if (ok) run.right += 1; else run.wrong += 1;
+  var allOk = true, j;
+  for (j = 0; j < round.cells.length; j++) if (!round.cells[j].done || !round.cells[j].ok) allOk = false;
+  if (allOk && !round.x2) {
+    round.x2 = true;
+    run.score *= 2;
+    run.note = "Чистый раунд. Баланс удвоен.";
+  }
   svoyaWrite("yurec-svoya-run", run);
   return { run: run, q: q, correct: ok };
 }
@@ -6672,7 +6739,7 @@ function svoyaRoundOpen(run) {
 function renderSvoya() {
   var pack = svoyaPack();
   var run = svoyaRun();
-  var html = '<a class="back av-back" href="#/game">← Игры</a><div class="svoya-page">';
+  var html = '<a class="back av-back" href="#/game">← Игры</a><div class="svoya-page' + (svoyaMaster() ? " is-master" : "") + '">';
   var s = svoyaUi.screen, i;
   if (!pack.questions || !pack.questions.length) {
     html += '<div class="svoya-hub"><p class="svoya-pitch">Колода грузится…</p></div></div>';
@@ -6681,9 +6748,9 @@ function renderSvoya() {
   if (s === "hub") {
     html += '<div class="svoya-hub"><button type="button" class="svoya-cover" id="svoya-zoom"><img src="game/svoya.jpg" alt="" /></button>' +
       '<p class="svoya-kicker">Игры двора</p><h2>Юрца игра</h2>' +
-      '<p class="svoya-blurb">Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Приз — одно из пяти золотых перьев, какое выпадет.</p>' +
+      '<p class="svoya-blurb">Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Перо выбираешь сам. Все пять — и ты магистр.</p>' +
       '<p class="svoya-pitch">Три раунда, как в телеке: сначала три темы, потом четыре, потом пять. Номиналы 100–500, 200–1000, 300–1500. Потом финал со ставкой.</p>' +
-      '<p class="svoya-pitch">На табло коты и аукционы не подписаны. За раунд не больше трёх котов и не больше трёх аукционов. Узнаешь, только когда вскроешь.</p>' +
+      '<p class="svoya-pitch">На табло коты и аукционы не подписаны, пока ты не магистр. Чистый раунд, где все ответы верные, удваивает баланс.</p>' +
       '<p class="svoya-pitch">Угадал — плюс. Ошибся — минус. Сдаться можно, кнопка мелкая в углу: партия сгорает и в книгу рекордов не пишется.</p>' +
       '<p class="svoya-scoreline">рекорд ' + svoyaBest() + " · партий " + svoyaPlays() + "</p>";
     if (svoyaOpen(run)) html += '<button type="button" class="svoya-btn gold" id="svoya-cont">Продолжить</button>';
@@ -6691,6 +6758,7 @@ function renderSvoya() {
     if (svoyaOpen(run) || svoyaDone(run)) html += '<button type="button" class="svoya-btn hero" id="svoya-new">' + (svoyaUi.anew ? "Точно сначала? Партия сгорит" : "Начать заново") + "</button>";
     else html += '<button type="button" class="svoya-btn gold" id="svoya-play">Играть</button>';
     html += '<button type="button" class="svoya-btn tg" id="svoya-hall">Таблица рекордов</button>' +
+      '<button type="button" class="svoya-btn gold" id="svoya-fame">Зал славы</button>' +
       '<button type="button" class="svoya-btn off" id="svoya-rules">Правила</button>' +
       '<button type="button" class="svoya-btn danger" id="svoya-wipe">' + (svoyaUi.wipe ? "Точно обнулить статистику?" : "Сбросить статистику") + "</button></div>";
   } else if (s === "board" && run && run.round <= 3) {
@@ -6707,8 +6775,9 @@ function renderSvoya() {
           if (round.cells[k].cat === round.cats[c] && rowAt === t) cell = round.cells[k];
         }
         if (!cell) continue;
-        face = cell.done ? (cell.ok ? "✓" : "✗") : vals[t];
-        cls = "svoya-cell" + (cell.done ? (cell.ok ? " ok" : " bad") : "");
+        var master = svoyaMaster();
+        face = cell.done ? (cell.ok ? "✓" : "✗") : (master && cell.kind === "cat" ? "кот" : (master && cell.kind === "auc" ? "аук" : vals[t]));
+        cls = "svoya-cell" + (cell.done ? (cell.ok ? " ok" : " bad") : "") + (!cell.done && master && cell.kind === "cat" ? " cat" : "") + (!cell.done && master && cell.kind === "auc" ? " auc" : "");
         html += '<button type="button" class="' + cls + '" data-svoya-q="' + esc(cell.qid) + '"' + (cell.done ? " disabled" : "") + ">" + face + "</button>";
       }
       html += "</div>";
@@ -6716,7 +6785,8 @@ function renderSvoya() {
     html += '</div><button type="button" class="svoya-give" id="svoya-give">' + (svoyaUi.give ? "Точно сдаться?" : "сдаюсь") + "</button></div>";
   } else if (s === "gap" && run) {
     html += '<div class="svoya-hub"><p class="svoya-kicker">Раунд ' + Math.min(run.round, svoyaLast(run)) + " сыгран</p><h2>" + run.score + "</h2>" +
-      '<p class="svoya-blurb">верно ' + run.right + " · мимо " + run.wrong + "</p>";
+      '<p class="svoya-blurb">верно ' + run.right + " · мимо " + run.wrong + "</p>" +
+      (run.note ? '<p class="svoya-pitch">' + esc(run.note) + "</p>" : "");
     if (run.round >= svoyaLast(run) && run.score <= 0) html += '<p class="svoya-pitch">Ноль или минус. Финала не будет, перо останется в серванте.</p>';
     else if (run.round >= svoyaLast(run)) html += '<p class="svoya-pitch">Финал. Одна тема, одна ставка. На кону одно из пяти перьев.</p>';
     else html += '<p class="svoya-pitch">Дальше темы новые. Где кот и аукцион — узнаешь, когда вскроешь.</p>';
@@ -6783,7 +6853,7 @@ function renderSvoya() {
       '<p class="svoya-blurb">' + line + "</p>" + feather +
       '<p class="svoya-pitch">' + esc(run.story || "") + "</p>";
     var hall = svoyaHall();
-    var fits = !run.forfeit && (hall.length < 5 ? true : run.score > (hall[hall.length - 1].score || -999999));
+    var fits = !run.forfeit && (hall.length < 10 ? true : run.score > (hall[hall.length - 1].score || -999999));
     if (fits && !svoyaUi.named) {
       html += '<form class="svoya-name" id="svoya-name"><p class="svoya-pitch">Ты влез в таблицу. Как подписать стыд?</p>' +
         '<input id="svoya-nick" maxlength="16" placeholder="Юрец" value="' + esc(svoyaUi.name) + '" />' +
@@ -6810,9 +6880,37 @@ function renderSvoya() {
       '<p class="svoya-pitch">После третьего раунда, если очков 0 или меньше — финала нет.</p>' +
       '<p class="svoya-pitch">Финал. Одна тема, ставка от нуля до баланса, один вопрос.</p>' +
       '<p class="svoya-pitch">Сдаюсь — мелкая подпись в углу. Второй тап подтверждает. В таблицу не пишется.</p>' +
-      '<p class="svoya-pitch">Доиграл в плюсе — одно из пяти перьев: Шотмана, Гоши, Светланы, Лысого хера или Бати. Какое выпадет, не выбираешь.</p>' +
+      '<p class="svoya-pitch">Доиграл в плюсе — получаешь перо, которое выбрал в начале. Все пять в зале славы — ты магистр.</p>' +
       '<p class="svoya-pitch">Доиграл в минусе или сдался — перья остаются в серванте.</p>' +
       '<button type="button" class="svoya-btn gold" id="svoya-back">Назад</button></div>';
+  } else if (s === "aim") {
+    var ids = ["shotman", "gosha", "sveta", "lysy", "batya"], ai;
+    html += '<div class="svoya-hub"><p class="svoya-kicker">Сервант</p><h2>За какое перо сегодня</h2>' +
+      '<p class="svoya-pitch">Пять перьев или случайное. Выигрыш в плюсе отдаст именно его.</p>';
+    for (ai = 0; ai < ids.length; ai++) {
+      var meta = svoyaPrizeMeta(ids[ai]);
+      html += '<button type="button" class="svoya-aim" data-svoya-aim="' + ids[ai] + '"><img src="' + meta.file + '" alt="" /><span>' + esc(meta.title) + "</span></button>";
+    }
+    html += '<button type="button" class="svoya-btn gold" data-svoya-aim="random">Рандом</button>' +
+      '<button type="button" class="svoya-btn" id="svoya-back">Назад</button></div>';
+  } else if (s === "fame") {
+    var got = svoyaFeatherIds(), fi, on;
+    html += '<div class="svoya-hub"><p class="svoya-kicker">' + (svoyaMaster() ? "Магистр" : "Сервант") + "</p><h2>Зал славы</h2>" +
+      '<p class="svoya-pitch">' + (svoyaMaster()
+        ? "Все перья твои. Кот и аукцион подписаны, форма золотая."
+        : "Тёмные ещё в серванте. Собери все пять — и клетки кота с аукционом перестанут прятаться.") + "</p><div class=\"svoya-fame-grid\">";
+    ids = ["shotman", "gosha", "sveta", "lysy", "batya"];
+    for (fi = 0; fi < ids.length; fi++) {
+      meta = svoyaPrizeMeta(ids[fi]);
+      on = got.indexOf(ids[fi]) !== -1;
+      html += '<button type="button" class="svoya-fame' + (on ? "" : " is-dim") + '"' + (on ? ' data-fame="' + meta.file + '"' : " disabled") + "><img src=\"" + meta.file + '" alt="" /><span>' + esc(on ? meta.title : "ещё в серванте") + "</span></button>";
+    }
+    html += '</div><button type="button" class="svoya-btn gold" id="svoya-back">Назад</button></div>';
+  }
+  if (svoyaUi.spice) {
+    html += '<div class="svoya-spice ' + svoyaUi.spice + '" role="status"><b>' +
+      (svoyaUi.spice === "cat" ? "Кот в мешке" : "Аукцион") + "</b><span>" +
+      (svoyaUi.spice === "cat" ? "Тема чужая. Цена двойная." : "Ставка от номинала. Вопрос ещё закрыт.") + "</span></div>";
   }
   html += "</div>";
   return shell(html, "game", null, { hideDock: true });
@@ -6834,7 +6932,7 @@ function bindSvoya() {
     }
   }
   on($("#svoya-zoom"), "click", function () { openZoom("game/svoya.jpg"); });
-  on($("#svoya-play"), "click", function () { svoyaUi = { screen: "board", qid: null, picked: null, name: "", wipe: false, anew: false, named: false, bet: 0, fx: false }; svoyaDeal(); paint(); });
+  on($("#svoya-play"), "click", function () { svoyaUi.screen = "aim"; paint(); });
   on($("#svoya-cont"), "click", function () {
     var run = svoyaRun();
     if (!run) { svoyaUi.screen = "hub"; paint(); return; }
@@ -6847,10 +6945,26 @@ function bindSvoya() {
   on($("#svoya-fin"), "click", function () { svoyaUi.screen = "fin"; paint(); });
   on($("#svoya-new"), "click", function () {
     if (!svoyaUi.anew) { svoyaUi.anew = true; paint(); return; }
-    svoyaUi = { screen: "board", qid: null, picked: null, name: "", wipe: false, anew: false, named: false, bet: 0, fx: false };
-    svoyaDeal(); paint();
+    svoyaUi.anew = false;
+    svoyaUi.screen = "aim";
+    paint();
   });
   on($("#svoya-hall"), "click", function () { svoyaUi.screen = "hall"; paint(); });
+  on($("#svoya-fame"), "click", function () { svoyaUi.screen = "fame"; paint(); });
+  var aims = document.querySelectorAll("[data-svoya-aim]");
+  var ai;
+  for (ai = 0; ai < aims.length; ai++) {
+    aims[ai].addEventListener("click", function () {
+      var aim = this.getAttribute("data-svoya-aim") || "random";
+      svoyaUi = { screen: "board", qid: null, picked: null, name: "", wipe: false, anew: false, named: false, bet: 0, fx: false };
+      svoyaDeal(aim);
+      paint();
+    });
+  }
+  var fames = document.querySelectorAll("[data-fame]");
+  for (ai = 0; ai < fames.length; ai++) {
+    fames[ai].addEventListener("click", function () { openZoom(this.getAttribute("data-fame")); });
+  }
   on($("#svoya-rules"), "click", function () { svoyaUi.screen = "rules"; paint(); });
   on($("#svoya-wipe"), "click", function () {
     if (!svoyaUi.wipe) { svoyaUi.wipe = true; paint(); return; }
@@ -6859,6 +6973,7 @@ function bindSvoya() {
       localStorage.removeItem("yurec-svoya-used");
       localStorage.removeItem("yurec-svoya-hall");
       localStorage.removeItem("yurec-svoya-plays");
+      localStorage.removeItem("yurec-svoya-feathers");
     } catch (e) {}
     svoyaUi.wipe = false;
     burstRain();
@@ -6896,10 +7011,7 @@ function bindSvoya() {
     svoyaUi.screen = "q";
     paint();
   });
-  on($("#svoya-again"), "click", function () {
-    svoyaUi = { screen: "board", qid: null, picked: null, name: "", wipe: false, anew: false, named: false, bet: 0, fx: false };
-    svoyaDeal(); paint();
-  });
+  on($("#svoya-again"), "click", function () { svoyaUi.screen = "aim"; paint(); });
   on($("#svoya-nextround"), "click", function () {
     var next = svoyaAdvance();
     svoyaUi.give = false;
@@ -6929,7 +7041,7 @@ function bindSvoya() {
     var hall = svoyaHall();
     hall.push({ name: nick, score: run ? run.score : 0, at: Date.now() });
     hall.sort(function (a, b) { return (b.score - a.score) || (a.at - b.at); });
-    svoyaWrite("yurec-svoya-hall", hall.slice(0, 5));
+    svoyaWrite("yurec-svoya-hall", hall.slice(0, 10));
     svoyaWrite("yurec-svoya-run", null);
     svoyaUi.named = true; svoyaUi.screen = "hall";
     paint();
@@ -6952,10 +7064,23 @@ function bindSvoya() {
       svoyaUi.qid = id;
       svoyaUi.picked = null;
       svoyaUi.give = false;
-      if (cell && cell.kind === "auc" && cell.bet == null) {
-        svoyaUi.bet = cell.v;
-        svoyaUi.screen = "auc";
-      } else svoyaUi.screen = "q";
+      var kind = cell && (cell.kind === "cat" || (cell.kind === "auc" && cell.bet == null)) ? cell.kind : "";
+      if (kind) {
+        svoyaUi.spice = kind;
+        svoyaUi.spiceTok = Date.now();
+        var tok = svoyaUi.spiceTok;
+        svoyaSpiceNoise(kind);
+        paint();
+        window.setTimeout(function () {
+          if (svoyaUi.spiceTok !== tok) return;
+          svoyaUi.spice = null;
+          if (kind === "auc") { svoyaUi.bet = cell.v; svoyaUi.screen = "auc"; }
+          else svoyaUi.screen = "q";
+          paint();
+        }, 1700);
+        return;
+      }
+      svoyaUi.screen = "q";
       paint();
     });
   }
@@ -9225,6 +9350,7 @@ function maybeStartTour() {
 }
 
 function yurecBack() {
+  if (typeof window.__yurecPlayBack === "function" && window.__yurecPlayBack()) return true;
   if (document.getElementById("raven-joke")) {
     hideRaven();
     return true;
@@ -9296,6 +9422,8 @@ function yurecBack() {
 }
 window.yurecBack = yurecBack;
 window.yurecPause = function () {
+  try { if (window.__avSave) window.__avSave(); } catch (eSave) {}
+  try { if (window.__arkSave) window.__arkSave(); } catch (eSave2) {}
   if (qAudio) try { qAudio.pause(); } catch (e) {}
   var nodes = document.querySelectorAll("audio,video");
   for (var i = 0; i < nodes.length; i++) try { nodes[i].pause(); } catch (e) {}
