@@ -1341,7 +1341,8 @@ function writeWall(list) {
 function takeShout() {
   try {
     if (sessionStorage.getItem("yurec-shout-seen") === "1") return "";
-    if (tourOn || localStorage.getItem(TOUR_KEY) !== "1") return "";
+    var tourMark = localStorage.getItem(TOUR_KEY);
+    if (tourOn || (tourMark !== "1" && tourMark !== "2")) return "";
   } catch (e) { return ""; }
   var pool = [];
   var cws = window.YUREC_CROSSWORDS || [];
@@ -4402,7 +4403,7 @@ var CHEAT_BOOK = [
   ["легенда", "Включает лицензию."],
   ["император", "Режим разработчика."],
   ["ворон", "Все зашквары до перезахода. Честные медали не трогает."],
-  ["РЕВЭЛ", "Шутка. Ворон на весь экран и карканье. Больше ничего."]
+  ["РЕВЭЛ", "Шутка. Ворон на весь экран и запись «Гоша — РЕВЭЛ». Больше ничего."]
 ];
 var adminRavenOk = false;
 function unlockAllPlay() {
@@ -4450,8 +4451,8 @@ function burstRaven() {
   try { lockModal(true); } catch (e0) {}
   try {
     if (localStorage.getItem(SOUND_KEY) !== "0") {
-      ravenAudio = new Audio("quotes/gosha-kar.mp3");
-      ravenAudio.loop = true;
+      ravenAudio = new Audio("quotes/gosha-revel.mp3");
+      ravenAudio.loop = false;
       ravenAudio.play().catch(function () {});
     }
   } catch (e) {}
@@ -5673,17 +5674,12 @@ function cwHintOpen() {
 }
 function cwRevealHint() {
   var bag = cwHintBag();
-  if (bag.used >= bag.cap) return;
-  var g = cwGrid(), pool = [], r, c, cell;
-  for (r = 0; r < g.length; r++) for (c = 0; c < g[r].length; c++) {
-    cell = g[r][c];
-    if (!cell) continue;
-    if (cwFill[cwKey(r, c)] === cell.ch) continue;
-    pool.push({ r: r, c: c, ch: cell.ch });
-  }
-  if (!pool.length) return;
-  var pick = pool[Math.floor(Math.random() * pool.length)];
-  cwFill[cwKey(pick.r, pick.c)] = pick.ch;
+  if (bag.used >= bag.cap || !CW) return;
+  var g = cwGrid();
+  var cell = g[cwSel.r] && g[cwSel.r][cwSel.c];
+  if (!cell) return;
+  if (cwFill[cwKey(cwSel.r, cwSel.c)] === cell.ch) return;
+  cwFill[cwKey(cwSel.r, cwSel.c)] = cell.ch;
   cwSave();
   bag.used += 1;
   try { localStorage.setItem(cwHintKey(CW.id), JSON.stringify(bag)); } catch (e) {}
@@ -6138,7 +6134,7 @@ function renderGamesHub() {
     crosswords: { id: "crosswords", href: "#/game/crosswords", cover: "game/crosswords.jpg", title: "Шотманские кроссворды", score: "разгадано " + cwOpen + " / " + CWS.length, blurb: "Кроссворд из киоска на Шотмана. Гоша орёт золотые клетки. Не знаешь слово — ври, как Юрец." },
     av: { id: "av", href: "#/game/av", cover: "game/av.jpg", title: "Помойкобол", score: "отбито " + avBeatenCount() + " / 6", blurb: "Юрец снизу, колобок сверху. Пилюли с помойки, лазер и просрочка. Кто взял яд — сам сдох. Двор орёт с каждого гола." },
     ark: { id: "ark", href: "#/game/ark", cover: "game/ark.jpg", title: "Алконоид", score: "разбито " + arkBeatenCount() + " / 10", blurb: "Харя Юрца — ракетка. Десять дворов: от квартиры до Кости. Батя с дробовиком, аптека, камера. Юрец всё равно легенда." },
-    svoya: { id: "svoya", href: "#/game/svoya", cover: "game/svoya.jpg", title: "Юрца игра", score: "рекорд " + svoyaBest(), blurb: "Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Приз — одно из пяти золотых перьев." }
+    svoya: { id: "svoya", href: "#/game/svoya", cover: "game/svoya.jpg", title: "Юрца игра", score: "перья: " + svoyaFeatherIds().length + " / 10<br>рекорд: " + svoyaBest(), blurb: "Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Десять перьев, выбираешь сам." }
   };
   var ids = orderedGameIds();
   var html = '<p class="kicker">Игры</p>' +
@@ -6538,27 +6534,48 @@ function svoyaDealShow(n, usedCats, used, bag) {
   }
   return { n: n, cats: cats, cells: cells, values: spec.values };
 }
+function svoyaPrizeIds() {
+  return ["yurec", "gosha", "tolik", "shotman", "nlo", "sveta", "zina", "lysy", "tsar", "batya"];
+}
+function svoyaShowOrder(screen) {
+  if (svoyaUi.orderFor === screen && svoyaUi.order && svoyaUi.order.length) return svoyaUi.order;
+  var ids = svoyaPrizeIds().slice(), i, j, t;
+  for (i = ids.length - 1; i > 0; i--) {
+    j = Math.floor(Math.random() * (i + 1));
+    t = ids[i];
+    ids[i] = ids[j];
+    ids[j] = t;
+  }
+  svoyaUi.order = ids;
+  svoyaUi.orderFor = screen;
+  return ids;
+}
 function svoyaPrizeMeta(id) {
   var map = {
-    shotman: { title: "Перо Шотмана", file: "game/feather.jpg", line: "Жёлтое золото, гранат, янтарь, малахит и осколок фианита. Перо улицы, не телепремия." },
+    yurec: { title: "Перо Юрца", file: "game/feather-yurec.jpg", line: "Своё, кривое, с кетчупом на золоте. Почему нет: царь линолеума тоже имеет право на перо." },
     gosha: { title: "Перо Гоши", file: "game/feather-gosha.jpg", line: "Чёрное перо ворона, малахит и рюмка. Гоша каркнул и отдал не сразу." },
+    tolik: { title: "Перо Толика", file: "game/feather-tolik.jpg", line: "Стакан без этикетки, янтарь и гильза. Толик клянётся, что перо — это бутылка. Этикетку он уже пропил." },
+    shotman: { title: "Перо Шотмана", file: "game/feather.jpg", line: "Жёлтое золото, гранат, янтарь, малахит и осколок фианита. Перо улицы, не телепремия." },
+    nlo: { title: "Перо НЛО", file: "game/feather-nlo.jpg", line: "Серебро, зелёный огонёк и тарелка вместо камня. Водку не отдало, перо уронило." },
     sveta: { title: "Перо Светланы", file: "game/feather-sveta.jpg", line: "Розовое золото, гранаты и латунный шуруп с кассы Максидома." },
+    zina: { title: "Перо Зинаиды", file: "game/feather-zina.jpg", line: "Медь, цветочки с халата и чешуйка. Бабка стукнула половником и перо осталось." },
     lysy: { title: "Перо Лысого хера", file: "game/feather-lysy.jpg", line: "Седое перо в пыли гипсокартона. Вместо камня — хромовая гайка." },
+    tsar: { title: "Царское перо", file: "game/feather-tsar.jpg", line: "Перо всех перьев. Корона из фольги и макарон, алмаз из витрины. Шутка, но в серванте лежит по закону двора." },
     batya: { title: "Перо Бати", file: "game/feather-batya.jpg", line: "Тёмное золото, янтарь и гильза вместо чернильницы. Батя сказал «дебил», но перо не отобрал." }
   };
   return map[id] || map.shotman;
 }
 function svoyaFeatherIds() {
-  var ids = ["shotman", "gosha", "sveta", "lysy", "batya"];
+  var ids = svoyaPrizeIds();
   var raw = svoyaRead("yurec-svoya-feathers", []);
   var out = [], i;
   if (!raw || !raw.length) return out;
   for (i = 0; i < ids.length; i++) if (raw.indexOf(ids[i]) !== -1) out.push(ids[i]);
   return out;
 }
-function svoyaMaster() { return svoyaFeatherIds().length >= 5; }
+function svoyaMaster() { return svoyaFeatherIds().length >= svoyaPrizeIds().length; }
 function svoyaRememberFeather(id) {
-  var ids = ["shotman", "gosha", "sveta", "lysy", "batya"];
+  var ids = svoyaPrizeIds();
   if (ids.indexOf(id) < 0) return;
   var cur = svoyaFeatherIds();
   if (cur.indexOf(id) !== -1) return;
@@ -6566,7 +6583,7 @@ function svoyaRememberFeather(id) {
   svoyaWrite("yurec-svoya-feathers", cur);
 }
 function svoyaRollPrize() {
-  var ids = ["shotman", "gosha", "sveta", "lysy", "batya"];
+  var ids = svoyaPrizeIds();
   return ids[Math.floor(Math.random() * ids.length)];
 }
 function svoyaGrant(run) {
@@ -6748,7 +6765,7 @@ function renderSvoya() {
   if (s === "hub") {
     html += '<div class="svoya-hub"><button type="button" class="svoya-cover" id="svoya-zoom"><img src="game/svoya.jpg" alt="" /></button>' +
       '<p class="svoya-kicker">Игры двора</p><h2>Юрца игра</h2>' +
-      '<p class="svoya-blurb">Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Перо выбираешь сам. Все пять — и ты магистр.</p>' +
+      '<p class="svoya-blurb">Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Перо выбираешь сам. Все десять — и ты магистр.</p>' +
       '<p class="svoya-pitch">Три раунда, как в телеке: сначала три темы, потом четыре, потом пять. Номиналы 100–500, 200–1000, 300–1500. Потом финал со ставкой.</p>' +
       '<p class="svoya-pitch">На табло коты и аукционы не подписаны, пока ты не магистр. Чистый раунд, где все ответы верные, удваивает баланс.</p>' +
       '<p class="svoya-pitch">Угадал — плюс. Ошибся — минус. Сдаться можно, кнопка мелкая в углу: партия сгорает и в книгу рекордов не пишется.</p>' +
@@ -6880,13 +6897,13 @@ function renderSvoya() {
       '<p class="svoya-pitch">После третьего раунда, если очков 0 или меньше — финала нет.</p>' +
       '<p class="svoya-pitch">Финал. Одна тема, ставка от нуля до баланса, один вопрос.</p>' +
       '<p class="svoya-pitch">Сдаюсь — мелкая подпись в углу. Второй тап подтверждает. В таблицу не пишется.</p>' +
-      '<p class="svoya-pitch">Доиграл в плюсе — получаешь перо, которое выбрал в начале. Все пять в зале славы — ты магистр.</p>' +
+      '<p class="svoya-pitch">Доиграл в плюсе — получаешь перо, которое выбрал в начале. Все десять в зале славы — ты магистр.</p>' +
       '<p class="svoya-pitch">Доиграл в минусе или сдался — перья остаются в серванте.</p>' +
       '<button type="button" class="svoya-btn gold" id="svoya-back">Назад</button></div>';
   } else if (s === "aim") {
-    var ids = ["shotman", "gosha", "sveta", "lysy", "batya"], ai;
+    var ids = svoyaShowOrder("aim"), ai;
     html += '<div class="svoya-hub"><p class="svoya-kicker">Сервант</p><h2>За какое перо сегодня</h2>' +
-      '<p class="svoya-pitch">Пять перьев или случайное. Выигрыш в плюсе отдаст именно его.</p>';
+      '<p class="svoya-pitch">Десять перьев вперемешку или случайное. Выигрыш в плюсе отдаст именно его.</p>';
     for (ai = 0; ai < ids.length; ai++) {
       var meta = svoyaPrizeMeta(ids[ai]);
       html += '<button type="button" class="svoya-aim" data-svoya-aim="' + ids[ai] + '"><img src="' + meta.file + '" alt="" /><span>' + esc(meta.title) + "</span></button>";
@@ -6898,8 +6915,8 @@ function renderSvoya() {
     html += '<div class="svoya-hub"><p class="svoya-kicker">' + (svoyaMaster() ? "Магистр" : "Сервант") + "</p><h2>Зал славы</h2>" +
       '<p class="svoya-pitch">' + (svoyaMaster()
         ? "Все перья твои. Кот и аукцион подписаны, форма золотая."
-        : "Тёмные ещё в серванте. Собери все пять — и клетки кота с аукционом перестанут прятаться.") + "</p><div class=\"svoya-fame-grid\">";
-    ids = ["shotman", "gosha", "sveta", "lysy", "batya"];
+        : "Тёмные ещё в серванте. Собери все десять — и клетки кота с аукционом перестанут прятаться.") + "</p><div class=\"svoya-fame-grid\">";
+    ids = svoyaShowOrder("fame");
     for (fi = 0; fi < ids.length; fi++) {
       meta = svoyaPrizeMeta(ids[fi]);
       on = got.indexOf(ids[fi]) !== -1;

@@ -154,7 +154,8 @@ function shoutPool(): Shout[] {
 export function takeShout(): string | null {
   try {
     if (sessionStorage.getItem(SHOUT_SEEN) === "1") return null;
-    if (localStorage.getItem("yurec-tour") !== "1") return null;
+    const tour = localStorage.getItem("yurec-tour");
+    if (tour !== "1" && tour !== "2") return null;
   } catch {
     return null;
   }

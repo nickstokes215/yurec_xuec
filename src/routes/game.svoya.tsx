@@ -116,6 +116,17 @@ function vibe(ok: boolean) {
   }
 }
 
+function shuffleFeathers() {
+  const list = SVOYA_PRIZES.slice();
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = list[i]!;
+    list[i] = list[j]!;
+    list[j] = t;
+  }
+  return list;
+}
+
 function SvoyaPage() {
   const stamp = useSyncExternalStore(subscribe, () => JSON.stringify({ r: readRun(), h: readHall(), p: playsCount() }), () => "");
   const snap = useMemo(() => {
@@ -141,6 +152,7 @@ function SvoyaPage() {
   const [packOn, setPackOn] = useState(() => svoyaReady());
   const [packErr, setPackErr] = useState(false);
   const [spice, setSpice] = useState<null | "cat" | "auc">(null);
+  const [featherOrder, setFeatherOrder] = useState(() => shuffleFeathers());
   const spiceTimer = useMemo(() => ({ id: 0 }), []);
   const master = isMaster();
   const q = qid ? svoyaById(qid) : undefined;
@@ -159,6 +171,10 @@ function SvoyaPage() {
       live = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (screen === "aim" || screen === "fame") setFeatherOrder(shuffleFeathers());
+  }, [screen]);
 
   useEffect(() => {
     if (screen !== "fin" || !run?.ended || finFx) return;
@@ -643,8 +659,8 @@ function SvoyaPage() {
         <div className="svoya-hub">
           <p className="svoya-kicker">Сервант</p>
           <h2>За какое перо сегодня</h2>
-          <p className="svoya-pitch">Пять перьев или случайное. Выигрыш в плюсе отдаст именно его.</p>
-          {SVOYA_PRIZES.map((p) => (
+          <p className="svoya-pitch">Десять перьев вперемешку или случайное. Выигрыш в плюсе отдаст именно его.</p>
+          {featherOrder.map((p) => (
             <button key={p.id} type="button" className="svoya-aim" disabled={!packOn} onClick={() => begin(p.id)}>
               <img src={svoyaPrizeSrc(p.id)} alt="" />
               <span>{p.title}</span>
@@ -666,10 +682,10 @@ function SvoyaPage() {
           <p className="svoya-pitch">
             {master
               ? "Все перья твои. Кот и аукцион подписаны, форма золотая, как у магистра в телеке."
-              : "Тёмные ещё в серванте. Собери все пять — и клетки кота с аукционом перестанут прятаться."}
+              : "Тёмные ещё в серванте. Собери все десять — и клетки кота с аукционом перестанут прятаться."}
           </p>
           <div className="svoya-fame-grid">
-            {SVOYA_PRIZES.map((p) => {
+            {featherOrder.map((p) => {
               const on = readFeathers().includes(p.id);
               return (
                 <button

@@ -4,7 +4,7 @@ const HALL_KEY = "yurec-svoya-hall";
 const PLAYS_KEY = "yurec-svoya-plays";
 const FEATHER_KEY = "yurec-svoya-feathers";
 const HALL_CAP = 10;
-const PRIZE_IDS = ["shotman", "gosha", "sveta", "lysy", "batya"] as const;
+const PRIZE_IDS = ["yurec", "gosha", "tolik", "shotman", "nlo", "sveta", "zina", "lysy", "tsar", "batya"] as const;
 export type SvoyaPrizeId = (typeof PRIZE_IDS)[number];
 
 export type SvoyaHall = { name: string; score: number; at: number };

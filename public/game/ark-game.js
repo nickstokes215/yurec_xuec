@@ -1109,11 +1109,12 @@
       if (s.helpFlags) helpFlags = s.helpFlags;
       matchAt = s.matchAt || Date.now();
       phase = s.phase === "serve" ? "serve" : "play";
-      paused = false;
+      paused = true;
       paintHud();
       syncPause();
       last = 0;
       if (!raf) raf = requestAnimationFrame(loop);
+      draw();
       saveSnap();
     }
 

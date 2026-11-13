@@ -420,19 +420,11 @@ function CrosswordPlay({
   }
 
   function revealHint() {
-    if (hint.used >= hint.cap) return;
-    const pool: { r: number; c: number; ch: string }[] = [];
-    for (let r = 0; r < grid.length; r++) {
-      for (let c = 0; c < grid[r].length; c++) {
-        const cell = grid[r][c];
-        if (!cell) continue;
-        if (fill[cellKey(r, c)] === cell.ch) continue;
-        pool.push({ r, c, ch: cell.ch });
-      }
-    }
-    if (!pool.length) return;
-    const pick = pool[Math.floor(Math.random() * pool.length)]!;
-    const next = { ...fill, [cellKey(pick.r, pick.c)]: pick.ch };
+    if (hint.used >= hint.cap || !sel) return;
+    const cell = grid[sel.r]?.[sel.c];
+    if (!cell) return;
+    if (fill[cellKey(sel.r, sel.c)] === cell.ch) return;
+    const next = { ...fill, [cellKey(sel.r, sel.c)]: cell.ch };
     setFill(next);
     writeJson(fillKey, next);
     const bag = { cap: hint.cap, used: hint.used + 1 };

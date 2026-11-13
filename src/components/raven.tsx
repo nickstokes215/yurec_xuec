@@ -9,11 +9,11 @@ function playKar() {
     /* ignore */
   }
   const a = new Audio();
-  a.src = "/quotes/gosha-kar.mp3";
-  a.loop = true;
+  a.src = "/quotes/gosha-revel.mp3";
+  a.loop = false;
   a.play().catch(() => {
-    a.src = "quotes/gosha-kar.mp3";
-    a.loop = true;
+    a.src = "quotes/gosha-revel.mp3";
+    a.loop = false;
     void a.play().catch(() => {});
   });
   return a;

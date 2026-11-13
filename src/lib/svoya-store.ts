@@ -226,7 +226,7 @@ function dealShow(n: number, usedCats: string[], used: Set<string>, bag: string[
   return { n, cats, cells, values: spec.values };
 }
 
-const PRIZE_IDS: SvoyaPrizeId[] = ["shotman", "gosha", "sveta", "lysy", "batya"];
+const PRIZE_IDS: SvoyaPrizeId[] = ["yurec", "gosha", "tolik", "shotman", "nlo", "sveta", "zina", "lysy", "tsar", "batya"];
 
 function rollPrize(): SvoyaPrizeId {
   return PRIZE_IDS[Math.floor(Math.random() * PRIZE_IDS.length)]!;

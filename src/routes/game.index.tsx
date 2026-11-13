@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { LEVELS, QUEST_COVER, CROSSWORDS_COVER, AV_COVER, AV_CHAIN, avBeatenCount, ARK_COVER, ARK_CHAIN, arkBeatenCount, AV_HUB_BLURB, ARK_HUB_BLURB, QUEST_HUB_BLURB, CROSSWORD_HUB_BLURB } from "@/data/game";
 import { SVOYA_COVER, SVOYA_HUB_BLURB } from "@/data/svoya-meta";
-import { bestScore } from "@/lib/svoya-stats";
+import { bestScore, readFeathers } from "@/lib/svoya-stats";
 import { CROSSWORDS } from "@/data/crossword";
 import { useAllEndings } from "@/lib/use-game";
 import { openZoom } from "@/lib/zoom";
@@ -50,7 +50,7 @@ function GamesHub() {
     arkBeatenCount,
     () => 0,
   );
-  const svoyaBest = useSyncExternalStore(
+  const svoyaLine = useSyncExternalStore(
     (fn) => {
       window.addEventListener("storage", fn);
       window.addEventListener("yurec-svoya", fn);
@@ -59,8 +59,8 @@ function GamesHub() {
         window.removeEventListener("yurec-svoya", fn);
       };
     },
-    bestScore,
-    () => 0,
+    () => `перья: ${readFeathers().length} / 10\nрекорд: ${bestScore()}`,
+    () => "перья: 0 / 10\nрекорд: 0",
   );
   const questOpen = LEVELS.reduce((n, l) => n + ((all[l.id]?.length ?? 0) >= l.endings.length && l.endings.length > 0 ? 1 : 0), 0);
   const questTotal = LEVELS.length;
@@ -84,7 +84,7 @@ function GamesHub() {
     },
     av: { id: "av", to: "/game/av", cover: AV_COVER, title: "Помойкобол", score: `отбито ${avOpen} / ${AV_CHAIN.length}`, blurb: AV_HUB_BLURB },
     ark: { id: "ark", to: "/game/ark", cover: ARK_COVER, title: "Алконоид", score: `разбито ${arkOpen} / ${ARK_CHAIN.length}`, blurb: ARK_HUB_BLURB },
-    svoya: { id: "svoya", to: "/game/svoya", cover: SVOYA_COVER, title: "Юрца игра", score: `рекорд ${svoyaBest}`, blurb: SVOYA_HUB_BLURB },
+    svoya: { id: "svoya", to: "/game/svoya", cover: SVOYA_COVER, title: "Юрца игра", score: svoyaLine, blurb: SVOYA_HUB_BLURB },
   };
   const list = order.ids.map((id) => catalog[id]).filter((g): g is GameMeta => !!g);
 
@@ -268,7 +268,7 @@ function GameGrid({ list }: { list: GameMeta[] }) {
             </button>
             <div className="game-row-body">
               <h3 className="font-sans text-[17px] font-semibold leading-tight">{g.title}</h3>
-              {g.score ? <p className="mt-0.5 text-[11px] tabular-nums text-subtle">{g.score}</p> : null}
+              {g.score ? <p className="mt-0.5 text-[11px] tabular-nums whitespace-pre-line text-subtle">{g.score}</p> : null}
               {g.blurb ? <p className="game-row-blurb">{g.blurb}</p> : null}
               <Link
                 to={g.to}
