@@ -25,7 +25,7 @@ import { PaidGate } from "@/components/paid-gate";
 import { OfflineBtn } from "@/components/offline-btn";
 import { offlineForStory } from "@/lib/offline";
 import { useTheme } from "@/lib/use-theme";
-import { FONT_DEFAULT, setReaderFont, useReaderFont } from "@/lib/use-font";
+import { FONT_DEFAULT, fontFaceById, setReaderFont, useReaderFont } from "@/lib/use-font";
 import { useReaderScrub } from "@/lib/use-settings";
 
 export const Route = createFileRoute("/story/$slug")({
@@ -167,7 +167,8 @@ function StoryPage() {
   const navigate = useNavigate();
   const { user } = useCurrentUserState();
   const { has, toggle } = useBookmarks();
-  const { size: font } = useReaderFont();
+  const { size: font, face } = useReaderFont();
+  const faceCss = fontFaceById(face).stack;
   const { resolved, cycle } = useTheme();
   const paper = resolved === "light";
   const scrub = useReaderScrub();
@@ -479,13 +480,14 @@ function StoryPage() {
             messages={sms.messages}
             paper={paper}
             font={font}
+            faceCss={faceCss}
             query={findQ}
             current={findI}
           />
         ) : (
           <div
-            className="mt-8 font-serif leading-[1.65]"
-            style={{ fontSize: font }}
+            className="mt-8 leading-[1.65]"
+            style={{ fontSize: font, fontFamily: faceCss }}
           >
             {(() => {
               let off = 0;
@@ -610,6 +612,7 @@ function SmsThread({
   messages,
   paper,
   font,
+  faceCss,
   query,
   current,
 }: {
@@ -617,13 +620,14 @@ function SmsThread({
   messages: { at: string; text: string }[];
   paper: boolean;
   font: number;
+  faceCss: string;
   query: string;
   current: number;
 }) {
   let off = 0;
   return (
     <div className="mt-8">
-      <div className="font-serif leading-[1.65]" style={{ fontSize: font }}>
+      <div className="leading-[1.65]" style={{ fontSize: font, fontFamily: faceCss }}>
         {intro.map((p, i) => {
           const from = off;
           off += findSpans(p, query).length;
@@ -651,7 +655,7 @@ function SmsThread({
                   "max-w-[92%] rounded-tr-2xl rounded-br-2xl rounded-bl-2xl px-3.5 py-2.5 leading-snug",
                   paper ? "bg-ink/10 text-ink" : "bg-elevated text-fg",
                 )}
-                style={{ fontSize: Math.max(8, font - 2) }}
+                style={{ fontSize: Math.max(8, font - 2), fontFamily: faceCss }}
               >
                 <HighlightText text={m.text} query={query} from={from} current={current} />
               </p>

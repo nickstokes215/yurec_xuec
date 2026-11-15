@@ -1511,6 +1511,23 @@ html[data-wide="1"] .ends li { margin-top: 0; }
 .notes-ask {
   margin-top: 18px;
 }
+.font-faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.font-face {
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--elevated);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 650;
+}
+.font-face.on { box-shadow: 0 0 0 2px var(--gold); }
 .font-sample {
   margin: 12px 0 0;
   text-align: center;

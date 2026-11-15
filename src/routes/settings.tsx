@@ -50,7 +50,7 @@ import {
 import { APP_VERSION, GITHUB_APK_URL } from "@/data/catalog";
 import { notesAsk, notesHHMM, notesHint, notesMinutes, notesTest, readNotesPlan, rollMinute, setNotesPlan, type NoteChan, type NotePlan } from "@/lib/notes";
 import { useTheme, type ThemeChoice } from "@/lib/use-theme";
-import { FONT_DEFAULT, FONT_MAX, FONT_MIN, setReaderFont, useReaderFont, type FontSource } from "@/lib/use-font";
+import { FONT_DEFAULT, FONT_FACES, FONT_MAX, FONT_MIN, fontFaceById, setReaderFace, setReaderFont, useReaderFont, type FontSource } from "@/lib/use-font";
 import {
   DEV_CHAT_URL,
   STUDIO_URL,
@@ -1253,9 +1253,10 @@ function PostcardCard() {
 }
 
 function FontSizeCard() {
-  const { size, source } = useReaderFont();
+  const { size, source, face } = useReaderFont();
   const [draft, setDraft] = useState(String(size));
   const [touched, setTouched] = useState<FontSource>(source);
+  const stack = fontFaceById(face).stack;
 
   useEffect(() => {
     setDraft(String(size));
@@ -1314,11 +1315,31 @@ function FontSizeCard() {
           className="h-11 min-w-0 flex-1 accent-[#c9a227]"
         />
       </div>
-      <p className="mt-3 text-center font-serif leading-snug" style={{ fontSize: size }}>
+      <p className="mt-4 text-center text-[11px] font-medium tracking-[0.14em] text-muted uppercase">Стиль шрифта</p>
+      <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
+        Стандартный — как было. Системный берёт шрифт телефона. Остальные — самые обычные, если они стоят на устройстве.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {FONT_FACES.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setReaderFace(f.id)}
+            className={cn(
+              "h-10 rounded-xl bg-elevated px-3 text-[13px] font-semibold",
+              face === f.id && "shadow-[0_0_0_2px_var(--color-accent)]",
+            )}
+            style={{ fontFamily: f.stack }}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+      <p className="mt-3 text-center leading-snug" style={{ fontSize: size, fontFamily: stack }}>
         Юрец орёт этим размером.
       </p>
       <p className="mt-1 text-center text-[11px] text-subtle">
-        Сейчас {size}. Последним было: {touched === "slider" ? "шкала" : touched === "keys" ? "число" : "сброс A±"}.
+        Сейчас {size}, {fontFaceById(face).label}. Последним было: {touched === "slider" ? "шкала" : touched === "keys" ? "число" : "сброс A±"}.
       </p>
     </section>
   );

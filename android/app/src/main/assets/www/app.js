@@ -2283,6 +2283,35 @@ function readFontSource() {
   return s;
 }
 
+function readFontFace() {
+  var id = "default";
+  try { id = localStorage.getItem("yurec-font-face") || "default"; } catch (e) {}
+  var faces = fontFaces();
+  var i;
+  for (i = 0; i < faces.length; i++) if (faces[i].id === id) return faces[i];
+  return faces[0];
+}
+function fontFaces() {
+  return [
+    { id: "default", label: "Стандартный", stack: '"Noto Serif", Georgia, serif' },
+    { id: "system", label: "Системный", stack: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' },
+    { id: "roboto", label: "Roboto", stack: 'Roboto, "Noto Sans", Arial, sans-serif' },
+    { id: "arial", label: "Arial", stack: "Arial, Helvetica, sans-serif" },
+    { id: "georgia", label: "Georgia", stack: "Georgia, serif" },
+    { id: "times", label: "Times", stack: '"Times New Roman", Times, serif' },
+    { id: "verdana", label: "Verdana", stack: "Verdana, Geneva, sans-serif" },
+    { id: "trebuchet", label: "Trebuchet", stack: '"Trebuchet MS", sans-serif' },
+    { id: "courier", label: "Courier", stack: '"Courier New", Courier, monospace' },
+    { id: "palatino", label: "Palatino", stack: 'Palatino, "Palatino Linotype", "Book Antiqua", serif' }
+  ];
+}
+function writeFontFace(id) {
+  var face = readFontFace();
+  var faces = fontFaces(), i;
+  for (i = 0; i < faces.length; i++) if (faces[i].id === id) face = faces[i];
+  try { localStorage.setItem("yurec-font-face", face.id); } catch (e) {}
+  return face;
+}
 function writeFontSize(n, src) {
   var next = src === "reset" ? 19 : Math.max(8, Math.min(32, Math.round(Number(n) || 19)));
   try {
@@ -2363,7 +2392,7 @@ function renderStory(slug) {
     (isRead(s.slug) ? "прочитано" : "не прочитано") + "</button></p>" +
     links +
     findBar +
-    '<div class="body" id="body" style="font-size:' + font + 'px">' + bodyHtml + "</div>" +
+    '<div class="body" id="body" style="font-size:' + font + "px;font-family:" + readFontFace().stack + '">' + bodyHtml + "</div>" +
     nav + "</article>" +
     (scrubOn ? '<div class="rscrub" id="rscrub" aria-hidden="true"><i class="rscrub-track"><b class="rscrub-thumb" id="rscrub-thumb"></b></i></div>' : "") +
     '<button type="button" class="totop" id="totop" aria-label="Наверх">↑</button></div>';
@@ -3817,7 +3846,12 @@ function themeBtnHtml(id, label) {
 function fontCardHtml() {
   var n = readFontSize();
   var src = readFontSource();
+  var face = readFontFace();
   var who = src === "slider" ? "шкала" : src === "keys" ? "число" : "сброс A±";
+  var faces = fontFaces(), i, facesHtml = "";
+  for (i = 0; i < faces.length; i++) {
+    facesHtml += '<button type="button" class="font-face' + (faces[i].id === face.id ? " on" : "") + '" data-font-face="' + faces[i].id + '" style="font-family:' + faces[i].stack + '">' + esc(faces[i].label) + "</button>";
+  }
   return '<section class="set-card">' +
     '<p class="set-head">' + setIco('<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>') + "Размер текста</p>" +
     '<p class="subtle">От 8 до 32. Число руками или шкала. Чего коснулся последним — то и стоит. Кнопка A± в рассказе возвращает 19.</p>' +
@@ -3825,8 +3859,11 @@ function fontCardHtml() {
       '<input type="number" id="font-num" min="8" max="32" inputmode="numeric" value="' + n + '" aria-label="Размер текста числом" />' +
       '<input type="range" id="font-range" min="8" max="32" value="' + n + '" aria-label="Шкала размера текста" />' +
     "</div>" +
-    '<p class="font-sample" id="font-sample" style="font-size:' + n + 'px">Юрец орёт этим размером.</p>' +
-    '<p class="subtle" id="font-who" style="text-align:center;margin-top:6px">Сейчас ' + n + ". Последним было: " + who + ".</p>" +
+    '<p class="set-head" style="margin-top:16px">Стиль шрифта</p>' +
+    '<p class="subtle">Стандартный — как было. Системный берёт шрифт телефона. Остальные — самые обычные, если они стоят на устройстве.</p>' +
+    '<div class="font-faces">' + facesHtml + "</div>" +
+    '<p class="font-sample" id="font-sample" style="font-size:' + n + "px;font-family:" + face.stack + '">Юрец орёт этим размером.</p>' +
+    '<p class="subtle" id="font-who" style="text-align:center;margin-top:6px">Сейчас ' + n + ", " + esc(face.label) + ". Последним было: " + who + ".</p>" +
   "</section>";
 }
 
@@ -4614,10 +4651,14 @@ function bindFontCard() {
   var who = $("#font-who");
   if (!num || !range) return;
   function paintLive(n, src) {
-    if (sample) sample.style.fontSize = n + "px";
+    var face = readFontFace();
+    if (sample) {
+      sample.style.fontSize = n + "px";
+      sample.style.fontFamily = face.stack;
+    }
     if (who) {
       var label = src === "slider" ? "шкала" : src === "keys" ? "число" : "сброс A±";
-      who.textContent = "Сейчас " + n + ". Последним было: " + label + ".";
+      who.textContent = "Сейчас " + n + ", " + face.label + ". Последним было: " + label + ".";
     }
   }
   range.addEventListener("input", function () {
@@ -4640,6 +4681,14 @@ function bindFontCard() {
     range.value = String(n);
     paintLive(n, "keys");
   });
+  var faces = document.querySelectorAll("[data-font-face]");
+  var fi;
+  for (fi = 0; fi < faces.length; fi++) {
+    faces[fi].addEventListener("click", function () {
+      writeFontFace(this.getAttribute("data-font-face"));
+      paint();
+    });
+  }
 }
 
 function foldSet(s) {
@@ -9216,7 +9265,7 @@ var TOUR_STEPS = [
   { id: "chat", path: "/chat", target: "chat-box", title: "Юрец AI", text: "Пишешь — орёт в ответ. Есть «Разговор» и «SMS-ки». Чипы подставляют готовый вопрос. Шаринг сохраняет переписку. По умолчанию чат сгорает, когда закрыл сборник: хранение включается в настройках. Кнопку чата можно убрать сверху или снизу." },
   { id: "info", path: "/about", target: "about-links", title: "Инфо", text: "Канал, донат, журнал версий, идеи, паспорт и зашквары. Название саги можно потыкать — двор это замечает, но не говорит, сколько раз. Иконку приложения и подпись ярлыка меняют в настройках." },
   { id: "set-find", path: "/settings", target: "set-search", title: "Поиск настроек", text: "Настроек много. Поле сверху прячет карточки, в которых нет твоих слов. «Ё» и «е» для него одно и то же. Несколько слов ищутся сразу все." },
-  { id: "set-look", path: "/settings", target: "set-theme", title: "Тема и шрифт", text: "Светлая, тёмная, чёрная или как в системе. Ниже — размер шрифта в читалке. Солнце в шапке крутит тему, не заходя сюда." },
+  { id: "set-look", path: "/settings", target: "set-theme", title: "Тема и шрифт", text: "Светлая, тёмная, чёрная или как в системе. Ниже — размер и стиль шрифта в читалке: стандартный, системный или один из обычных. Солнце в шапке крутит тему, не заходя сюда." },
   { id: "set-post", path: "/settings", target: "set-post", title: "Открытка", text: "Шрифт, свой текст или цитата дня, чья картинка, JPG или PNG, папка в галерее. Можно выключить совсем. Фон и узор — случайные каждый раз или закреплённые. PNG тяжелее, JPG надёжнее." },
   { id: "set-dock", path: "/settings", target: "set-dock", title: "Нижнее меню и быт", text: "Закладки, цитатник, зашквары и инфо можно убрать из нижнего ряда. По умолчанию цитатник и закладки спрятаны: цитатник всё равно открывается с цитаты дня, закладка ставится в рассказе. Рядом лежат звук, вибрация, «не гасить экран», полоса в тексте, виджет на стол и справка двора — файл, которым двор переезжает на другой телефон." },
   { id: "medal", path: "/settings", target: "set-tour", title: "Медаль двора", text: "Обучение само больше не вылезет. Ещё раз — эта кнопка. Раз дошёл до конца, а не смахнул, двор выдаёт зашквар «Экскурсия». Он уже твой." }
