@@ -1513,6 +1513,21 @@ html[data-wide="1"] .av-diffs {
   font-size: 16px;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
+.av-coach { z-index: 7; }
+.av-coach-go {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-height: 52px;
+  width: 100%;
+  margin: 0 0 10px;
+  border: 0;
+  border-radius: 14px;
+  background: #1f6b45;
+  color: #fff;
+  font-weight: 650;
+  font-size: 16px;
+}
 .av-manual h3 {
   font-size: 22px;
   font-weight: 650;

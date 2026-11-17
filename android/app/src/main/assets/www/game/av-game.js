@@ -307,6 +307,72 @@
     lvlRow("5", "Светлана", "Секрет после бати. До двух. Помойка раз в десять секунд, почти не зевает. Выиграть трудно. Награда — поцелуй.") +
     lvlRow("6", "Костя", "Зеркало после Светки. Ты снизу уже Костя, сверху Юрец. Режим бога: пилюли кнопками под кортом. До пяти. На четырёх очках Юрец зовёт ящера вдвоём. Счёт любой — Юрец всё равно легенда Шотмана.") +
     '<p class="av-man-foot">Методичка врёт меньше, чем Юрец. Дальше — сам.</p>';
+  var COACH_KEY = "yurec-av-coach";
+  function coachSeen() {
+    try { return JSON.parse(localStorage.getItem(COACH_KEY) || "{}"); } catch (e) { return {}; }
+  }
+  function markCoach(id) {
+    var s = coachSeen();
+    s[id] = 1;
+    try { localStorage.setItem(COACH_KEY, JSON.stringify(s)); } catch (e) {}
+  }
+  function clearCoach() {
+    try { localStorage.removeItem(COACH_KEY); } catch (e) {}
+  }
+  var COACH_HOW =
+    '<p class="av-man-h">Как бить</p>' +
+    '<p class="av-man-p">Снизу ты. Сверху соперник. Палец водит твоего колобка по низу. Подача — тычок по корту, не по своей морде. Если на подаче молчишь десять секунд, шар улетает сам.</p>' +
+    '<p class="av-man-p">Шар за его линию — твоё очко. Шар за твоей — его. Обычно до пяти. Отбивай, не стой в углу: оттуда низ не закрыть.</p>' +
+    '<p class="av-man-p">Центр колобка бьёт спокойно. Кромка уводит шар в угол — соперник может не успеть. В этом и матч: успеть вернуть и положить так, чтобы он не дотянулся. Чем дольше розыгрыш, тем злее шар.</p>' +
+    '<p class="av-man-p">Нижнее меню на время матча снято. «ПАУЗА» справа от названия. Кнопка «Назад» сначала ставит паузу, второй раз выходит в список.</p>';
+  var COACH_PILLS =
+    '<p class="av-man-h">Откуда плюшки</p>' +
+    '<p class="av-man-p">Капсулы падают сами, примерно раз в 15–25 секунд, и лежат около десяти. Кто задел шаром — тот и взял. Под капсулой видно, сколько ей осталось жить.</p>' +
+    pillRow("#cfd8dc", "Фольга", "Кого накрыло — тот стоит колом 15 секунд и не ездит.") +
+    pillRow("#8b5cff", "Карлик", "Кого накрыло — сдувает вдвое на 15 секунд. Таким почти не поймать.") +
+    pillRow("#e08a2c", "Кабан", "Кто последний отбил — раздувается. Шире колобок, проще закрыть низ.") +
+    pillRow("#6b4a2b", "Дробовик", "Два выстрела на 15 секунд. Жжёт колобка, гол не ставит. Очко только когда шар пересёк линию.") +
+    pillRow("#5a7a3a", "Помойка", "Пять мячей сразу. Лови хоть один.") +
+    pillRow("#c9a227", "Водка", "Стена из «Столичной» на 15 секунд. Дробь сквозь пузырь не берёт.") +
+    pillRow("#c43b6e", "Жизнь", "Стирает чужое очко. Если у него ноль — плюс тебе. Может закрыть матч.") +
+    pillRow("#d4a017", "Король", "Лысый выходит вторым на минуту. Вдвоём крыть проще.") +
+    pillRow("#7ec8e3", "Липучка", "Шар липнет. Кидаешь, когда готов. Соперник вбрасывает сам через 1–3 секунды.") +
+    pillRow("#ff2a6a", "Лазер", "Редкий. Розовая кнопка внизу — луч сразу. Попал — колобок вспыхивает, ворота пустые.") +
+    pillRow("#6b7a22", "Просрочка", "Яд. Кто взял — тот и сдох. Бей в пустые ворота.") +
+    pillRow("#9b6bff", "НЛО", "Зинаида вторым на минуту. Можно сразу и лысый, и ящер.");
+  var COACH_SPEC = {
+    povar:
+      '<p class="av-man-p">Повар — разогрев. Колобок с гриля медленный и часто зевает, промахивается чуть ли не на полкорта. Шарик у него ещё не злой.</p>' +
+      '<p class="av-man-p">До пяти. Ни оружия, ни половника. Здесь учатся подавать и класть в угол, куда он не дотянется. Касса скидку не даст, лаваш бронёй не станет.</p>',
+    lysy:
+      '<p class="av-man-p">Лысый быстрее повара и почти не зевает. Фараон «Олимпика»: стоит ровно и читает шар. До пяти.</p>' +
+      '<p class="av-man-p">Центр он закрывает. Кромкой его ещё можно застать, если не торчать в углу. Здесь плюшки уже не роскошь: фольга, карлик и дробовик решают кабинет.</p>',
+    yasher:
+      '<p class="av-man-p">Зинаида читает, куда полетит шар, и высовывает язык, если стоит мимо удара. До пяти. Закрыть можно и без плюшек, с ними проще.</p>' +
+      '<p class="av-man-p">Когда у тебя уже четыре, она достаёт половник: бьёт шире и злее, но не на весь двор. Смеётся. Пятый всё равно можно пропихнуть мимо половника. Водку она так просто не отдаст.</p>',
+    batya:
+      '<p class="av-man-p">Батя после ящера. До пяти. Раз в четырнадцать секунд — залп: от двух до пяти дробин, не одна прицельная очередь.</p>' +
+      '<p class="av-man-p">Дробь гол не ставит. Кого задело — колобок сгорает, ворота пустые. Очко только когда шар пересёк линию. Водка ставит стену: сквозь пузырь дробь не берёт.</p>',
+    sveta:
+      '<p class="av-man-p">Светка после бати. Счёт только до двух. Почти не зевает: у неё колобок широкий, у тебя узкий. Выиграть трудно, это не разогрев.</p>' +
+      '<p class="av-man-p">Раз в десять секунд она открывает помойку и сыпет пять мячей. Лови хоть один. Кто первым набрал два — тот забрал раунд. Выиграл — поцелуй. Проиграл — гудки.</p>',
+    kostya:
+      '<p class="av-man-p">Зеркало. Снизу ты уже Костя, сверху орёт Юрец. До пяти. Сначала он медленный и мажет. Чем больше очков на табло, тем злее шар.</p>' +
+      '<p class="av-man-p">Режим бога: под кортом кнопки плюшек. Жмёшь — эффект твой, шаром капсулу ловить не надо. Юрец капсулу с неба всё равно может взять, если шар летит к нему.</p>' +
+      '<p class="av-man-p">Когда у тебя уже четыре, Юрец зовёт Зинаиду. Дальше сверху двое. Счёт в титрах любой: Юрец всё равно легенда Шотмана. Тебе от этого не легче.</p>'
+  };
+  function coachHtml(id) {
+    var d = DIFFS[id] || DIFFS.povar;
+    var goal = d.goal || 5;
+    return '<button type="button" class="av-coach-go">Понял, подавай</button>' +
+      '<p class="av-dos">C:\\SHOTMAN> урок</p>' +
+      "<h3>" + d.label + "</h3>" +
+      '<p class="av-lead">' + d.sub + ". Счёт до " + goal + ". Сначала правила, потом этот двор.</p>" +
+      COACH_HOW + COACH_PILLS +
+      '<p class="av-man-h">Этот раунд</p>' +
+      (COACH_SPEC[id] || "") +
+      '<p class="av-man-foot">Если забыл — в меню кнопка «Обучение заново». Методичка в «Информации» никуда не делась.</p>';
+  }
   function clamp(n, a, b) { return n < a ? a : n > b ? b : n; }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -392,6 +458,7 @@
       '<div class="av-diffs"></div>' +
       '<div class="av-help-rule" role="separator"><span>Помощь</span></div>' +
       '<button type="button" class="av-info">Информация</button>' +
+      '<button type="button" class="av-info av-coach-reset">Обучение заново</button>' +
       '<button type="button" class="av-info av-hall-open">Таблица рекордов</button>' +
       '<div class="av-help-rule" role="separator"><span>служебный вход</span></div>' +
       '<button type="button" class="av-cheat-btn">Чит-код</button>' +
@@ -422,6 +489,10 @@
     wrap.appendChild(menu);
     wrap.appendChild(end);
     wrap.appendChild(manual);
+    var coachEl = document.createElement("div");
+    coachEl.className = "av-manual av-coach";
+    coachEl.hidden = true;
+    wrap.appendChild(coachEl);
     wrap.appendChild(cheatModal);
     var hallEl = document.createElement("div");
     hallEl.className = "av-manual";
@@ -653,6 +724,14 @@
       try { manual.scrollTop = 0; } catch (e) {}
     });
     menu.querySelector(".av-hall-open").addEventListener("click", function () { openHall(); });
+    menu.querySelector(".av-coach-reset").addEventListener("click", function () {
+      clearCoach();
+      confirmEl.hidden = true;
+      manual.hidden = true;
+      cheatModal.hidden = true;
+      cheatMsg.hidden = false;
+      cheatMsg.textContent = "Обучение снова включено. Перед каждым уровнем расскажу, как бить и кто там сверху.";
+    });
     manual.querySelector(".av-manual-close").addEventListener("click", function () {
       manual.hidden = true;
     });
@@ -1027,7 +1106,7 @@
     function syncPause() {
       var live = phase === "play" || phase === "serve";
       if (!live) paused = false;
-      if (pauseVeil) pauseVeil.hidden = !(paused && live);
+      if (pauseVeil) pauseVeil.hidden = !(paused && live) || coachOn;
       if (!pauseBtn) return;
       if (phase === "over") {
         pauseBtn.hidden = true;
@@ -1044,12 +1123,40 @@
       }
     }
     function setPause(on) {
+      if (coachOn) return;
       paused = !!on && phase !== "menu" && phase !== "over";
       if (!paused) { last = 0; acc = 0; }
       syncPause();
       if (!paused && phase !== "menu" && phase !== "over" && !raf) raf = requestAnimationFrame(loop);
     }
 
+    var coachOn = false;
+    function openCoach(id) {
+      coachOn = true;
+      coachEl.innerHTML = coachHtml(id);
+      coachEl.hidden = false;
+      try { coachEl.scrollTop = 0; } catch (e) {}
+      paused = true;
+      if (pauseBtn) pauseBtn.hidden = true;
+      if (pauseVeil) pauseVeil.hidden = true;
+      var go = coachEl.querySelector(".av-coach-go");
+      if (go) go.addEventListener("click", function () {
+        markCoach(id);
+        coachOn = false;
+        coachEl.hidden = true;
+        paused = false;
+        last = 0;
+        syncPause();
+        saveSnap();
+        draw(0);
+        if (!raf) raf = requestAnimationFrame(loop);
+      });
+      draw(0);
+    }
+    function hideCoach() {
+      coachOn = false;
+      if (coachEl) coachEl.hidden = true;
+    }
     function startMatch(id, keep) {
       if (!keep) clearSnap();
       unlockAudio();
@@ -1121,6 +1228,7 @@
       paintHud();
       resetBall("yurec");
       last = 0;
+      if (!keep && !coachSeen()[id]) openCoach();
       if (!raf) loop(0);
       if (!keep) saveSnap();
     }
@@ -1256,6 +1364,7 @@
 
     function finish() {
       phase = "over";
+      hideCoach();
       clearSnap();
       syncPause();
       shotBtn.hidden = true;
@@ -1455,6 +1564,7 @@
       menu.hidden = false;
       end.hidden = true;
       manual.hidden = true;
+      hideCoach();
       cheatModal.hidden = true;
       confirmEl.hidden = true;
       hud.hidden = true;
@@ -2767,6 +2877,7 @@
         return;
       }
       if (phase === "play" || phase === "serve") {
+        if (coachOn) return;
         setPause(!paused);
         if (paused) saveSnap();
       }
@@ -2849,6 +2960,12 @@
     draw(0);
 
     function gameBack() {
+      if (coachOn) {
+        hideCoach();
+        clearSnap();
+        goMenu();
+        return true;
+      }
       if (cheatModal && !cheatModal.hidden) { cheatModal.hidden = true; return true; }
       if (hallEl && !hallEl.hidden) { hallEl.hidden = true; return true; }
       if (manual && !manual.hidden) { manual.hidden = true; return true; }
