@@ -730,7 +730,7 @@
       manual.hidden = true;
       cheatModal.hidden = true;
       cheatMsg.hidden = false;
-      cheatMsg.textContent = "Обучение снова включено. Перед каждым уровнем расскажу, как бить и кто там сверху.";
+      cheatMsg.textContent = "Обучение снова включено. В следующем матче урок прямо на корте: сначала поводишь пальцем, потом подаёшь.";
     });
     manual.querySelector(".av-manual-close").addEventListener("click", function () {
       manual.hidden = true;
@@ -1069,6 +1069,7 @@
       lastHitter = serveFor === "yurec" ? "yurec" : "foe";
       pillSticky = false;
       foeStickyWait = 0;
+      if (lesson && (lesson.step === "move" || lesson.step === "serve")) lesson.step = "hit";
       paintHud();
       beep(serveFor === "yurec" ? 220 : 160, 0.07, 0.03);
     }
@@ -1131,6 +1132,51 @@
     }
 
     var coachOn = false;
+    var lesson = null;
+    var PILL_LESSON = {
+      foil: "Фольга. Кого накрыл шар — тот стоит колом.",
+      shrink: "Карлик. Кого накрыло — тот вдвое уже.",
+      grow: "Кабан. Кто последним отбил — тот шире.",
+      shot: "Дробовик. Жжёт колобка. Гол не ставит.",
+      dump: "Помойка. Пять мячей сразу. Лови хоть один.",
+      vodka: "Водка. Стена. Дробь сквозь неё не берёт.",
+      life: "Жизнь. Стирает чужое очко.",
+      king: "Король. Лысый выходит вторым на минуту.",
+      sticky: "Липучка. Шар прилип. Кидай, когда готов.",
+      laser: "Лазер. Жми розовую кнопку внизу.",
+      rot: "Просрочка. Кто взял — тот сдох.",
+      ufo: "НЛО. Зинаида выходит вторым на минуту."
+    };
+    function lessonBoss(id) {
+      if (id === "povar") return "Повар медленный и зевает. Клади в угол — он не успеет.";
+      if (id === "lysy") return "Лысый почти не мажет. Здесь уже нужна плюшка.";
+      if (id === "yasher") return "Язык достаёт, если она мимо шара. На твоих четырёх — половник.";
+      if (id === "batya") return "Раз в четырнадцать секунд залп. Дробь жжёт, очко не даёт.";
+      if (id === "sveta") return "До двух. Раз в десять секунд она сыпет пять мячей.";
+      if (id === "kostya") return "Снизу ты — Костя. Кнопки под кортом дают плюшку сразу.";
+      return "Бей так, чтобы он не дотянулся.";
+    }
+    function lessonTip() {
+      if (!lesson) return "";
+      var g = (cfg && cfg.goal) || 5;
+      if (lesson.step === "move") return "Води пальцем. Снизу — ты.";
+      if (lesson.step === "serve") return "Тыкни по корту. Шар полетит вверх.";
+      if (lesson.step === "hit") return "Отбей. Кромкой — в угол, чтоб не успел.";
+      if (lesson.step === "goal") return "За его линию — твоё очко. До " + g + ".";
+      return "";
+    }
+    function beginLesson(id) {
+      lesson = { id: id, step: "move", x0: yurec.x, t: 0, pill: false, gun: false, dump: false };
+    }
+    function lessonAdvance(to) {
+      if (!lesson || lesson.step === "done") return;
+      lesson.step = to;
+      lesson.t = 0;
+      if (to === "live") {
+        markCoach(lesson.id);
+        say(lessonBoss(lesson.id), 4.2);
+      }
+    }
     function openCoach(id) {
       coachOn = true;
       coachEl.innerHTML = coachHtml(id);
@@ -1228,7 +1274,8 @@
       paintHud();
       resetBall("yurec");
       last = 0;
-      if (!keep && !coachSeen()[id]) openCoach();
+      lesson = null;
+      if (!keep && !coachSeen()[id]) beginLesson(id);
       if (!raf) loop(0);
       if (!keep) saveSnap();
     }
@@ -1333,6 +1380,7 @@
       var g = matchGoal();
       if (winner === "yurec") scoreY += 1;
       else scoreZ += 1;
+      if (lesson && lesson.step === "goal") lessonAdvance("live");
       paintHud();
       if (!reduced) trauma = Math.min(1, trauma + 0.55);
       addPart(W / 2, NET, winner === "yurec" ? "#e8c36a" : cfg.fill, 18);
@@ -1365,6 +1413,7 @@
     function finish() {
       phase = "over";
       hideCoach();
+      lesson = null;
       clearSnap();
       syncPause();
       shotBtn.hidden = true;
@@ -1565,6 +1614,7 @@
       end.hidden = true;
       manual.hidden = true;
       hideCoach();
+      lesson = null;
       cheatModal.hidden = true;
       confirmEl.hidden = true;
       hud.hidden = true;
@@ -1717,7 +1767,10 @@
       bonus.kind = pickPill();
       bonus.live = true;
       bonus.t = 10;
-      say(PILL_META[bonus.kind].name.toUpperCase() + " НА ПОЛЕ!", 0.9);
+      if (lesson && !lesson.pill) {
+        lesson.pill = true;
+        say(PILL_LESSON[bonus.kind] || (PILL_META[bonus.kind].name + ". Кто задел шаром — тот взял."), 3.6);
+      } else say(PILL_META[bonus.kind].name.toUpperCase() + " НА ПОЛЕ!", 0.9);
       beep(880, 0.12, 0.05);
     }
 
@@ -2140,11 +2193,15 @@
       babka.tongue = Math.max(0, babka.tongue - dt * 2.2);
       if (bannerT > 0) bannerT -= dt;
       if ((phase === "play" || phase === "serve") && quipT > 0) quipT -= dt;
-      if (quipT <= 0 && (phase === "play" || phase === "serve")) {
+      if (!lesson && quipT <= 0 && (phase === "play" || phase === "serve")) {
         quipT = 10 + Math.random() * 5;
         if (bannerT < 0.35) say(pick(YELL), 2.15);
       }
       if (phase === "play") rallyT += dt;
+      if (lesson && lesson.step === "goal") {
+        lesson.t += dt;
+        if (lesson.t > 8) lessonAdvance("live");
+      }
       if (laughT > 0) laughT = Math.max(0, laughT - dt);
       if (stunY > 0) stunY = Math.max(0, stunY - dt);
       if (stunZ > 0) stunZ = Math.max(0, stunZ - dt);
@@ -2192,6 +2249,7 @@
         yurec.x = clamp(lerp(yurec.x, want, 1 - Math.exp(-18 * dt)), minX, maxX);
         if (keys.l || keys.r) pointerX = yurec.x;
         yurec.vx = (yurec.x - prev) / dt;
+        if (lesson && lesson.step === "move" && Math.abs(yurec.x - lesson.x0) > 26) lessonAdvance("serve");
       }
 
       var threat = threatBall() || balls[0];
@@ -2237,6 +2295,10 @@
       }
       if (cfg.gun && phase === "play" && stunZ <= 0 && !babka.dead) {
         batyaGunT -= dt;
+        if (lesson && !lesson.gun && batyaGunT < 3 && batyaGunT > 0) {
+          lesson.gun = true;
+          say("Сейчас залп. Дробь жжёт колобка, очко не даёт. Отойди.", 3);
+        }
         if (batyaGunT <= 0) {
           batyaBurst();
           batyaGunT = 14;
@@ -2244,6 +2306,10 @@
       }
       if (cfg.dumpster && phase === "play" && stunZ <= 0 && !babka.dead) {
         svetaDumpT -= dt;
+        if (lesson && !lesson.dump && svetaDumpT < 2.4 && svetaDumpT > 0) {
+          lesson.dump = true;
+          say("Сейчас помойка: пять мячей. Лови хоть один.", 2.8);
+        }
         if (svetaDumpT <= 0) {
           svetaDump();
           svetaDumpT = 10;
@@ -2260,7 +2326,7 @@
         if (serveFor === "yurec") {
           b0.x = yurec.x;
           b0.y = yurec.y - yurec.r * 0.55 - b0.r - 6;
-          if (!(stickyMode || pillSticky)) {
+          if (!(stickyMode || pillSticky) && !(lesson && lesson.step === "move")) {
             serveT += dt;
             if (serveT >= 10) launch();
           }
@@ -2294,7 +2360,7 @@
         }
         if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); beep(90, 0.03, 0.02); }
         if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx); beep(90, 0.03, 0.02); }
-        hitPaddle(yurec, false, b);
+        if (hitPaddle(yurec, false, b) && lesson && lesson.step === "hit") lessonAdvance("goal");
         if (kingY > 0 && !mateY.dead) hitPaddle(mateY, false, b);
         if (ufoY > 0 && !mateU.dead) hitPaddle(mateU, false, b);
         hitPaddle(babka, true, b);
@@ -2763,15 +2829,28 @@
 
       if (phase === "serve" && serveFor === "yurec") {
         drawServeAim();
-        ctx.fillStyle = "rgba(236,234,228,0.85)";
-        ctx.font = "600 13px Manrope, sans-serif";
-        ctx.textAlign = "center";
-        if (stickyMode || pillSticky) {
-          ctx.fillText("липучка · ткни выше морды", W / 2, NET + 22);
-        } else {
-          var left = Math.max(0, 10 - serveT);
-          ctx.fillText(left <= 3.2 ? "авто " + Math.ceil(left) + "с" : "морда двигает, выше — пуск", W / 2, NET + 22);
+        if (!(lesson && lessonTip())) {
+          ctx.fillStyle = "rgba(236,234,228,0.85)";
+          ctx.font = "600 13px Manrope, sans-serif";
+          ctx.textAlign = "center";
+          if (stickyMode || pillSticky) {
+            ctx.fillText("липучка · ткни выше морды", W / 2, NET + 22);
+          } else {
+            var left = Math.max(0, 10 - serveT);
+            ctx.fillText(left <= 3.2 ? "авто " + Math.ceil(left) + "с" : "морда двигает, выше — пуск", W / 2, NET + 22);
+          }
         }
+      }
+      if (lesson && lessonTip()) {
+        var tip = lessonTip();
+        ctx.font = "700 14px Manrope, sans-serif";
+        ctx.textAlign = "center";
+        var tipW = Math.min(W - 16, ctx.measureText(tip).width + 22);
+        var tipY = NET + 6;
+        ctx.fillStyle = "rgba(8,8,10,0.82)";
+        ctx.fillRect((W - tipW) / 2, tipY, tipW, 26);
+        ctx.fillStyle = "#f4e4a1";
+        ctx.fillText(tip, W / 2, tipY + 18);
       }
       drawFireHud();
       if (bannerT > 0) {
@@ -2859,7 +2938,10 @@
       if (fired === "shot") { fireShot("yurec"); return; }
       if (fired === "laser") { fireLaser("yurec"); return; }
       if (stunY > 0) return;
-      if (phase === "serve" && serveFor === "yurec" && !inFaceZone(ey)) launch();
+      if (phase === "serve" && serveFor === "yurec" && !inFaceZone(ey)) {
+        if (lesson && lesson.step === "move") return;
+        launch();
+      }
     }
     function onMove(e) {
       if (e.cancelable) e.preventDefault();

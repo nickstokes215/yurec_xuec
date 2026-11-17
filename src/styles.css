@@ -2135,7 +2135,7 @@ html[data-wide="1"] .chat-log {
   color: inherit;
   text-align: left;
 }
-.svoya-aim img { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; }
+.svoya-aim img { width: 64px; height: 64px; object-fit: cover; object-position: center 28%; border-radius: 12px; }
 .svoya-fame-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .svoya-fame {
   padding: 0;
