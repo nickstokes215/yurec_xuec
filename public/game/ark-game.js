@@ -1220,7 +1220,7 @@
       }
       html += '<div class="ark-end-btns">';
       if (won && next) html += '<button type="button" class="av-next av-level-next">Следующий уровень</button>';
-      html += '<button type="button" class="av-again">Сыграть ещё раз</button>';
+      if (!won) html += '<button type="button" class="av-again">Сыграть ещё раз</button>';
       html += '<button type="button" class="av-info av-hall-end">Таблица рекордов</button>';
       html += '<button type="button" class="av-menu-btn">Выйти из игры</button>';
       html += "</div>";
@@ -1229,7 +1229,8 @@
       if (won && next) {
         end.querySelector(".av-level-next").onclick = function () { startLevel(CHAIN[CHAIN.indexOf(levelId) + 1]); };
       }
-      end.querySelector(".av-again").onclick = function () { startLevel(levelId); };
+      var againBtn = end.querySelector(".av-again");
+      if (againBtn) againBtn.onclick = function () { startLevel(levelId); };
       end.querySelector(".av-menu-btn").onclick = function () { goMenu(); };
       var hallEnd = end.querySelector(".av-hall-end");
       if (hallEnd) hallEnd.onclick = function () { openHall(); };

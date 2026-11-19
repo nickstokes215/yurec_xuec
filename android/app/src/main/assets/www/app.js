@@ -3151,6 +3151,15 @@ function achQualified(id) {
       return plays >= 1;
     } catch (e) { return false; }
   }
+  if (id === "urok") {
+    try {
+      if (localStorage.getItem("yurec-av-lesson") === "1") return true;
+      var seen = JSON.parse(localStorage.getItem("yurec-av-coach") || "{}");
+      var sk;
+      for (sk in seen) if (Number(seen[sk]) > 0) return true;
+    } catch (e2) {}
+    return false;
+  }
   return false;
 }
 function getAch(id) {
@@ -6826,7 +6835,10 @@ function renderSvoya() {
     html += '<button type="button" class="svoya-btn tg" id="svoya-hall">Таблица рекордов</button>' +
       '<button type="button" class="svoya-btn gold" id="svoya-fame">Зал славы</button>' +
       '<button type="button" class="svoya-btn off" id="svoya-rules">Правила</button>' +
-      '<button type="button" class="svoya-btn danger" id="svoya-wipe">' + (svoyaUi.wipe ? "Точно обнулить статистику?" : "Сбросить статистику") + "</button></div>";
+      '<button type="button" class="svoya-btn danger" id="svoya-wipe">' + (svoyaUi.wipe ? "Точно? Статистика и все перья сгорят" : "Сбросить статистику и перья") + "</button>" +
+      '<form class="svoya-cheat" id="svoya-cheat"><input class="av-cheat-in" id="svoya-cheat-in" placeholder="чит-код" autocomplete="off" /><button type="submit" class="svoya-btn off">Ввести</button></form>' +
+      (svoyaUi.cheatMsg ? '<p class="svoya-pitch">' + esc(svoyaUi.cheatMsg) + "</p>" : "") +
+      "</div>";
   } else if (s === "board" && run && run.round <= 3) {
     var round = svoyaCur(run), doneN = 0, vals = (round && round.values) || [100, 200, 300, 400, 500];
     if (round) for (i = 0; i < round.cells.length; i++) if (round.cells[i].done) doneN++;
@@ -7043,6 +7055,18 @@ function bindSvoya() {
     } catch (e) {}
     svoyaUi.wipe = false;
     burstRain();
+    paint();
+  });
+  on($("#svoya-cheat"), "submit", function (e) {
+    e.preventDefault();
+    var inp = document.getElementById("svoya-cheat-in");
+    var v = String(inp && inp.value || "").replace(/^\s+|\s+$/g, "").toLowerCase().replace(/ё/g, "е");
+    if (window.YurecGate && window.YurecGate.cheat(v)) {
+      try {
+        localStorage.setItem("yurec-svoya-feathers", JSON.stringify(["yurec", "gosha", "tolik", "shotman", "nlo", "sveta", "zina", "lysy", "tsar", "batya"]));
+      } catch (err) {}
+      svoyaUi.cheatMsg = "Все перья открыты. Зал славы больше не тёмный.";
+    } else svoyaUi.cheatMsg = "Двор не узнал слово.";
     paint();
   });
   on($("#svoya-back"), "click", function () { svoyaUi.screen = "hub"; paint(); });

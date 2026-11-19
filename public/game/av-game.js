@@ -458,7 +458,6 @@
       '<div class="av-diffs"></div>' +
       '<div class="av-help-rule" role="separator"><span>Помощь</span></div>' +
       '<button type="button" class="av-info">Информация</button>' +
-      '<button type="button" class="av-info av-coach-reset">Обучение заново</button>' +
       '<button type="button" class="av-info av-hall-open">Таблица рекордов</button>' +
       '<div class="av-help-rule" role="separator"><span>служебный вход</span></div>' +
       '<button type="button" class="av-cheat-btn">Чит-код</button>' +
@@ -724,14 +723,6 @@
       try { manual.scrollTop = 0; } catch (e) {}
     });
     menu.querySelector(".av-hall-open").addEventListener("click", function () { openHall(); });
-    menu.querySelector(".av-coach-reset").addEventListener("click", function () {
-      clearCoach();
-      confirmEl.hidden = true;
-      manual.hidden = true;
-      cheatModal.hidden = true;
-      cheatMsg.hidden = false;
-      cheatMsg.textContent = "Обучение снова включено. В следующем матче урок прямо на корте: сначала поводишь пальцем, потом подаёшь.";
-    });
     manual.querySelector(".av-manual-close").addEventListener("click", function () {
       manual.hidden = true;
     });
@@ -1156,8 +1147,14 @@
       if (id === "kostya") return "Снизу ты — Костя. Кнопки под кортом дают плюшку сразу.";
       return "Бей так, чтобы он не дотянулся.";
     }
+    function lessonSay(text, hold) {
+      if (!lesson) return;
+      lesson.note = text;
+      lesson.noteT = hold || 3.4;
+    }
     function lessonTip() {
       if (!lesson) return "";
+      if (lesson.note && lesson.noteT > 0) return lesson.note;
       var g = (cfg && cfg.goal) || 5;
       if (lesson.step === "move") return "Води пальцем. Снизу — ты.";
       if (lesson.step === "serve") return "Тыкни по корту. Шар полетит вверх.";
@@ -1174,7 +1171,11 @@
       lesson.t = 0;
       if (to === "live") {
         markCoach(lesson.id);
-        say(lessonBoss(lesson.id), 4.2);
+        try { localStorage.setItem("yurec-av-lesson", "1"); } catch (e) {}
+        try { if (window.evaluateAchievements) window.evaluateAchievements(); } catch (e2) {}
+        try { window.dispatchEvent(new Event("yurec-progress")); } catch (e3) {}
+        lesson.note = lessonBoss(lesson.id);
+        lesson.noteT = 4.4;
       }
     }
     function openCoach(id) {
@@ -1476,11 +1477,12 @@
             '<input class="av-cheat-in av-hall-name" maxlength="16" value="' + hallEsc(hallNick()) + '" />' +
             '<button type="submit" class="av-next">Вписать</button></form>'
           : "") +
-        '<button type="button" class="av-again">Сыграть ещё раз</button>' +
+        (!win ? '<button type="button" class="av-again">Сыграть ещё раз</button>' : "") +
         (nextId ? '<button type="button" class="av-next av-level-next">Следующий уровень</button>' : "") +
         '<button type="button" class="av-info av-hall-end">Таблица рекордов</button>' +
         '<button type="button" class="av-menu-btn">Выйти из игры</button>';
-      end.querySelector(".av-again").onclick = function () {
+      var againBtn = end.querySelector(".av-again");
+      if (againBtn) againBtn.onclick = function () {
         end.hidden = true;
         startMatch(diffId);
       };
@@ -1769,7 +1771,7 @@
       bonus.t = 10;
       if (lesson && !lesson.pill) {
         lesson.pill = true;
-        say(PILL_LESSON[bonus.kind] || (PILL_META[bonus.kind].name + ". Кто задел шаром — тот взял."), 3.6);
+        lessonSay(PILL_LESSON[bonus.kind] || (PILL_META[bonus.kind].name + ". Кто задел шаром — тот взял."), 3.6);
       } else say(PILL_META[bonus.kind].name.toUpperCase() + " НА ПОЛЕ!", 0.9);
       beep(880, 0.12, 0.05);
     }
@@ -2198,6 +2200,7 @@
         if (bannerT < 0.35) say(pick(YELL), 2.15);
       }
       if (phase === "play") rallyT += dt;
+      if (lesson && lesson.noteT > 0) lesson.noteT -= dt;
       if (lesson && lesson.step === "goal") {
         lesson.t += dt;
         if (lesson.t > 8) lessonAdvance("live");
@@ -2297,7 +2300,7 @@
         batyaGunT -= dt;
         if (lesson && !lesson.gun && batyaGunT < 3 && batyaGunT > 0) {
           lesson.gun = true;
-          say("Сейчас залп. Дробь жжёт колобка, очко не даёт. Отойди.", 3);
+          lessonSay("Сейчас залп. Дробь жжёт колобка, очко не даёт. Отойди.", 3);
         }
         if (batyaGunT <= 0) {
           batyaBurst();
@@ -2308,7 +2311,7 @@
         svetaDumpT -= dt;
         if (lesson && !lesson.dump && svetaDumpT < 2.4 && svetaDumpT > 0) {
           lesson.dump = true;
-          say("Сейчас помойка: пять мячей. Лови хоть один.", 2.8);
+          lessonSay("Сейчас помойка: пять мячей. Лови хоть один.", 2.8);
         }
         if (svetaDumpT <= 0) {
           svetaDump();
@@ -2843,14 +2846,34 @@
       }
       if (lesson && lessonTip()) {
         var tip = lessonTip();
-        ctx.font = "700 14px Manrope, sans-serif";
+        ctx.font = "700 13px Manrope, sans-serif";
         ctx.textAlign = "center";
-        var tipW = Math.min(W - 16, ctx.measureText(tip).width + 22);
-        var tipY = NET + 6;
-        ctx.fillStyle = "rgba(8,8,10,0.82)";
-        ctx.fillRect((W - tipW) / 2, tipY, tipW, 26);
-        ctx.fillStyle = "#f4e4a1";
-        ctx.fillText(tip, W / 2, tipY + 18);
+        var tipMax = W - 36;
+        var tipWords = tip.split(" ");
+        var tipLines = [];
+        var tipCur = "";
+        var tipI, tipTry;
+        for (tipI = 0; tipI < tipWords.length; tipI++) {
+          tipTry = tipCur ? tipCur + " " + tipWords[tipI] : tipWords[tipI];
+          if (ctx.measureText(tipTry).width > tipMax && tipCur) {
+            tipLines.push(tipCur);
+            tipCur = tipWords[tipI];
+          } else tipCur = tipTry;
+        }
+        if (tipCur) tipLines.push(tipCur);
+        if (tipLines.length > 3) tipLines = tipLines.slice(0, 3);
+        var tipW = 0;
+        for (tipI = 0; tipI < tipLines.length; tipI++) tipW = Math.max(tipW, ctx.measureText(tipLines[tipI]).width);
+        tipW = Math.min(W - 16, tipW + 28);
+        var tipH = 16 + tipLines.length * 16;
+        var tipY = 96;
+        ctx.fillStyle = "rgba(12, 42, 28, 0.94)";
+        ctx.fillRect((W - tipW) / 2, tipY, tipW, tipH);
+        ctx.strokeStyle = "#3ddc97";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect((W - tipW) / 2 + 0.5, tipY + 0.5, tipW - 1, tipH - 1);
+        ctx.fillStyle = "#9ef0c2";
+        for (tipI = 0; tipI < tipLines.length; tipI++) ctx.fillText(tipLines[tipI], W / 2, tipY + 18 + tipI * 16);
       }
       drawFireHud();
       if (bannerT > 0) {

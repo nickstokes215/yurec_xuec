@@ -66,7 +66,7 @@ export type SvoyaRun = {
 };
 
 export type { SvoyaHall };
-export { readHall, bestScore, playsCount, wipeSvoya } from "@/lib/svoya-stats";
+export { readHall, bestScore, playsCount, wipeSvoya, unlockAllFeathers } from "@/lib/svoya-stats";
 export { svoyaById };
 
 function shuffle<T>(list: T[]): T[] {

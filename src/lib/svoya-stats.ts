@@ -71,6 +71,15 @@ export function playsCount(): number {
   }
 }
 
+export function unlockAllFeathers() {
+  try {
+    localStorage.setItem(FEATHER_KEY, JSON.stringify(PRIZE_IDS.slice()));
+  } catch {
+    /* ignore */
+  }
+  emitSvoya();
+}
+
 export function wipeSvoya() {
   try {
     localStorage.removeItem(RUN_KEY);

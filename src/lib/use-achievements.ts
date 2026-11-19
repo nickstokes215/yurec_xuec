@@ -464,6 +464,14 @@ function qualified(id: string): boolean {
       } catch {
         return false;
       }
+    case "urok":
+      try {
+        if (localStorage.getItem("yurec-av-lesson") === "1") return true;
+        const seen = JSON.parse(localStorage.getItem("yurec-av-coach") || "{}") as Record<string, number>;
+        return Object.keys(seen).some((k) => Number(seen[k]) > 0);
+      } catch {
+        return false;
+      }
     default:
       return false;
   }

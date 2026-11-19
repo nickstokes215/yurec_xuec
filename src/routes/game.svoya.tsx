@@ -7,6 +7,7 @@ import { playFireworks } from "@/components/fireworks";
 import { playRain } from "@/components/rain";
 import { isSoundOn, isVibrateOn } from "@/lib/use-settings";
 import { isMaster, readFeathers } from "@/lib/svoya-stats";
+import "@/lib/secret-gate";
 import { openZoom } from "@/lib/zoom";
 import { cn } from "@/lib/utils";
 import {
@@ -28,6 +29,7 @@ import {
   submitHall,
   svoyaById,
   wipeSvoya,
+  unlockAllFeathers,
   cellOrd,
   type SvoyaRun,
 } from "@/lib/svoya-store";
@@ -144,6 +146,8 @@ function SvoyaPage() {
   const [picked, setPicked] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [wipeAsk, setWipeAsk] = useState(false);
+  const [cheat, setCheat] = useState("");
+  const [cheatMsg, setCheatMsg] = useState("");
   const [newAsk, setNewAsk] = useState(false);
   const [named, setNamed] = useState(false);
   const [bet, setBet] = useState(0);
@@ -380,8 +384,33 @@ function SvoyaPage() {
               playRain();
             }}
           >
-            {wipeAsk ? "Точно обнулить статистику?" : "Сбросить статистику"}
+            {wipeAsk ? "Точно? Статистика и все перья сгорят" : "Сбросить статистику и перья"}
           </button>
+          <form
+            className="svoya-cheat"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const v = cheat.trim().toLowerCase().replace(/ё/g, "е");
+              const gate = (window as Window & { YurecGate?: { cheat: (s: string) => boolean } }).YurecGate;
+              if (gate && gate.cheat(v)) {
+                unlockAllFeathers();
+                setCheat("");
+                setCheatMsg("Все перья открыты. Зал славы больше не тёмный.");
+              } else setCheatMsg("Двор не узнал слово.");
+            }}
+          >
+            <input
+              className="av-cheat-in"
+              value={cheat}
+              placeholder="чит-код"
+              autoComplete="off"
+              onChange={(e) => setCheat(e.target.value)}
+            />
+            <button type="submit" className="svoya-btn off">
+              Ввести
+            </button>
+          </form>
+          {cheatMsg ? <p className="svoya-pitch">{cheatMsg}</p> : null}
         </div>
       ) : null}
 

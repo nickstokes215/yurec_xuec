@@ -2222,7 +2222,9 @@ html.av-nodock [data-app-dock] {
   position: absolute;
   top: 0.22rem;
   left: 0.55rem;
-  z-index: 6;
+  z-index: 60;
+  pointer-events: auto;
+  padding: 8px 10px;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -3286,6 +3288,9 @@ html[data-wide="1"] .chat-log { max-width: 720px; margin-inline: auto; width: 10
 .svoya-btn.tg { background: #229ed9; color: #fff; }
 .svoya-btn.off { background: #2f8f4e; color: #e8f8ee; }
 .svoya-btn.danger { background: #b42318; color: #fff; }
+.svoya-cheat { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+.svoya-cheat .av-cheat-in { flex: 1; margin: 0; min-width: 0; }
+.svoya-cheat .svoya-btn { width: auto; min-width: 96px; margin: 0; }
 .svoya-give {
   position: fixed;
   left: 8px;

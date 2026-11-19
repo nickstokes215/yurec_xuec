@@ -994,7 +994,9 @@ html.av-nodock .dock-inner {
   position: absolute;
   top: 0.22rem;
   left: 0.55rem;
-  z-index: 6;
+  z-index: 60;
+  pointer-events: auto;
+  padding: 8px 10px;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -2064,6 +2066,9 @@ html[data-wide="1"] .chat-log {
 .svoya-btn.tg { background: var(--color-tg); color: var(--color-tg-fg); }
 .svoya-btn.off { background: var(--color-off); color: var(--color-off-fg); }
 .svoya-btn.danger { background: var(--color-danger); color: var(--color-danger-fg); }
+.svoya-cheat { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+.svoya-cheat .av-cheat-in { flex: 1; margin: 0; min-width: 0; }
+.svoya-cheat .svoya-btn { width: auto; min-width: 96px; margin: 0; }
 .svoya-give {
   position: fixed;
   left: 8px;
