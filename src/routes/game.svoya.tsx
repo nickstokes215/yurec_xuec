@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { catTitle, ensureSvoya, svoyaReady } from "@/data/svoya";
-import { SVOYA_COVER, SVOYA_HUB_BLURB, SVOYA_PITCH, SVOYA_PRIZE_LOSE, SVOYA_PRIZES, SVOYA_RULES, SVOYA_TITLE, svoyaPrize, svoyaPrizeSrc, type SvoyaPrizeId } from "@/data/svoya-meta";
+import { SVOYA_COVER, SVOYA_HUB_BLURB, SVOYA_PRIZE_LOSE, SVOYA_PRIZES, SVOYA_RULES, SVOYA_TITLE, svoyaPrize, svoyaPrizeSrc, type SvoyaPrizeId } from "@/data/svoya-meta";
 import { playFireworks } from "@/components/fireworks";
 import { playRain } from "@/components/rain";
 import { isSoundOn, isVibrateOn } from "@/lib/use-settings";
@@ -146,6 +146,7 @@ function SvoyaPage() {
   const [picked, setPicked] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [wipeAsk, setWipeAsk] = useState(false);
+  const [cheatOpen, setCheatOpen] = useState(false);
   const [cheat, setCheat] = useState("");
   const [cheatMsg, setCheatMsg] = useState("");
   const [newAsk, setNewAsk] = useState(false);
@@ -324,11 +325,6 @@ function SvoyaPage() {
           <p className="svoya-kicker">Игры двора</p>
           <h2>{SVOYA_TITLE}</h2>
           <p className="svoya-blurb">{SVOYA_HUB_BLURB}</p>
-          {SVOYA_PITCH.map((t) => (
-            <p key={t} className="svoya-pitch">
-              {t}
-            </p>
-          ))}
           <p className="svoya-scoreline">
             рекорд {stamp ? bestScore() : 0} · партий {stamp ? (snap.p ?? 0) : 0}
           </p>
@@ -362,15 +358,51 @@ function SvoyaPage() {
               {packOn ? "Играть" : "Колода грузится…"}
             </button>
           )}
+          <div className="av-help-rule" role="separator">
+            <span>Помощь</span>
+          </div>
+          <button type="button" className="svoya-btn off" onClick={() => setScreen("rules")}>
+            Правила
+          </button>
           <button type="button" className="svoya-btn tg" onClick={() => setScreen("hall")}>
             Таблица рекордов
           </button>
           <button type="button" className="svoya-btn gold" onClick={() => setScreen("fame")}>
             Зал славы
           </button>
-          <button type="button" className="svoya-btn off" onClick={() => setScreen("rules")}>
-            Правила
+          <div className="av-help-rule" role="separator">
+            <span>служебный вход</span>
+          </div>
+          <button type="button" className="svoya-btn off" onClick={() => setCheatOpen((v) => !v)}>
+            Чит-код
           </button>
+          {cheatOpen ? (
+            <form
+              className="svoya-cheat"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const v = cheat.trim().toLowerCase().replace(/ё/g, "е");
+                const gate = (window as Window & { YurecGate?: { cheat: (s: string) => boolean } }).YurecGate;
+                if (gate && gate.cheat(v)) {
+                  unlockAllFeathers();
+                  setCheat("");
+                  setCheatMsg("Все перья открыты. Зал славы больше не тёмный.");
+                } else setCheatMsg("Двор не узнал слово.");
+              }}
+            >
+              <input
+                className="av-cheat-in"
+                value={cheat}
+                placeholder="код"
+                autoComplete="off"
+                onChange={(e) => setCheat(e.target.value)}
+              />
+              <button type="submit" className="svoya-btn off">
+                Ввести
+              </button>
+            </form>
+          ) : null}
+          {cheatMsg ? <p className="svoya-pitch">{cheatMsg}</p> : null}
           <button
             type="button"
             className="svoya-btn danger"
@@ -386,31 +418,6 @@ function SvoyaPage() {
           >
             {wipeAsk ? "Точно? Статистика и все перья сгорят" : "Сбросить статистику и перья"}
           </button>
-          <form
-            className="svoya-cheat"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const v = cheat.trim().toLowerCase().replace(/ё/g, "е");
-              const gate = (window as Window & { YurecGate?: { cheat: (s: string) => boolean } }).YurecGate;
-              if (gate && gate.cheat(v)) {
-                unlockAllFeathers();
-                setCheat("");
-                setCheatMsg("Все перья открыты. Зал славы больше не тёмный.");
-              } else setCheatMsg("Двор не узнал слово.");
-            }}
-          >
-            <input
-              className="av-cheat-in"
-              value={cheat}
-              placeholder="чит-код"
-              autoComplete="off"
-              onChange={(e) => setCheat(e.target.value)}
-            />
-            <button type="submit" className="svoya-btn off">
-              Ввести
-            </button>
-          </form>
-          {cheatMsg ? <p className="svoya-pitch">{cheatMsg}</p> : null}
         </div>
       ) : null}
 

@@ -835,6 +835,11 @@ public class YurecOffline {
     }
 
     @JavascriptInterface
+    public void setWidgetCard(boolean on) {
+        QuoteWidget.setCard(ctx, on);
+    }
+
+    @JavascriptInterface
     public int getWidgetInterval() {
         return QuoteWidget.hours(ctx);
     }

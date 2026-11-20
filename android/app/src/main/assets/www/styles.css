@@ -18,6 +18,18 @@
   --app-max: 100%;
 }
 
+html, body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea, [contenteditable="true"],
+.reader .body, .reader .body * {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 html[data-theme="light"] {
   --void: #cfc6b6;
   --bg: #e7dfd0;

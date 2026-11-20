@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.SystemClock;
+import android.view.View;
 import android.widget.RemoteViews;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,6 +28,7 @@ public class QuoteWidget extends AppWidgetProvider {
     public static final String KEY_ID = "id";
     public static final String KEY_TEXT = "text";
     public static final String KEY_SPEAKER = "speaker";
+    public static final String KEY_CARD = "card";
 
     @Override
     public void onUpdate(Context ctx, AppWidgetManager mgr, int[] ids) {
@@ -76,6 +78,15 @@ public class QuoteWidget extends AppWidgetProvider {
         schedule(ctx);
     }
 
+    public static void setCard(Context ctx, boolean on) {
+        prefs(ctx).edit().putBoolean(KEY_CARD, on).apply();
+        refreshAll(ctx, false);
+    }
+
+    public static boolean cardOn(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_CARD, false);
+    }
+
     public static String pin(Context ctx) {
         if (Build.VERSION.SDK_INT < 26) return "old";
         try {
@@ -116,7 +127,21 @@ public class QuoteWidget extends AppWidgetProvider {
         open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
-        rv.setOnClickPendingIntent(R.id.widget_root, PendingIntent.getActivity(ctx, 71, open, flags));
+        rv.setOnClickPendingIntent(R.id.widget_kicker, PendingIntent.getActivity(ctx, 71, open, flags));
+        rv.setOnClickPendingIntent(R.id.widget_quote, PendingIntent.getActivity(ctx, 74, open, flags));
+        rv.setOnClickPendingIntent(R.id.widget_speaker, PendingIntent.getActivity(ctx, 75, open, flags));
+        if (cardOn(ctx)) {
+            rv.setViewVisibility(R.id.widget_card, View.VISIBLE);
+            Intent card = new Intent(ctx, MainActivity.class);
+            card.setAction("ru.yurec.xuec.POSTCARD");
+            card.putExtra("open", "postcard");
+            card.putExtra("cardText", text);
+            card.putExtra("cardSpeaker", speaker == null ? "" : speaker);
+            card.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            rv.setOnClickPendingIntent(R.id.widget_card, PendingIntent.getActivity(ctx, 73, card, flags));
+        } else {
+            rv.setViewVisibility(R.id.widget_card, View.GONE);
+        }
         mgr.updateAppWidget(id, rv);
     }
 

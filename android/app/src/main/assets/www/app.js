@@ -550,6 +550,9 @@ function applyStoredIcon() {
     if (window.YurecNative && typeof window.YurecNative.setWidgetInterval === "function") {
       window.YurecNative.setWidgetInterval(readWidgetHours());
     }
+    if (window.YurecNative && typeof window.YurecNative.setWidgetCard === "function") {
+      window.YurecNative.setWidgetCard(widgetCardOn());
+    }
   } catch (e) {}
 }
 function readWidgetHours() {
@@ -565,6 +568,17 @@ function setWidgetHours(h) {
   try {
     if (window.YurecNative && typeof window.YurecNative.setWidgetInterval === "function") {
       window.YurecNative.setWidgetInterval(h);
+    }
+  } catch (e2) {}
+}
+function widgetCardOn() {
+  try { return localStorage.getItem("yurec-widget-card") === "1"; } catch (e) { return false; }
+}
+function setWidgetCard(on) {
+  try { localStorage.setItem("yurec-widget-card", on ? "1" : "0"); } catch (e) {}
+  try {
+    if (window.YurecNative && typeof window.YurecNative.setWidgetCard === "function") {
+      window.YurecNative.setWidgetCard(!!on);
     }
   } catch (e2) {}
 }
@@ -1845,10 +1859,25 @@ function bindPostcard() {
   });
   drawPostPreview();
 }
-function sharePostcard(text, speaker, speakerId, done) {
+function sharePostcard(text, speaker, speakerId, done, forceRandom) {
   var prefs = readPostcard();
+  if (forceRandom) {
+    prefs = {
+      on: true,
+      font: "random",
+      textMode: prefs.textMode,
+      customText: prefs.customText,
+      image: prefs.image,
+      customImage: prefs.customImage,
+      format: prefs.format,
+      path: prefs.path,
+      paper: "random",
+      pattern: "random",
+      roll: ((Date.now() / 1000) | 0) + (prefs.roll || 1)
+    };
+  }
   var folder = postFolder(prefs);
-  if (!prefs.on) { if (done) done("off"); return; }
+  if (!forceRandom && !prefs.on) { if (done) done("off"); return; }
   var canvas = document.createElement("canvas");
   canvas.width = 1080;
   canvas.height = 1440;
@@ -1905,6 +1934,30 @@ function sharePostcard(text, speaker, speakerId, done) {
   im.onload = function () { paint(im); };
   im.onerror = function () { paint(null); };
   im.src = src;
+}
+function widgetPostcard(text, speaker) {
+  var day = citatOfDay();
+  var line = String(text || (day && day.text) || "").replace(/^\s+|\s+$/g, "");
+  var who = String(speaker || (day && day.speaker) || "Юрец");
+  var whoId = (day && day.speaker === who && day.speakerId) ? day.speakerId : "yurec";
+  if (!line) return;
+  sharePostcard(line, who, whoId, function () {}, true);
+}
+function lockCopy() {
+  document.addEventListener("selectionchange", function () {
+    var sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    var node = sel.anchorNode;
+    var el = node && node.nodeType === 3 ? node.parentElement : node;
+    if (!el || !el.closest) return;
+    if (el.closest(".reader .body, .story-copy, input, textarea")) return;
+    try { sel.removeAllRanges(); } catch (e) {}
+  });
+  document.addEventListener("contextmenu", function (e) {
+    var el = e.target;
+    if (el && el.closest && el.closest(".reader .body, .story-copy, input, textarea")) return;
+    e.preventDefault();
+  });
 }
 function playWalkVoice(src) {
   try { if (localStorage.getItem("yurec-sound") === "0") return; } catch (e) {}
@@ -4184,6 +4237,9 @@ function renderSettings() {
       '<div class="freq-grid">' +
         widgetHourBtn(1, "1 ч") + widgetHourBtn(6, "6 ч") + widgetHourBtn(12, "12 ч") + widgetHourBtn(24, "24 ч") +
       "</div>" +
+      '<button type="button" class="set-switch" id="widget-card" role="switch" aria-checked="' + (widgetCardOn() ? "true" : "false") + '">' +
+        "<span>Кнопка «Открытка»</span><span class=\"pill" + (widgetCardOn() ? " on" : "") + '">' + (widgetCardOn() ? "на виджете" : "спрятана") + "</span></button>" +
+      '<p class="subtle">По тапу сразу собирает открытку в случайном стиле и кладёт в галерею. Фон, узор и шрифт каждый раз другие.</p>' +
       (widgetNote ? '<p class="bak-note">' + esc(widgetNote) + "</p>" : "") +
     "</section>" +
     '<section class="set-card">' +
@@ -4838,6 +4894,10 @@ function bindSettings() {
       paint();
     });
   }
+  on($("#widget-card"), "click", function () {
+    setWidgetCard(!widgetCardOn());
+    paint();
+  });
   on($("#ai-wipe"), "click", function () {
     if (!wipeChatAsk) { wipeChatAsk = true; paint(); return; }
     clearChatLog();
@@ -6823,22 +6883,23 @@ function renderSvoya() {
   if (s === "hub") {
     html += '<div class="svoya-hub"><button type="button" class="svoya-cover" id="svoya-zoom"><img src="game/svoya.jpg" alt="" /></button>' +
       '<p class="svoya-kicker">Игры двора</p><h2>Юрца игра</h2>' +
-      '<p class="svoya-blurb">Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Перо выбираешь сам. Все десять — и ты магистр.</p>' +
-      '<p class="svoya-pitch">Три раунда, как в телеке: сначала три темы, потом четыре, потом пять. Номиналы 100–500, 200–1000, 300–1500. Потом финал со ставкой.</p>' +
-      '<p class="svoya-pitch">На табло коты и аукционы не подписаны, пока ты не магистр. Чистый раунд, где все ответы верные, удваивает баланс.</p>' +
-      '<p class="svoya-pitch">Угадал — плюс. Ошибся — минус. Сдаться можно, кнопка мелкая в углу: партия сгорает и в книгу рекордов не пишется.</p>' +
+      '<p class="svoya-blurb">Своя игра Шотмана. Три раунда, финал, перо выбираешь сам. Все десять — и ты магистр.</p>' +
       '<p class="svoya-scoreline">рекорд ' + svoyaBest() + " · партий " + svoyaPlays() + "</p>";
     if (svoyaOpen(run)) html += '<button type="button" class="svoya-btn gold" id="svoya-cont">Продолжить</button>';
     else if (svoyaDone(run)) html += '<button type="button" class="svoya-btn gold" id="svoya-fin">Итог партии</button>';
     if (svoyaOpen(run) || svoyaDone(run)) html += '<button type="button" class="svoya-btn hero" id="svoya-new">' + (svoyaUi.anew ? "Точно сначала? Партия сгорит" : "Начать заново") + "</button>";
     else html += '<button type="button" class="svoya-btn gold" id="svoya-play">Играть</button>';
-    html += '<button type="button" class="svoya-btn tg" id="svoya-hall">Таблица рекордов</button>' +
-      '<button type="button" class="svoya-btn gold" id="svoya-fame">Зал славы</button>' +
+    html += '<div class="av-help-rule" role="separator"><span>Помощь</span></div>' +
       '<button type="button" class="svoya-btn off" id="svoya-rules">Правила</button>' +
-      '<button type="button" class="svoya-btn danger" id="svoya-wipe">' + (svoyaUi.wipe ? "Точно? Статистика и все перья сгорят" : "Сбросить статистику и перья") + "</button>" +
-      '<form class="svoya-cheat" id="svoya-cheat"><input class="av-cheat-in" id="svoya-cheat-in" placeholder="чит-код" autocomplete="off" /><button type="submit" class="svoya-btn off">Ввести</button></form>' +
+      '<button type="button" class="svoya-btn tg" id="svoya-hall">Таблица рекордов</button>' +
+      '<button type="button" class="svoya-btn gold" id="svoya-fame">Зал славы</button>' +
+      '<div class="av-help-rule" role="separator"><span>служебный вход</span></div>' +
+      '<button type="button" class="svoya-btn off" id="svoya-cheat-open">Чит-код</button>' +
+      (svoyaUi.cheatOpen
+        ? '<form class="svoya-cheat" id="svoya-cheat"><input class="av-cheat-in" id="svoya-cheat-in" placeholder="код" autocomplete="off" /><button type="submit" class="svoya-btn off">Ввести</button></form>'
+        : "") +
       (svoyaUi.cheatMsg ? '<p class="svoya-pitch">' + esc(svoyaUi.cheatMsg) + "</p>" : "") +
-      "</div>";
+      '<button type="button" class="svoya-btn danger" id="svoya-wipe">' + (svoyaUi.wipe ? "Точно? Статистика и все перья сгорят" : "Сбросить статистику и перья") + "</button></div>";
   } else if (s === "board" && run && run.round <= 3) {
     var round = svoyaCur(run), doneN = 0, vals = (round && round.values) || [100, 200, 300, 400, 500];
     if (round) for (i = 0; i < round.cells.length; i++) if (round.cells[i].done) doneN++;
@@ -7055,6 +7116,10 @@ function bindSvoya() {
     } catch (e) {}
     svoyaUi.wipe = false;
     burstRain();
+    paint();
+  });
+  on($("#svoya-cheat-open"), "click", function () {
+    svoyaUi.cheatOpen = !svoyaUi.cheatOpen;
     paint();
   });
   on($("#svoya-cheat"), "submit", function (e) {
@@ -9752,6 +9817,7 @@ function boot() {
   window.addEventListener("scroll", updateTotop, { passive: true });
   applyStoredIcon();
   applyKeepAwake();
+  lockCopy();
   yxEdgeBind();
   paint();
   window.addEventListener("hashchange", paint);

@@ -257,6 +257,30 @@ export function setWidgetHours(h: WidgetHours) {
   emit(widgetListeners);
 }
 
+const WIDGET_CARD_KEY = "yurec-widget-card";
+
+export function readWidgetCard() {
+  try {
+    return localStorage.getItem(WIDGET_CARD_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setWidgetCard(on: boolean) {
+  try {
+    localStorage.setItem(WIDGET_CARD_KEY, on ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+  try {
+    const native = (window as Window & { YurecNative?: { setWidgetCard?: (on: boolean) => void } }).YurecNative;
+    if (native && typeof native.setWidgetCard === "function") native.setWidgetCard(on);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function pinQuoteWidget(): "ok" | "need" | "old" | "web" {
   const native = (window as Window & { YurecNative?: { pinQuoteWidget?: () => string | void } }).YurecNative;
   if (native && typeof native.pinQuoteWidget === "function") {
@@ -552,6 +576,8 @@ export function applyStoredIcon() {
   try {
     const native = (window as Window & { YurecNative?: { setWidgetInterval?: (n: number) => void } }).YurecNative;
     if (native && typeof native.setWidgetInterval === "function") native.setWidgetInterval(readWidgetHours());
+    const card = (window as Window & { YurecNative?: { setWidgetCard?: (on: boolean) => void } }).YurecNative;
+    if (card && typeof card.setWidgetCard === "function") card.setWidgetCard(readWidgetCard());
   } catch {
     /* ignore */
   }

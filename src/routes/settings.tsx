@@ -70,6 +70,8 @@ import {
   useAiKeep,
   useWidgetHours,
   pinQuoteWidget,
+  readWidgetCard,
+  setWidgetCard,
   WIDGET_HOURS,
   useReaderScrub,
   useDeveloper,
@@ -197,6 +199,7 @@ function SettingsPage() {
   const aiKeep = useAiKeep();
   const widget = useWidgetHours();
   const [widgetNote, setWidgetNote] = useState("");
+  const [widgetCard, setWidgetCardOn] = useState(() => readWidgetCard());
   const scrub = useReaderScrub();
   const vibe = useVibrate();
   const sound = useSound();
@@ -540,6 +543,23 @@ function SettingsPage() {
           ))}
         </div>
         {widgetNote ? <p className="mt-2 text-center text-[12px] text-gold">{widgetNote}</p> : null}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={widgetCard}
+          onClick={() => {
+            const next = !widgetCard;
+            setWidgetCardOn(next);
+            setWidgetCard(next);
+          }}
+          className="mt-3 flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-elevated px-4 text-sm font-medium"
+        >
+          <span>Кнопка «Открытка»</span>
+          <span className="text-muted">{widgetCard ? "на виджете" : "спрятана"}</span>
+        </button>
+        <p className="mt-2 text-center text-[12px] leading-relaxed text-subtle">
+          По тапу сразу собирает открытку в случайном стиле и кладёт в галерею. Фон, узор и шрифт каждый раз другие.
+        </p>
       </section>
 
       <section className="mt-3 rounded-2xl bg-surface px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">

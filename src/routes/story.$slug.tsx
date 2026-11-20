@@ -486,7 +486,7 @@ function StoryPage() {
           />
         ) : (
           <div
-            className="mt-8 leading-[1.65]"
+            className="story-copy mt-8 leading-[1.65]"
             style={{ fontSize: font, fontFamily: faceCss }}
           >
             {(() => {
@@ -626,7 +626,7 @@ function SmsThread({
 }) {
   let off = 0;
   return (
-    <div className="mt-8">
+    <div className="story-copy mt-8">
       <div className="leading-[1.65]" style={{ fontSize: font, fontFamily: faceCss }}>
         {intro.map((p, i) => {
           const from = off;

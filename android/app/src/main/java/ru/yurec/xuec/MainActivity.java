@@ -40,6 +40,8 @@ public class MainActivity extends Activity {
     private View customView;
     private WebChromeClient.CustomViewCallback customCallback;
     private boolean backBusy;
+    private boolean pageReady;
+    private String pendingCardJs;
     private ValueCallback<Uri[]> filePathCallback;
     private static final int FILE_CHOOSE = 4201;
 
@@ -201,7 +203,9 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 status.setVisibility(View.GONE);
+                pageReady = true;
                 pushScreen();
+                flushCard();
             }
 
             @Override
@@ -219,6 +223,7 @@ public class MainActivity extends Activity {
             }
         });
 
+        queueCard(getIntent());
         webView.loadUrl(bootHash(getIntent()));
         YurecNotes.onLaunch(this);
     }
@@ -248,6 +253,10 @@ public class MainActivity extends Activity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        if (wantsOpen(intent, "postcard", "ru.yurec.xuec.POSTCARD")) {
+            queueCard(intent);
+            return;
+        }
         if (webView == null) return;
         String js = null;
         String route = intent.getStringExtra("route");
@@ -260,6 +269,30 @@ public class MainActivity extends Activity {
             js = "(function(){try{location.hash='#/citats';if(window.paint)window.paint();}catch(e){}})()";
         }
         if (js != null) webView.evaluateJavascript(js, null);
+    }
+
+    private void queueCard(Intent intent) {
+        if (!wantsOpen(intent, "postcard", "ru.yurec.xuec.POSTCARD")) return;
+        String text = intent.getStringExtra("cardText");
+        String speaker = intent.getStringExtra("cardSpeaker");
+        if (text == null) text = "";
+        if (speaker == null) speaker = "";
+        pendingCardJs = "(function(){try{if(window.widgetPostcard)window.widgetPostcard("
+                + org.json.JSONObject.quote(text) + ","
+                + org.json.JSONObject.quote(speaker) + ");}catch(e){}})()";
+        if (pageReady) flushCard();
+    }
+
+    private void flushCard() {
+        if (pendingCardJs == null || webView == null) return;
+        final String js = pendingCardJs;
+        pendingCardJs = null;
+        webView.post(new Runnable() {
+            @Override
+            public void run() {
+                if (webView != null) webView.evaluateJavascript(js, null);
+            }
+        });
     }
 
     private void pushScreen() {

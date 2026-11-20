@@ -115,6 +115,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     void notesBoot();
   }, []);
   useEffect(() => {
+    function keepStoryOnly() {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) return;
+      const node = sel.anchorNode;
+      const el = node && node.nodeType === 3 ? node.parentElement : (node as Element | null);
+      if (!el || typeof (el as Element).closest !== "function") return;
+      if ((el as Element).closest(".story-copy, .reader .body, input, textarea")) return;
+      sel.removeAllRanges();
+    }
+    document.addEventListener("selectionchange", keepStoryOnly);
+    return () => document.removeEventListener("selectionchange", keepStoryOnly);
+  }, []);
+  useEffect(() => {
     noteVisit(pathname);
   }, [pathname]);
   useEffect(() => {

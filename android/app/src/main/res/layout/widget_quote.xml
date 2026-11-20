@@ -46,4 +46,17 @@
         android:text="Повар шавермы"
         android:textColor="#9A958C"
         android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/widget_card"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:layout_marginTop="8dp"
+        android:background="#C9A227"
+        android:gravity="center"
+        android:text="Открытка"
+        android:textColor="#1A1408"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 </LinearLayout>
