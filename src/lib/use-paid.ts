@@ -67,6 +67,12 @@ export function lockPaid() {
   } catch {
     /* ignore */
   }
+  try {
+    const native = (window as Window & { YurecNative?: { notesDev?: (on: boolean, url: string) => void } }).YurecNative;
+    if (native && typeof native.notesDev === "function") native.notesDev(false, "");
+  } catch {
+    /* мост молчит */
+  }
   later(() => {
     emit();
     try {

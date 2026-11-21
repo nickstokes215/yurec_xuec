@@ -887,7 +887,7 @@ function SettingsPage() {
           Уведомления
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          Три канала, у каждого свой час. Двор стучит раз в сутки. Разработка зовёт в Grok, когда лимит мог отпуститься. Обновления сами смотрят GitHub и пишут, если сборку можно скачать с официального источника автора.
+          Три канала, у каждого свой час. Двор стучит раз в сутки. Разработка — только с лицензией разработчика. Обновления сами смотрят GitHub и пишут, если сборку можно скачать с официального источника автора.
         </p>
         <NoteLane
           title="Двор"
@@ -907,16 +907,29 @@ function SettingsPage() {
         >
           Разрешить уведомления
         </button>
-        <NoteLane
-          title="Разработка"
-          text="Зайти в Grok и продолжить двор. Лимиты сбрасываются в разное время, поэтому час подводится вручную. Канал по умолчанию выключен."
-          chan={notesPlan.dev}
-          onChange={(chan) => {
-            const next = setNotesPlan({ ...notesPlan, dev: chan });
-            setNotesPlanUi(next);
-          }}
-          onTest={() => void notesTest("dev").then((how) => setNotesMsg(notesHint(how)))}
-        />
+        {dev.on ? (
+          <NoteLane
+            title="Разработка"
+            text="Зайти в тот же чат, что открывает кнопка «Открыть разработку». Лимиты сбрасываются в разное время, поэтому час подводится вручную. Канал по умолчанию выключен."
+            chan={notesPlan.dev}
+            onChange={(chan) => {
+              const next = setNotesPlan({ ...notesPlan, dev: chan });
+              setNotesPlanUi(next);
+            }}
+            onTest={() => void notesTest("dev").then((how) => setNotesMsg(notesHint(how)))}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setDevOpen(true)}
+            className="mt-3 w-full rounded-xl bg-elevated px-3 py-3 text-left opacity-40 grayscale"
+          >
+            <span className="text-sm font-medium">Разработка</span>
+            <p className="mt-1 text-[12px] leading-relaxed text-subtle">
+              Секция затемнена. Только для разработчика. Нажми и введи лицензионный код — тогда канал заработает, а тап по пушу откроет тот же чат, что «Открыть разработку».
+            </p>
+          </button>
+        )}
         <NoteLane
           title="Обновления"
           text="В выбранный час телефон проверяет GitHub. Если версия новее — придёт стук: скачать можно с официального источника автора."

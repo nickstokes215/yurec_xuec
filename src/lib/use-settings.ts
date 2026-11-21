@@ -471,6 +471,12 @@ export function unlockDeveloper(input: string): boolean {
     /* ignore */
   }
   grantPaidSilent();
+  try {
+    const native = (window as Window & { YurecNative?: { notesDev?: (on: boolean, url: string) => void } }).YurecNative;
+    if (native && typeof native.notesDev === "function") native.notesDev(true, DEV_CHAT_URL);
+  } catch {
+    /* мост молчит */
+  }
   later(() => {
     emit(devListeners);
     window.dispatchEvent(new Event("yurec-license-changed"));

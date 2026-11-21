@@ -845,6 +845,11 @@ public class YurecOffline {
     }
 
     @JavascriptInterface
+    public void notesDev(boolean on, String url) {
+        YurecNotes.setDev(ctx, on, url);
+    }
+
+    @JavascriptInterface
     public String notesAsk() {
         return YurecNotes.ask(YurecNotes.activity(), true);
     }

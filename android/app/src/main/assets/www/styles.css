@@ -1523,6 +1523,21 @@ html[data-wide="1"] .ends li { margin-top: 0; }
 .notes-ask {
   margin-top: 18px;
 }
+.notes-locked {
+  display: block;
+  width: 100%;
+  border: 0;
+  text-align: left;
+  opacity: 0.42;
+  filter: grayscale(0.35);
+  cursor: pointer;
+}
+.notes-lock-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 650;
+  margin-bottom: 4px;
+}
 .font-faces {
   display: flex;
   flex-wrap: wrap;

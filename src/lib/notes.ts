@@ -1,5 +1,5 @@
 import { APP_VERSION } from "@/data/catalog";
-import { DEV_CHAT_URL } from "@/lib/use-settings";
+import { DEV_CHAT_URL, isDeveloper } from "@/lib/use-settings";
 
 const AT = "yurec-notes-at";
 const ASKED = "yurec-notes-asked";
@@ -143,6 +143,7 @@ export function setNotesClock(hhmm: string) {
 }
 
 export function setNotesPlan(next: NotePlan): NotePlan {
+  syncNativeDev();
   writePlan(next);
   const native = bridge();
   if (native && typeof native.notesPlan === "function") {
@@ -173,6 +174,17 @@ export function setNotesPlan(next: NotePlan): NotePlan {
   }
   armWeb(false);
   return next;
+}
+
+function syncNativeDev() {
+  const native = bridge() as (ReturnType<typeof bridge> & { notesDev?: (on: boolean, url: string) => void }) | null;
+  if (native && typeof native.notesDev === "function") {
+    try {
+      native.notesDev(isDeveloper(), DEV_CHAT_URL);
+    } catch {
+      /* мост молчит */
+    }
+  }
 }
 
 function dayLine(): Line {
@@ -250,6 +262,7 @@ function armWeb(forceNextDay: boolean) {
 
 function armChan(id: "day" | "dev" | "upd", chan: NoteChan, forceNextDay: boolean) {
   clearTimer(id);
+  if (id === "dev" && !isDeveloper()) return;
   if (!chan.on) return;
   if (id === "day" && chan.mode === "span") {
     const last = Number(localStorage.getItem(AT) || "0");
@@ -276,6 +289,7 @@ function armChan(id: "day" | "dev" | "upd", chan: NoteChan, forceNextDay: boolea
 }
 
 export async function notesBoot() {
+  syncNativeDev();
   const plan = readNotesPlan();
   const native = bridge();
   if (native && typeof native.notesPlan === "function") {
@@ -344,6 +358,8 @@ export async function notesAsk(): Promise<string> {
 }
 
 export async function notesTest(kind: NoteKind = "all"): Promise<string> {
+  syncNativeDev();
+  if (kind === "dev" && !isDeveloper()) return "locked";
   const native = bridge();
   if (native && typeof native.notesTestKind === "function") {
     try {
@@ -378,7 +394,7 @@ export async function notesTest(kind: NoteKind = "all"): Promise<string> {
     });
   }
   if (kind === "all" || kind === "day") samples.push(dayLine());
-  if (kind === "all" || kind === "dev") samples.push(DEV_LINE);
+  if ((kind === "all" || kind === "dev") && isDeveloper()) samples.push(DEV_LINE);
   samples.forEach((line, i) => {
     window.setTimeout(() => show(line, "yurec-test-" + kind + "-" + i), i * 500);
   });
@@ -392,5 +408,6 @@ export function notesHint(how: string) {
   if (how === "denied") return "Доступ закрыт. Без него стук в дверь не доходит.";
   if (how === "later") return "Уже спрашивали. Если отказал — включи в системе.";
   if (how === "нет") return "Этот браузер уведомления не умеет. На телефоне — умеет.";
+  if (how === "locked") return "Канал «Разработка» закрыт. Нужен лицензионный код разработчика.";
   return "Не вышло. На телефоне это системный запрос.";
 }

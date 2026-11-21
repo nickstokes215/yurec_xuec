@@ -224,6 +224,7 @@ public class MainActivity extends Activity {
         });
 
         queueCard(getIntent());
+        openDevChat(getIntent());
         webView.loadUrl(bootHash(getIntent()));
         YurecNotes.onLaunch(this);
     }
@@ -257,6 +258,10 @@ public class MainActivity extends Activity {
             queueCard(intent);
             return;
         }
+        if (wantsOpen(intent, "devchat", "ru.yurec.xuec.DEVCHAT")) {
+            openDevChat(intent);
+            return;
+        }
         if (webView == null) return;
         String js = null;
         String route = intent.getStringExtra("route");
@@ -269,6 +274,18 @@ public class MainActivity extends Activity {
             js = "(function(){try{location.hash='#/citats';if(window.paint)window.paint();}catch(e){}})()";
         }
         if (js != null) webView.evaluateJavascript(js, null);
+    }
+
+    private void openDevChat(Intent intent) {
+        if (!wantsOpen(intent, "devchat", "ru.yurec.xuec.DEVCHAT")) return;
+        String url = intent.getStringExtra("devUrl");
+        if (url == null || !url.startsWith("https://")) url = YurecNotes.devUrl(this);
+        try {
+            Intent view = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(view);
+        } catch (Exception ignored) {
+        }
     }
 
     private void queueCard(Intent intent) {

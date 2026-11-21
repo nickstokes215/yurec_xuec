@@ -11,7 +11,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import androidx.core.app.NotificationCompat;
@@ -131,9 +130,13 @@ public class YurecNotes {
             post(ctx, CH_DAY, 702, day[0], day[1], day[2]);
         }
         if ("all".equals(kind) || "dev".equals(kind)) {
-            post(ctx, CH_DEV, 703, "Проверка: разработка",
-                    "Так выглядит канал разработки. Настоящий стук позовёт в Grok продолжить двор.",
-                    GROK);
+            if (!devOk(ctx)) {
+                if ("dev".equals(kind)) return "locked";
+            } else {
+                post(ctx, CH_DEV, 703, "Проверка: разработка",
+                        "Так выглядит канал разработки. Тап сразу откроет тот же чат, что кнопка «Открыть разработку».",
+                        "devchat");
+            }
         }
         return "ok";
     }
@@ -197,6 +200,7 @@ public class YurecNotes {
         if (!"day".equals(id) && "span".equals(mode)) mode = "clock";
         int min = o.optInt("min", defMin);
         if (min < -1 || min > 1439) min = defMin;
+        if ("dev".equals(id) && !devOk(ctx)) on = false;
         SharedPreferences.Editor ed = prefs(ctx).edit();
         ed.putBoolean(id + "_on", on);
         ed.putString(id + "_mode", mode);
@@ -234,6 +238,7 @@ public class YurecNotes {
     }
 
     private static boolean chanOn(Context ctx, String id, boolean defOn) {
+        if ("dev".equals(id) && !devOk(ctx)) return false;
         SharedPreferences p = prefs(ctx);
         if ("day".equals(id) && !p.contains("day_on")) return true;
         return p.getBoolean(id + "_on", defOn);
@@ -367,6 +372,26 @@ public class YurecNotes {
         return v;
     }
 
+    public static void setDev(Context ctx, boolean on, String url) {
+        if (ctx == null) return;
+        SharedPreferences.Editor ed = prefs(ctx).edit();
+        ed.putBoolean("dev_ok", on);
+        if (url != null && url.startsWith("https://")) ed.putString("dev_url", url);
+        if (!on) ed.putBoolean("dev_on", false);
+        ed.apply();
+        if (canPost(ctx)) arm(ctx);
+    }
+
+    public static boolean devOk(Context ctx) {
+        return ctx != null && prefs(ctx).getBoolean("dev_ok", false);
+    }
+
+    public static String devUrl(Context ctx) {
+        String url = ctx == null ? null : prefs(ctx).getString("dev_url", GROK);
+        if (url == null || !url.startsWith("https://")) return GROK;
+        return url;
+    }
+
     private static void scheduleChan(Context ctx, String id, String action, int req, boolean forceNextDay) {
         PendingIntent pi = pingIntent(ctx, action, req);
         try {
@@ -432,8 +457,14 @@ public class YurecNotes {
 
     private static PendingIntent openIntent(Context ctx, String route, int id) {
         Intent open;
-        if (route != null && route.startsWith("https://grok.com")) {
-            open = new Intent(Intent.ACTION_VIEW, Uri.parse(route));
+        boolean dev = "devchat".equals(route) || (route != null && route.startsWith("https://"));
+        if (dev) {
+            open = new Intent(ctx, MainActivity.class);
+            open.setAction("ru.yurec.xuec.DEVCHAT");
+            open.putExtra("open", "devchat");
+            String url = route != null && route.startsWith("https://") ? route : devUrl(ctx);
+            open.putExtra("devUrl", url);
+            open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         } else {
             open = new Intent(ctx, MainActivity.class);
             open.setAction("ru.yurec.xuec.NOTE");
@@ -477,7 +508,7 @@ public class YurecNotes {
             } else if (ACTION_DEV.equals(action)) {
                 if (chanOn(ctx, "dev", false)) {
                     post(ctx, CH_DEV, 730, "Разработка",
-                            "Лимит мог отпуститься. Зайди в Grok и продолжи работу над двором.", GROK);
+                            "Лимит мог отпуститься. Зайди в чат и продолжи работу над двором.", "devchat");
                 }
                 reroll(ctx, "dev");
                 scheduleChan(ctx, "dev", ACTION_DEV, 82, true);

@@ -498,6 +498,7 @@ function unlockDeveloper(v) {
     localStorage.setItem(PAID_KEY, "1");
   } catch (e) {}
   try { noteAchRedo("relic"); } catch (e2) {}
+  syncNotesDev();
   return true;
 }
 function lockPaid() {
@@ -506,6 +507,7 @@ function lockPaid() {
     localStorage.removeItem("yurec-celebrate");
     localStorage.removeItem(DEV_KEY);
   } catch (e) {}
+  syncNotesDev();
 }
 function readAppIcon() {
   try { return localStorage.getItem(ICON_KEY) === "horror" ? "horror" : "comedy"; } catch (e) { return "comedy"; }
@@ -553,6 +555,7 @@ function applyStoredIcon() {
     if (window.YurecNative && typeof window.YurecNative.setWidgetCard === "function") {
       window.YurecNative.setWidgetCard(widgetCardOn());
     }
+    syncNotesDev();
   } catch (e) {}
 }
 function readWidgetHours() {
@@ -4024,6 +4027,7 @@ function notesHint(how) {
   if (how === "denied") return "Доступ закрыт. Без него стук в дверь не доходит.";
   if (how === "later") return "Уже спрашивали. Если отказал — включи в системе.";
   if (how === "нет") return "Этот браузер уведомления не умеет. На телефоне — умеет.";
+  if (how === "locked") return "Канал «Разработка» закрыт. Нужен лицензионный код разработчика.";
   return "Не вышло. На телефоне это системный запрос.";
 }
 function notesWeb(kind) {
@@ -4033,13 +4037,18 @@ function notesWeb(kind) {
     var lines = [];
     if (kind === "all" || kind === "upd") lines.push(["Проверка: обновление", "Так выглядит канал обновлений. Это диагностика, не настоящий релиз. Настоящий стук скажет, что сборку можно скачать с официального источника автора.", "/apk"]);
     if (kind === "all" || kind === "day") lines.push(["Кроссворд стынет", "В киоске пустая сетка. Карандаш на месте.", "/"]);
-    if (kind === "all" || kind === "dev") lines.push(["Проверка: разработка", "Так выглядит канал разработки. Настоящий стук позовёт в Grok продолжить двор.", "/settings"]);
+    if ((kind === "all" || kind === "dev") && isDev()) lines.push(["Проверка: разработка", "Так выглядит канал разработки. Тап сразу откроет тот же чат, что кнопка «Открыть разработку».", DEV_CHAT_URL]);
+    if (kind === "dev" && !isDev()) return "locked";
     for (var i = 0; i < lines.length; i++) {
       (function (line, n) {
         setTimeout(function () {
           try {
             var note = new Notification(line[0], { body: line[1], tag: "yurec-test-" + n });
-            note.onclick = function () { note.close(); location.hash = "#" + line[2]; };
+            note.onclick = function () {
+              note.close();
+              if (String(line[2]).indexOf("https://") === 0) openUrl(line[2]);
+              else location.hash = "#" + line[2];
+            };
           } catch (e) {}
         }, n * 500);
       })(lines[i], i);
@@ -4057,6 +4066,8 @@ function notesWeb(kind) {
   return "ask";
 }
 function notesRun(kind) {
+  syncNotesDev();
+  if (kind === "dev" && !isDev()) return "locked";
   var native = window.YurecNative;
   try {
     if (!kind && native && typeof native.notesAsk === "function") return String(native.notesAsk() || "ok");
@@ -4115,6 +4126,7 @@ function writeNotesPlan(plan) {
   } catch (e2) {}
 }
 function pushNotesPlan(plan) {
+  syncNotesDev();
   writeNotesPlan(plan);
   try {
     if (window.YurecNative && typeof window.YurecNative.notesPlan === "function") {
@@ -4143,7 +4155,19 @@ function setNotesClock(hhmm) {
   plan.day = mins < 0 ? { on: true, mode: "span", min: -1 } : { on: true, mode: "clock", min: mins };
   pushNotesPlan(plan);
 }
+function syncNotesDev() {
+  try {
+    if (window.YurecNative && typeof window.YurecNative.notesDev === "function") {
+      window.YurecNative.notesDev(!!isDev(), DEV_CHAT_URL);
+    }
+  } catch (e) {}
+}
 function notesLane(id, title, text, allowSpan) {
+  if (id === "dev" && !isDev()) {
+    return '<button type="button" class="notes-lane notes-locked" id="notes-dev-lock">' +
+      '<span class="notes-lock-title">Разработка</span>' +
+      '<span class="subtle">Секция затемнена. Только для разработчика. Нажми и введи лицензионный код — тогда канал заработает, а тап по пушу откроет тот же чат, что «Открыть разработку».</span></button>';
+  }
   var plan = readNotesPlan();
   var chan = plan[id];
   var timed = chan.on && chan.mode !== "span";
@@ -4315,7 +4339,7 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>') + "Уведомления</p>" +
-      '<p class="subtle">Три канала, у каждого свой час. Двор стучит раз в сутки. Разработка зовёт в Grok. Обновления смотрят GitHub и пишут, если сборку можно скачать с официального источника автора.</p>' +
+      '<p class="subtle">Три канала, у каждого свой час. Двор стучит раз в сутки. Разработка — только с лицензией разработчика. Обновления смотрят GitHub и пишут, если сборку можно скачать с официального источника автора.</p>' +
       notesLane("day", "Двор", "Один стук: то про сборник, то про игру. Выключишь своё время — стук через сутки после прошлого.", true) +
       '<button type="button" class="btn wide off notes-ask" id="notes-ask">Разрешить уведомления</button>' +
       notesLane("dev", "Разработка", "Зайти в Grok и продолжить двор. Лимиты сбрасываются в разное время, поэтому час подводится вручную. Канал по умолчанию выключен.", false) +
@@ -4828,6 +4852,7 @@ function bindSettings() {
     chatNote = how === "ok" ? "Android спросит: добавить ярлык «Юрец AI»." : (how === "need" ? "Разреши ярлыки и нажми ещё раз." : "Ярлык ставится в телефонной сборке.");
     paint();
   });
+  on($("#notes-dev-lock"), "click", function () { openDevModal(); });
   on($("#notes-ask"), "click", function () {
     notesNote = notesHint(notesRun(false));
     paint();
