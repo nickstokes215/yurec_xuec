@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 const KEY = "yurec-game-order";
-const FACTORY = ["quest", "crosswords", "av", "ark", "svoya"] as const;
+const FACTORY = ["quest", "crosswords", "av", "ark", "yt", "svoya"] as const;
 export type GameHubId = (typeof FACTORY)[number];
 
 const listeners = new Set<() => void>();

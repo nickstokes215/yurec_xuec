@@ -2318,6 +2318,45 @@ html.av-nodock [data-app-dock] {
   letter-spacing: 0.03em;
   pointer-events: auto;
 }
+.av-head .av-pause.yt-off { display: none !important; }
+.yt-keys {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+.yt-keys[hidden] { display: none !important; }
+.yt-keys button {
+  grid-column: span 2;
+  height: 46px;
+  border: 0;
+  border-radius: 12px;
+  background: #1a1408;
+  color: #f4e4a1;
+  box-shadow: 0 0 0 1px #e8c36a;
+  font-weight: 750;
+  font-size: 14px;
+}
+.yt-keys button:nth-child(4),
+.yt-keys button:nth-child(5) { grid-column: span 3; }
+.yt-coach {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 8px;
+  z-index: 5;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(18, 42, 22, 0.92);
+  color: #b6f0a2;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+}
+.yt-coach[hidden] { display: none !important; }
 .av-pause[hidden] { display: none !important; }
 .av-head .av-pause {
   grid-column: 3;

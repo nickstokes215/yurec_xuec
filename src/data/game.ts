@@ -63,6 +63,7 @@ export const QUEST_COVER = `/game/quest.jpg?v=${changelogJson.version}`;
 export const CROSSWORDS_COVER = `/game/crosswords.jpg?v=${changelogJson.version}`;
 export const AV_COVER = `/game/av.jpg?v=${changelogJson.version}`;
 export const ARK_COVER = `/game/ark.jpg?v=${changelogJson.version}`;
+export const YT_COVER = `/game/yt.jpg?v=${changelogJson.version}`;
 
 export const QUEST_PITCH = [
   "Ты — Юрец. Не читатель саги и не Костя с красной икрой — а сам император панельных джунглей!",

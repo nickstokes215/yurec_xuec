@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { LEVELS, QUEST_COVER, CROSSWORDS_COVER, AV_COVER, AV_CHAIN, avBeatenCount, ARK_COVER, ARK_CHAIN, arkBeatenCount, AV_HUB_BLURB, ARK_HUB_BLURB, QUEST_HUB_BLURB, CROSSWORD_HUB_BLURB } from "@/data/game";
+import { LEVELS, QUEST_COVER, CROSSWORDS_COVER, AV_COVER, AV_CHAIN, avBeatenCount, ARK_COVER, ARK_CHAIN, arkBeatenCount, YT_COVER, AV_HUB_BLURB, ARK_HUB_BLURB, QUEST_HUB_BLURB, CROSSWORD_HUB_BLURB } from "@/data/game";
 import { SVOYA_COVER, SVOYA_HUB_BLURB } from "@/data/svoya-meta";
 import { bestScore, readFeathers } from "@/lib/svoya-stats";
 import { CROSSWORDS } from "@/data/crossword";
@@ -16,7 +16,7 @@ const HOLD_MS = 400;
 
 type GameMeta = {
   id: GameHubId;
-  to: "/game/quest" | "/game/crosswords" | "/game/av" | "/game/ark" | "/game/svoya";
+  to: "/game/quest" | "/game/crosswords" | "/game/av" | "/game/ark" | "/game/yt" | "/game/svoya";
   cover: string;
   title: string;
   score?: string;
@@ -49,6 +49,29 @@ function GamesHub() {
     },
     arkBeatenCount,
     () => 0,
+  );
+  const ytLine = useSyncExternalStore(
+    (fn) => {
+      window.addEventListener("storage", fn);
+      window.addEventListener("yurec-yt", fn);
+      return () => {
+        window.removeEventListener("storage", fn);
+        window.removeEventListener("yurec-yt", fn);
+      };
+    },
+    () => {
+      try {
+        const clears = JSON.parse(localStorage.getItem("yurec-yt-clears") || "{}") as Record<string, number>;
+        let n = 0;
+        for (let i = 1; i <= 5; i++) if (clears[i] || clears[String(i)]) n += 1;
+        const hall = JSON.parse(localStorage.getItem("yurec-yt-scores") || "[]") as { score?: number }[];
+        const best = Array.isArray(hall) ? hall.reduce((m, row) => Math.max(m, row.score || 0), 0) : 0;
+        return `пройдено ${n} / 5 · рекорд ${best}`;
+      } catch {
+        return "пройдено 0 / 5 · рекорд 0";
+      }
+    },
+    () => "пройдено 0 / 5 · рекорд 0",
   );
   const svoyaLine = useSyncExternalStore(
     (fn) => {
@@ -84,6 +107,7 @@ function GamesHub() {
     },
     av: { id: "av", to: "/game/av", cover: AV_COVER, title: "Помойкобол", score: `отбито ${avOpen} / ${AV_CHAIN.length}`, blurb: AV_HUB_BLURB },
     ark: { id: "ark", to: "/game/ark", cover: ARK_COVER, title: "Алконоид", score: `разбито ${arkOpen} / ${ARK_CHAIN.length}`, blurb: ARK_HUB_BLURB },
+    yt: { id: "yt", to: "/game/yt", cover: YT_COVER, title: "Юртрис", score: ytLine, blurb: "Ламповый тетрис девяностых. Фигурки — герои Шотмана. Пять скоростей, каждая быстрее на 30%." },
     svoya: { id: "svoya", to: "/game/svoya", cover: SVOYA_COVER, title: "Юрца игра", score: svoyaLine, blurb: SVOYA_HUB_BLURB },
   };
   const list = order.ids.map((id) => catalog[id]).filter((g): g is GameMeta => !!g);
@@ -93,7 +117,7 @@ function GamesHub() {
       <p className="text-[11px] font-medium tracking-[0.16em] text-muted uppercase">Игры</p>
       <h2 className="mt-1 font-sans text-2xl font-semibold leading-tight">Игры двора</h2>
       <p className="mt-2 font-serif text-[16px] leading-relaxed text-muted">
-        Пять игр. На телефоне столбик, на планшете — два ряда. Зажми карточку — перетащи любимую наверх.
+        Шесть игр. На телефоне столбик, на планшете — два ряда. Зажми карточку — перетащи любимую наверх.
       </p>
       <Link
         to="/passport"

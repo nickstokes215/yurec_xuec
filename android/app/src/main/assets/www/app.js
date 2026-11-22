@@ -706,7 +706,7 @@ function applyKeepAwake() {
     }).catch(function () {});
   } catch (e) {}
 }
-var GAME_FACTORY = ["quest", "crosswords", "av", "ark", "svoya"];
+var GAME_FACTORY = ["quest", "crosswords", "av", "ark", "yt", "svoya"];
 function readGameOrder() {
   try {
     var raw = localStorage.getItem(GAME_ORDER_KEY);
@@ -1425,7 +1425,7 @@ function takeShout() {
 }
 function maybeShout() {
   var r = route();
-  if (r.indexOf("/game/av") === 0 || r.indexOf("/game/ark") === 0) return;
+  if (r.indexOf("/game/av") === 0 || r.indexOf("/game/ark") === 0 || r.indexOf("/game/yt") === 0) return;
   if (document.getElementById("shout-pop")) return;
   var text = takeShout();
   if (!text) return;
@@ -4268,7 +4268,7 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>') + "Мультимедиа</p>" +
-      '<p class="subtle">Звук и вибрация на всё приложение: Помойкобол, Алконоид, Юрца игра, отбив, гол, перетаскивание карточек. По умолчанию оба включены.</p>' +
+      '<p class="subtle">Звук и вибрация на всё приложение: Помойкобол, Алконоид, Юртрис, Юрца игра, отбив, гол, перетаскивание карточек. По умолчанию оба включены.</p>' +
       '<button type="button" class="set-switch" id="sound-nav" role="switch" aria-checked="' + (soundOn ? "true" : "false") + '">' +
         "<span>Звук</span><span class=\"pill" + (soundOn ? " on" : "") + '">' + (soundOn ? "включён" : "отключён") + "</span></button>" +
       '<button type="button" class="set-switch" id="vibe-nav" role="switch" aria-checked="' + (vibeOn ? "true" : "false") + '">' +
@@ -4276,7 +4276,7 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>') + "Экран</p>" +
-      '<p class="subtle">Полезно в Помойкоболе, Алконоиде и Юрца игре: телефон не уснёт посреди розыгрыша. Пока включено — экран горит, пока сборник открыт.</p>' +
+      '<p class="subtle">Полезно в Помойкоболе, Алконоиде, Юртрисе и Юрца игре: телефон не уснёт посреди розыгрыша. Пока включено — экран горит, пока сборник открыт.</p>' +
       '<button type="button" class="set-switch" id="awake-nav" role="switch" aria-checked="' + (awakeOn ? "true" : "false") + '">' +
         "<span>Не гасить экран</span><span class=\"pill" + (awakeOn ? " on" : "") + '">' + (awakeOn ? "включено" : "отключено") + "</span></button>" +
     "</section>" +
@@ -4302,7 +4302,7 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card">' +
       '<p class="set-head">' + setIco('<line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="2"/>') + "Игры</p>" +
-      '<p class="subtle">Вернёт карточки во вкладке «Игры» к заводскому порядку: квест, кроссворды, Помойкобол, Алконоид, Юрца игра.</p>' +
+      '<p class="subtle">Вернёт карточки во вкладке «Игры» к заводскому порядку: квест, кроссворды, Помойкобол, Алконоид, Юртрис, Юрца игра.</p>' +
       '<button type="button" class="btn wide danger" id="wipe-games">' +
         (wipeGamesAsk ? "Точно сбросить всё?" : "Сбросить порядок игр") +
       "</button>" +
@@ -6264,6 +6264,17 @@ function avBeatenCount() {
     return n;
   } catch (e) { return 0; }
 }
+function ytProgress() {
+  try {
+    var c = JSON.parse(localStorage.getItem("yurec-yt-clears") || "{}");
+    var n = 0, i;
+    for (i = 1; i <= 5; i++) if (c[i] || c[String(i)]) n += 1;
+    var hall = JSON.parse(localStorage.getItem("yurec-yt-scores") || "[]");
+    var best = 0, j;
+    if (hall && hall.length) for (j = 0; j < hall.length; j++) if ((hall[j].score || 0) > best) best = hall[j].score || 0;
+    return { n: n, best: best };
+  } catch (e) { return { n: 0, best: 0 }; }
+}
 function renderGamesHub() {
   var questOpen = 0, questTotal = LEVELS.length, i, lvl, ends;
   for (i = 0; i < LEVELS.length; i++) {
@@ -6277,12 +6288,13 @@ function renderGamesHub() {
     crosswords: { id: "crosswords", href: "#/game/crosswords", cover: "game/crosswords.jpg", title: "Шотманские кроссворды", score: "разгадано " + cwOpen + " / " + CWS.length, blurb: "Кроссворд из киоска на Шотмана. Гоша орёт золотые клетки. Не знаешь слово — ври, как Юрец." },
     av: { id: "av", href: "#/game/av", cover: "game/av.jpg", title: "Помойкобол", score: "отбито " + avBeatenCount() + " / 6", blurb: "Юрец снизу, колобок сверху. Пилюли с помойки, лазер и просрочка. Кто взял яд — сам сдох. Двор орёт с каждого гола." },
     ark: { id: "ark", href: "#/game/ark", cover: "game/ark.jpg", title: "Алконоид", score: "разбито " + arkBeatenCount() + " / 10", blurb: "Харя Юрца — ракетка. Десять дворов: от квартиры до Кости. Батя с дробовиком, аптека, камера. Юрец всё равно легенда." },
+    yt: { id: "yt", href: "#/game/yt", cover: "game/yt.jpg", title: "Юртрис", score: "пройдено " + ytProgress().n + " / 5 · рекорд " + ytProgress().best, blurb: "Ламповый тетрис девяностых. Фигурки — герои Шотмана. Пять скоростей, каждая быстрее на 30%." },
     svoya: { id: "svoya", href: "#/game/svoya", cover: "game/svoya.jpg", title: "Юрца игра", score: "перья: " + svoyaFeatherIds().length + " / 10<br>рекорд: " + svoyaBest(), blurb: "Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Десять перьев, выбираешь сам." }
   };
   var ids = orderedGameIds();
   var html = '<p class="kicker">Игры</p>' +
     '<h2 style="font-size:28px;margin-top:6px">Игры двора</h2>' +
-    '<p class="muted" style="font-family:var(--serif);font-size:16px;line-height:1.6;margin-top:8px">Пять игр. На телефоне столбик, на планшете — два ряда. Зажми карточку — перетащи любимую наверх.</p>' +
+    '<p class="muted" style="font-family:var(--serif);font-size:16px;line-height:1.6;margin-top:8px">Шесть игр. На телефоне столбик, на планшете — два ряда. Зажми карточку — перетащи любимую наверх.</p>' +
     '<a class="card pass-hub" href="#/passport" data-tour="game-pass"><div class="pass-hub-body">' +
       '<div class="kicker">Справка</div><h2>Паспорт двора</h2>' +
       '<p class="subtle" style="margin-top:4px">Что уже прочитано, отбито и разгадано.</p></div>' +
@@ -6497,6 +6509,25 @@ function bindArk() {
     batya: "characters/batya.jpg",
     kostya: "characters/kostya.jpg"
   });
+}
+
+var ytHandle = null;
+function stopYt() {
+  if (ytHandle && ytHandle.destroy) {
+    try { ytHandle.destroy(); } catch (e) {}
+  }
+  ytHandle = null;
+}
+function renderYt() {
+  var html = '<a class="back av-back" href="#/game">← Игры</a>' +
+    '<div id="yt-root" class="av-host"></div>';
+  return shell(html, "game", null, { hideDock: true }).replace('<div class="page">', '<div class="page av-fill">');
+}
+function bindYt() {
+  stopYt();
+  var el = document.getElementById("yt-root");
+  if (!el || !window.YurecYt) return;
+  ytHandle = window.YurecYt.mount(el);
 }
 
 var svoyaUi = { screen: "hub", qid: null, picked: null, name: "", wipe: false, anew: false, named: false, bet: 0, fx: false };
@@ -8846,6 +8877,7 @@ function yxEdgeBind() {
     if (!r || r === "/") return true;
     if (r === "/game/av" || r.indexOf("/game/av/") === 0) return true;
     if (r === "/game/ark" || r.indexOf("/game/ark/") === 0) return true;
+    if (r === "/game/yt" || r.indexOf("/game/yt/") === 0) return true;
     if (zOpen) return true;
     return false;
   }
@@ -8966,17 +8998,20 @@ function paint() {
   try { noteAchVisit(r); } catch (eVis) {}
   var avNow = r === "/game/av" || r.indexOf("/game/av") === 0;
   var arkNow = r === "/game/ark" || r.indexOf("/game/ark") === 0;
+  var ytNow = r === "/game/yt" || r.indexOf("/game/yt") === 0;
   var svoyaNow = r === "/game/svoya" || r.indexOf("/game/svoya") === 0;
   try {
-    document.documentElement.classList.toggle("av-nodock", avNow || arkNow || svoyaNow);
-    document.body.classList.toggle("av-nodock", avNow || arkNow || svoyaNow);
+    document.documentElement.classList.toggle("av-nodock", avNow || arkNow || ytNow || svoyaNow);
+    document.body.classList.toggle("av-nodock", avNow || arkNow || ytNow || svoyaNow);
   } catch (e) {}
   if (!avNow) stopAv();
   if (!arkNow) stopArk();
+  if (!ytNow) stopYt();
   if (r.indexOf("/game") === 0) {
     var lastGame = "/game";
     if (r === "/game/av" || r.indexOf("/game/av") === 0) lastGame = "/game/av";
     else if (r === "/game/ark" || r.indexOf("/game/ark") === 0) lastGame = "/game/ark";
+    else if (r === "/game/yt" || r.indexOf("/game/yt") === 0) lastGame = "/game/yt";
     else if (r === "/game/svoya" || r.indexOf("/game/svoya") === 0) lastGame = "/game/svoya";
     else if (r.indexOf("/game/crossword") === 0) lastGame = "/game/crosswords";
     else if (r.indexOf("/game/") === 0) lastGame = "/game/quest";
@@ -9064,6 +9099,11 @@ function paint() {
     if (!same || !document.getElementById("ark-root")) {
       yxPut(root, renderArk(), same);
       bindArk();
+    }
+  } else if (r === "/game/yt" || r === "/game/yt/") {
+    if (!same || !document.getElementById("yt-root")) {
+      yxPut(root, renderYt(), same);
+      bindYt();
     }
   } else if (r === "/game/svoya" || r === "/game/svoya/") {
     yxPut(root, renderSvoya(), same);
@@ -9604,6 +9644,7 @@ window.yurecBack = yurecBack;
 window.yurecPause = function () {
   try { if (window.__avSave) window.__avSave(); } catch (eSave) {}
   try { if (window.__arkSave) window.__arkSave(); } catch (eSave2) {}
+  try { if (window.__ytSave) window.__ytSave(); } catch (eSave3) {}
   if (qAudio) try { qAudio.pause(); } catch (e) {}
   var nodes = document.querySelectorAll("audio,video");
   for (var i = 0; i < nodes.length; i++) try { nodes[i].pause(); } catch (e) {}
