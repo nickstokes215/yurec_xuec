@@ -3442,6 +3442,46 @@ html[data-wide="1"] .svoya-cell { min-height: 56px; font-size: 18px; }
 .walk-go { display: grid; place-items: center; height: 40px; margin-top: 10px; width: 100%; border: 0; border-radius: 12px; background: #c9a227; color: #1a1408; font-size: 13px; font-weight: 650; text-decoration: none; }
 .walk-row { display: flex; gap: 8px; margin-top: 12px; }
 .walk-row .walk-go { margin-top: 0; flex: 1; }
+.yw-viz {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 52px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: #1a1408;
+  color: #f4e4a1;
+  box-shadow: 0 0 0 2px #e8c36a;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+.yw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: #050a14;
+  padding: env(safe-area-inset-top, 0px) 8px env(safe-area-inset-bottom, 0px);
+  overflow: auto;
+}
+.yw-back {
+  align-self: flex-start;
+  margin: 8px 4px;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #1a1408;
+  color: #f4e4a1;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+#yw-root { flex: 1; min-height: 0; }
 .walk-go.is-quiet { background: var(--elevated); color: var(--fg); }
 .post-link { display: inline-block; margin-top: 8px; padding: 0; border: 0; background: none; color: var(--subtle); font-size: 12px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
 .post-note { margin: 8px 0 0; text-align: left; font-size: 12px; line-height: 1.4; color: var(--muted); }

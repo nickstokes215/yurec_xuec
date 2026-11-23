@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { getCharacter } from "@/data/catalog";
+import { getCharacter, APP_VERSION } from "@/data/catalog";
 import { getYardLayer, YARD_LAYERS, type YardLayer, type YardPin } from "@/data/yard-map";
 import { WALK } from "@/lib/yard-life";
 import { cn } from "@/lib/utils";
@@ -35,14 +35,17 @@ export function YardMap() {
   const [layerId, setLayerId] = useState("peter");
   const [openId, setOpenId] = useState<string | null>(null);
   const [walk, setWalk] = useState<number | null>(null);
+  const [world, setWorld] = useState(false);
   const layerIdRef = useRef(layerId);
   const openRef = useRef(openId);
   const walkRef = useRef(walk);
+  const worldRef = useRef(world);
   const voiceRef = useRef<HTMLAudioElement | null>(null);
   const navigate = useNavigate();
   layerIdRef.current = layerId;
   openRef.current = openId;
   walkRef.current = walk;
+  worldRef.current = world;
 
   useEffect(() => {
     setLayerId(readLayer());
@@ -58,6 +61,10 @@ export function YardMap() {
     const w = window as Window & { yurecBack?: () => boolean };
     const prev = w.yurecBack;
     const onBack = () => {
+      if (worldRef.current) {
+        setWorld(false);
+        return true;
+      }
       if (walkRef.current != null) {
         setWalk(null);
         return true;
@@ -154,6 +161,9 @@ export function YardMap() {
           Стена подъезда
         </Link>
       </div>
+      <button type="button" className="yw-viz" onClick={() => setWorld(true)}>
+        3D-визуализация
+      </button>
 
       <p className="mt-2 font-serif text-[15px] leading-relaxed text-muted">{layer.hint}</p>
 
@@ -210,7 +220,59 @@ export function YardMap() {
           }}
         />
       ) : null}
+      {world ? <WorldOverlay onClose={() => setWorld(false)} /> : null}
     </main>
+  );
+}
+
+type WorldApi = { mount: (el: HTMLElement) => { destroy: () => void } };
+
+function WorldOverlay({ onClose }: { onClose: () => void }) {
+  const host = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = host.current;
+    if (!el) return;
+    let dead = false;
+    let handle: { destroy: () => void } | null = null;
+    const scripts: HTMLScriptElement[] = [];
+    const w = window as Window & { YurecWorld?: WorldApi; YurecGate?: unknown };
+    function boot() {
+      if (dead || !el || !w.YurecWorld) return;
+      handle = w.YurecWorld.mount(el);
+    }
+    function add(src: string, next: () => void) {
+      const s = document.createElement("script");
+      s.src = src;
+      s.async = true;
+      s.onload = next;
+      document.body.appendChild(s);
+      scripts.push(s);
+    }
+    const start = () => {
+      if (w.YurecWorld) boot();
+      else add(`/game/yurec-world.js?v=${APP_VERSION}`, boot);
+    };
+    if (w.YurecGate) start();
+    else add(`/game/secret-gate.js?v=${APP_VERSION}`, start);
+    document.documentElement.classList.add("av-nodock");
+    document.body.classList.add("av-nodock");
+    return () => {
+      dead = true;
+      handle?.destroy();
+      scripts.forEach((s) => s.remove());
+      document.documentElement.classList.remove("av-nodock");
+      document.body.classList.remove("av-nodock");
+    };
+  }, []);
+
+  return (
+    <div className="yw-overlay">
+      <button type="button" className="yw-back" onClick={onClose}>
+        ← Карта
+      </button>
+      <div ref={host} id="yw-root" />
+    </div>
   );
 }
 

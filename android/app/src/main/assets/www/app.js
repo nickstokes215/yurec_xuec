@@ -7902,6 +7902,7 @@ function renderYardMap() {
   html += "</nav>";
   html += '<div class="walk-row"><button type="button" class="walk-go" id="walk-go">Прогулка</button>' +
     '<a class="walk-go is-quiet" href="#/wall">Стена подъезда</a></div>';
+  html += '<button type="button" class="yw-viz" id="yw-open">3D-визуализация</button>';
   html += '<p class="muted" style="font-family:var(--serif);font-size:15px;line-height:1.5;margin-top:8px">' + esc(layer.hint || "") + "</p>";
   html += '<div class="ymap-scroller"><div class="ymap-stage' + (layer.wide ? " is-wide" : "") + '">';
   html += '<img src="' + esc(photoSrc(layer.src)) + '" alt="' + esc(layer.title) + '" />';
@@ -7994,8 +7995,50 @@ function bindYardMap() {
   if (voice) voice.addEventListener("click", function () {
     if (walkAt >= 0 && walkAt < WALK.length) playWalkVoice(WALK[walkAt].voice);
   });
+  var ywOpen = document.getElementById("yw-open");
+  if (ywOpen) ywOpen.addEventListener("click", openYardWorld);
+}
+var ywHandle = null;
+function closeYardWorld() {
+  if (ywHandle && ywHandle.destroy) {
+    try { ywHandle.destroy(); } catch (e) {}
+  }
+  ywHandle = null;
+  var ov = document.getElementById("yw-overlay");
+  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  try {
+    document.documentElement.classList.remove("av-nodock");
+    document.body.classList.remove("av-nodock");
+  } catch (e2) {}
+}
+function openYardWorld() {
+  closeYardWorld();
+  var ov = document.createElement("div");
+  ov.id = "yw-overlay";
+  ov.className = "yw-overlay";
+  ov.innerHTML = '<button type="button" class="yw-back" id="yw-back">← Карта</button><div id="yw-root"></div>';
+  document.body.appendChild(ov);
+  try {
+    document.documentElement.classList.add("av-nodock");
+    document.body.classList.add("av-nodock");
+  } catch (e) {}
+  function boot() {
+    var host = document.getElementById("yw-root");
+    if (!host || !window.YurecWorld) return;
+    ywHandle = window.YurecWorld.mount(host);
+  }
+  if (window.YurecWorld) boot();
+  else {
+    var s = document.createElement("script");
+    s.src = "game/yurec-world.js";
+    s.onload = boot;
+    document.body.appendChild(s);
+  }
+  var back = document.getElementById("yw-back");
+  if (back) back.addEventListener("click", closeYardWorld);
 }
 function yardHardwareBack() {
+  if (document.getElementById("yw-overlay")) { closeYardWorld(); return true; }
   if (walkAt >= 0) { walkAt = -1; paint(); return true; }
   if (state.ypin) { state.ypin = null; paint(); return true; }
   var cur = state.ylayer || "peter";
@@ -8995,14 +9038,16 @@ function tabKey(path) {
 
 function paint() {
   var r = route();
+  if (r !== "/characters/map" && r !== "/characters/map/") closeYardWorld();
   try { noteAchVisit(r); } catch (eVis) {}
   var avNow = r === "/game/av" || r.indexOf("/game/av") === 0;
   var arkNow = r === "/game/ark" || r.indexOf("/game/ark") === 0;
   var ytNow = r === "/game/yt" || r.indexOf("/game/yt") === 0;
   var svoyaNow = r === "/game/svoya" || r.indexOf("/game/svoya") === 0;
+  var worldNow = !!document.getElementById("yw-overlay");
   try {
-    document.documentElement.classList.toggle("av-nodock", avNow || arkNow || ytNow || svoyaNow);
-    document.body.classList.toggle("av-nodock", avNow || arkNow || ytNow || svoyaNow);
+    document.documentElement.classList.toggle("av-nodock", avNow || arkNow || ytNow || svoyaNow || worldNow);
+    document.body.classList.toggle("av-nodock", avNow || arkNow || ytNow || svoyaNow || worldNow);
   } catch (e) {}
   if (!avNow) stopAv();
   if (!arkNow) stopArk();
@@ -9413,7 +9458,7 @@ var TOUR_STEPS = [
   { id: "media", path: "/videos", target: "media-grid", title: "Медиа", text: "Плитки: видео, шортсы, песни, газета, звонки. Внутри свой поиск и сортировка. У ролика бывает скачивание — тогда смотрится без сети. Газета листается разворотами. Нижняя полоска разделов появляется, когда уже зашёл внутрь." },
   { id: "games", path: "/game", target: "game-card", title: "Игры двигаются", text: "Зажми карточку примерно на полсекунды и тащи — игры меняются местами. Короткий тап открывает, не двигает. Заводской порядок вернёт кнопка внизу или пункт в настройках. В Помойкоболе и Алконоиде «ПАУЗА» справа от названия. В кроссворде «?» открывает одну букву, от пяти до семи раз. В «Юрца игре» кот и аукцион спрятаны, пока клетку не вскроешь." },
   { id: "pass", path: "/game", target: "game-pass", title: "Паспорт двора", text: "Сводка: что прочитано, какие уровни отбиты, сколько зашкваров открыто. Это не настройки. Сюда, когда хочешь увидеть двор целиком, а не крутить тумблеры." },
-  { id: "map", path: "/characters", target: "yard-map", title: "Карта и стена", text: "Карта: сначала город, потом двор, потом трёшка. Жми на огни — откроется точка и карточка героя. Под картой «Стена подъезда»: мел только на этом телефоне, чужих надписей нет. Уезжает вместе со справкой из настроек." },
+  { id: "map", path: "/characters", target: "yard-map", title: "Карта и стена", text: "Карта: сначала город, потом двор, потом трёшка. Жми на огни — откроется точка и карточка героя. Кнопка «3D-визуализация» крутит тот же двор глобусом. Под картой «Стена подъезда»: мел только на этом телефоне, чужих надписей нет. Уезжает вместе со справкой из настроек." },
   { id: "chars", path: "/characters", target: "char-card", title: "Карточки героев", text: "Короткий тап открывает героя: биография и ещё фразы, если жать на цитату. Зажми карточку и тащи — порядок меняется, как у игр. Чипы сверху режут двор, банду, семью и остальное. Сбросить порядок можно в настройках, пункт «Герои»." },
   { id: "zash", path: "/zashkvary", target: "zash-board", title: "Зашквары", text: "Медали. Часть за подвиг, часть за то, что просто ткнул не туда. Закрытая показывает подсказку, открытая — картинку, ор и дату. Двор выдаёт сам, руками список не отмечают. Если кнопки внизу нет — вход через «Инфо»." },
   { id: "chat", path: "/chat", target: "chat-box", title: "Юрец AI", text: "Пишешь — орёт в ответ. Есть «Разговор» и «SMS-ки». Чипы подставляют готовый вопрос. Шаринг сохраняет переписку. По умолчанию чат сгорает, когда закрыл сборник: хранение включается в настройках. Кнопку чата можно убрать сверху или снизу." },
