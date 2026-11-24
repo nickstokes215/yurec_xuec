@@ -63,15 +63,15 @@ function GamesHub() {
       try {
         const clears = JSON.parse(localStorage.getItem("yurec-yt-clears") || "{}") as Record<string, number>;
         let n = 0;
-        for (let i = 1; i <= 5; i++) if (clears[i] || clears[String(i)]) n += 1;
+        for (let i = 1; i <= 10; i++) if (clears[i] || clears[String(i)]) n += 1;
         const hall = JSON.parse(localStorage.getItem("yurec-yt-scores") || "[]") as { score?: number }[];
         const best = Array.isArray(hall) ? hall.reduce((m, row) => Math.max(m, row.score || 0), 0) : 0;
-        return `пройдено: ${n} / 5\nрекорд: ${best}`;
+        return `пройдено: ${n} / 10\nрекорд: ${best}`;
       } catch {
-        return "пройдено: 0 / 5\nрекорд: 0";
+        return "пройдено: 0 / 10\nрекорд: 0";
       }
     },
-    () => "пройдено: 0 / 5\nрекорд: 0",
+    () => "пройдено: 0 / 10\nрекорд: 0",
   );
   const svoyaLine = useSyncExternalStore(
     (fn) => {
@@ -107,7 +107,7 @@ function GamesHub() {
     },
     av: { id: "av", to: "/game/av", cover: AV_COVER, title: "Помойкобол", score: `отбито: ${avOpen} / ${AV_CHAIN.length}`, blurb: AV_HUB_BLURB },
     ark: { id: "ark", to: "/game/ark", cover: ARK_COVER, title: "Алконоид", score: `разбито: ${arkOpen} / ${ARK_CHAIN.length}`, blurb: ARK_HUB_BLURB },
-    yt: { id: "yt", to: "/game/yt", cover: YT_COVER, title: "Юртрис", score: ytLine, blurb: "Ламповый тетрис девяностых. Фигурки — герои Шотмана. Пять скоростей, каждая быстрее на 30%." },
+    yt: { id: "yt", to: "/game/yt", cover: YT_COVER, title: "Юртрис", score: ytLine, blurb: "Ламповый тетрис девяностых. Фигурки — цвета героев Шотмана. Десять уровней: сначала скорость, потом мусор снизу." },
     svoya: { id: "svoya", to: "/game/svoya", cover: SVOYA_COVER, title: "Юрца игра", score: svoyaLine, blurb: SVOYA_HUB_BLURB },
   };
   const list = order.ids.map((id) => catalog[id]).filter((g): g is GameMeta => !!g);

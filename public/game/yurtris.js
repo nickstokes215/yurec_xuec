@@ -15,15 +15,23 @@
   var LINE_SCORES = [0, 100, 300, 500, 900];
 
   var LEVELS = [
-    { level: 1, title: "Утро на Шотмана", target: 1200 },
-    { level: 2, title: "Ларёк и линолеум", target: 3200 },
-    { level: 3, title: "Вечерний Шотман", target: 6500 },
-    { level: 4, title: "Радуга и диск", target: 11500 },
-    { level: 5, title: "Трон Императора", target: 18500 }
+    { level: 1, title: "Утро на Шотмана", target: 1200, junk: 0, startJunk: 0 },
+    { level: 2, title: "Ларёк и линолеум", target: 3200, junk: 0, startJunk: 0 },
+    { level: 3, title: "Вечерний Шотман", target: 6500, junk: 0, startJunk: 0 },
+    { level: 4, title: "Радуга и диск", target: 11500, junk: 0, startJunk: 0 },
+    { level: 5, title: "Трон Императора", target: 18500, junk: 0, startJunk: 0 },
+    { level: 6, title: "Ночная помойка", target: 26000, junk: 11, startJunk: 0 },
+    { level: 7, title: "Киоск до утра", target: 34000, junk: 9, startJunk: 1 },
+    { level: 8, title: "Бабка не спит", target: 44000, junk: 7, startJunk: 2 },
+    { level: 9, title: "Смена Лысого", target: 56000, junk: 6, startJunk: 3 },
+    { level: 10, title: "Император не отпускает", target: 72000, junk: 5, startJunk: 4 }
   ];
   LEVELS.forEach(function (lv, i) {
-    lv.drop = Math.round(BASE_DROP / Math.pow(FACTOR, i));
-    lv.speed = i === 0 ? "обычная" : "+" + Math.round((Math.pow(FACTOR, i) - 1) * 100) + "%";
+    var raw = Math.round(BASE_DROP / Math.pow(FACTOR, i));
+    lv.drop = i >= 6 ? Math.max(170, raw) : raw;
+    if (i === 0) lv.speed = "обычная";
+    else if (lv.drop === 170 && raw < 170) lv.speed = "потолок";
+    else lv.speed = "+" + Math.round((BASE_DROP / lv.drop - 1) * 100) + "%";
   });
 
   var PIECES = [
@@ -49,10 +57,13 @@
     { id: "level-3", title: "Свой в киоске", desc: "Дойди до вечернего Шотмана, третьего уровня." },
     { id: "combo-streak", title: "Холодная голова", desc: "Три уборки рядов подряд, без пустой постановки." },
     { id: "hall-of-fame", title: "Легенда двора", desc: "Набери 5 000 очков за одну партию." },
-    { id: "champion-5", title: "Золотой половник", desc: "Пройди пятый уровень: 18 500 очков на троне." }
+    { id: "champion-5", title: "Золотой половник", desc: "Пройди пятый уровень: 18 500 очков на троне." },
+    { id: "night-shift", title: "Ночная смена", desc: "Дойди до шестого уровня, где снизу лезет мусор." },
+    { id: "champion-10", title: "Императорский стакан", desc: "Пройди десятый уровень. Двор это не прощает быстро." }
   ];
 
   function pieceBy(id) {
+    if (id === "garbage") return { id: "garbage", name: "", badge: "", accent: "#5c564c", dark: "#2a2824", light: "#8a8478" };
     var i;
     for (i = 0; i < PIECES.length; i++) if (PIECES[i].id === id) return PIECES[i];
     return PIECES[0];
@@ -70,9 +81,6 @@
   }
   function soundOn() {
     try { return localStorage.getItem("yurec-sound") !== "0"; } catch (e) { return true; }
-  }
-  function hallNick() {
-    try { return localStorage.getItem("yurec-hall-name") || "Юрец"; } catch (e) { return "Юрец"; }
   }
   function esc(s) {
     var amp = "&" + "amp;";
@@ -110,12 +118,12 @@
     }
 
     var head = document.createElement("div");
-    head.className = "av-head";
+    head.className = "av-head yt-head";
     head.innerHTML = '<button type="button" class="av-title">Юртрис</button>';
     var pauseBtn = document.createElement("button");
     pauseBtn.type = "button";
-    pauseBtn.className = "av-pause yt-off";
-    pauseBtn.textContent = "ПАУЗА";
+    pauseBtn.className = "av-pause";
+    pauseBtn.textContent = "ИГРАТЬ";
     head.appendChild(pauseBtn);
 
     var hud = document.createElement("div");
@@ -129,7 +137,7 @@
     canvas.setAttribute("aria-label", "Юртрис");
     wrap.appendChild(canvas);
     var veil = document.createElement("div");
-    veil.className = "av-pause-veil";
+    veil.className = "av-pause-veil yt-veil";
     veil.hidden = true;
     veil.textContent = "Пауза";
     wrap.appendChild(veil);
@@ -138,15 +146,16 @@
     coach.hidden = true;
     wrap.appendChild(coach);
 
-    var keys = document.createElement("div");
-    keys.className = "yt-keys";
-    keys.hidden = true;
-    keys.innerHTML =
-      '<button type="button" data-yt="left">←</button>' +
-      '<button type="button" data-yt="rot">↻</button>' +
-      '<button type="button" data-yt="right">→</button>' +
-      '<button type="button" data-yt="soft">Вниз</button>' +
-      '<button type="button" data-yt="hard">В пол</button>';
+    var keysL = document.createElement("div");
+    keysL.className = "yt-pad";
+    keysL.hidden = true;
+    keysL.innerHTML = '<button type="button" data-yt="left">←</button><button type="button" data-yt="soft">↓</button>';
+    var keysR = document.createElement("div");
+    keysR.className = "yt-pad";
+    keysR.hidden = true;
+    keysR.innerHTML = '<button type="button" data-yt="rot">↻</button><button type="button" data-yt="right">→</button><button type="button" data-yt="hard">В пол</button>';
+    var boardRow = document.createElement("div");
+    boardRow.className = "yt-board";
 
     var menu = document.createElement("div");
     menu.className = "av-menu";
@@ -160,10 +169,12 @@
     wrap.appendChild(menu);
     wrap.appendChild(end);
     wrap.appendChild(sheet);
+    boardRow.appendChild(keysL);
+    boardRow.appendChild(wrap);
+    boardRow.appendChild(keysR);
     host.appendChild(head);
     host.appendChild(hud);
-    host.appendChild(wrap);
-    host.appendChild(keys);
+    host.appendChild(boardRow);
 
     var ctx = canvas.getContext("2d");
     var board = emptyBoard();
@@ -186,6 +197,7 @@
     var coachStep = readJson(COACH_KEY, 0) || 0;
     var committed = false;
     var pointer = null;
+    var sinceGarbage = 0;
     var holdTimer = 0;
 
     function emptyBoard() {
@@ -299,15 +311,21 @@
     function syncChrome() {
       var live = phase === "play";
       hud.hidden = !live && phase !== "over" && phase !== "win";
-      keys.hidden = !(live && !paused);
-      if (live) {
-        pauseBtn.classList.remove("yt-off");
-        pauseBtn.hidden = false;
-        pauseBtn.textContent = paused ? "ДАЛЬШЕ" : "ПАУЗА";
-        pauseBtn.classList.toggle("is-on", !!paused);
-      } else {
-        pauseBtn.classList.add("yt-off");
+      var showPads = live && !paused;
+      keysL.hidden = !showPads;
+      keysR.hidden = !showPads;
+      if (phase === "over" || phase === "win") {
         pauseBtn.hidden = true;
+      } else {
+        pauseBtn.hidden = false;
+        pauseBtn.classList.remove("yt-off");
+        if (live) {
+          pauseBtn.textContent = "ПАУЗА";
+          pauseBtn.classList.toggle("is-on", !!paused);
+        } else {
+          pauseBtn.textContent = "ИГРАТЬ";
+          pauseBtn.classList.remove("is-on");
+        }
       }
       veil.hidden = !(live && paused);
       if (!(live && !paused)) coach.hidden = true;
@@ -323,31 +341,38 @@
       list.sort(function (a, b) { return (b.score - a.score) || ((a.at || 0) - (b.at || 0)); });
       return list.slice(0, 10);
     }
-    function hallPush(name, points, line) {
-      var nick = String(name || "Юрец").replace(/^\s+|\s+$/g, "").slice(0, 16) || "Юрец";
-      try { localStorage.setItem("yurec-hall-name", nick); } catch (e) {}
+    function hallPush(name, points) {
+      var nick = String(name || "").replace(/^\s+|\s+$/g, "").slice(0, 16);
+      if (!nick) return false;
       var list = hallRead();
-      list.push({ name: nick, score: points, line: line, at: Date.now() });
+      list.push({ name: nick, score: points, at: Date.now() });
       list.sort(function (a, b) { return (b.score - a.score) || ((a.at || 0) - (b.at || 0)); });
       writeJson(SCORES_KEY, list.slice(0, 10));
       try { root.dispatchEvent(new Event("yurec-yt")); } catch (e2) {}
+      return true;
+    }
+    function stamp(at) {
+      var d = new Date(at || Date.now());
+      if (isNaN(d.getTime())) return "";
+      function z(n) { return n < 10 ? "0" + n : String(n); }
+      return z(d.getDate()) + "." + z(d.getMonth() + 1) + "." + d.getFullYear() + ", " + z(d.getHours()) + ":" + z(d.getMinutes());
     }
     function clearedCount() {
       var c = clears(), n = 0, i;
-      for (i = 1; i <= 5; i++) if (c[i] || c[String(i)]) n += 1;
+      for (i = 1; i <= LEVELS.length; i++) if (c[i] || c[String(i)]) n += 1;
       return n;
     }
+    var YT_TONE = ["av-diff-easy", "av-diff-mid", "av-diff-hard", "av-diff-love", "av-diff-secret", "av-diff-copper", "av-diff-teal", "av-diff-violet", "av-diff-shot", "av-diff-god"];
     function paintMenu() {
       var html = '<p class="av-dos">C:\\SHOTMAN> yt</p>' +
         '<h3>Юртрис</h3>' +
-        '<p class="av-lead">Ламповый тетрис девяностых, только фигурки — герои Шотмана. Пять уровней, каждый на 30% быстрее. Набрал цель — уровень твой.</p>' +
-        '<p class="av-sheet"><b>пройдено ' + clearedCount() + ' / 5</b><span>рекорд: ' + bestScore() + '</span></p>';
-      if (readJson(SNAP_KEY, null)) html += '<button type="button" class="av-next" id="yt-resume">Продолжить</button>';
+        '<p class="av-lead">Ламповый тетрис девяностых. Фигурки — цвета героев Шотмана, без букв. Десять уровней: сначала скорость, с шестого снизу лезет мусор. Набрал цель — уровень твой. «Играть» в правом углу продолжает оборванную партию или открывает первый невзятый двор.</p>' +
+        '<p class="av-sheet"><b>пройдено: ' + clearedCount() + " / " + LEVELS.length + '</b><span>рекорд: ' + bestScore() + '</span></p>';
       html += '<div class="av-diffs" id="yt-diffs"></div>' +
         '<div class="av-help-rule" role="separator"><span>Помощь</span></div>' +
-        '<button type="button" class="av-info" id="yt-about">Как играть</button>' +
-        '<button type="button" class="av-info" id="yt-hall">Таблица рекордов</button>' +
-        '<button type="button" class="av-info" id="yt-prizes">Призы</button>' +
+        '<button type="button" class="av-info yt-help yt-help-about" id="yt-about">Как играть</button>' +
+        '<button type="button" class="av-info yt-help yt-help-hall" id="yt-hall">Таблица рекордов</button>' +
+        '<button type="button" class="av-info yt-help yt-help-prizes" id="yt-prizes">Призы</button>' +
         '<div class="av-help-rule" role="separator"><span>служебный вход</span></div>' +
         '<button type="button" class="av-reset" id="yt-wipe">Сбросить Юртрис</button>';
       menu.innerHTML = html;
@@ -359,17 +384,15 @@
         var done = !!(clears()[lv.level] || clears()[String(lv.level)]);
         var b = document.createElement("button");
         b.type = "button";
-        b.className = "av-diff" + (open ? "" : " locked");
+        var tone = YT_TONE[(lv.level - 1) % YT_TONE.length];
+        b.className = "av-diff " + tone + (open ? "" : " av-diff-lock");
         b.disabled = !open;
-        var sub = open
-          ? (done ? "пройден · " : "открыт · ") + lv.speed + " · цель " + lv.target
-          : "закрыто · сначала предыдущий";
+        var sub = !open ? "закрыто · сначала предыдущий"
+          : (done ? "пройден · " : "открыт · ") + lv.speed + " · цель " + lv.target + (lv.junk ? " · мусор" : "");
         b.innerHTML = '<span class="av-diff-txt"><b>' + lv.level + ". " + lv.title + "</b><span>" + sub + "</span></span>";
         if (open) b.addEventListener("click", function () { startLevel(lv.level, false); });
         box.appendChild(b);
       });
-      var resume = menu.querySelector("#yt-resume");
-      if (resume) resume.onclick = function () { resumeSnap(); };
       menu.querySelector("#yt-about").onclick = function () { openAbout(); };
       menu.querySelector("#yt-hall").onclick = function () { openHall(); };
       menu.querySelector("#yt-prizes").onclick = function () { openPrizes(); };
@@ -395,11 +418,11 @@
       menu.hidden = true;
       sheet.innerHTML =
         '<p class="av-dos">C:\\SHOTMAN> help</p><h3>Как играть</h3>' +
-        '<p class="av-lead">Стакан как в тетрисе: десять клеток в ширину, двадцать в высоту. Семь фигур — Юрец, Светлана, Зинаида, Толик, Костя, Лысый и Гоша. Мешок из семи, без долгой засухи нужной.</p>' +
-        '<p class="av-lead">Влево и вправо — сдвиг. Поворот — тап или ↻. «Вниз» даёт одно очко за клетку. «В пол» ставит сразу и даёт два очка за клетку падения.</p>' +
-        '<p class="av-lead">Полный ряд исчезает. Один ряд — 100, два — 300, три — 500, четыре — 900. Сумма множится на номер уровня. Четыре ряда разом — Юртрис. Три уборки подряд без пустой постановки — комбо.</p>' +
-        '<p class="av-lead">Уровень пройден, когда счёт дотянул до цели. Следующий быстрее на 30%. Не дотянул и упёрся в потолок — партия в таблицу, уровень закрыт как был.</p>' +
-        '<p class="av-lead">Юрец — балка. Светлана — квадрат. Зинаида — буква Т. Толик и Костя — зеркальные ступеньки. Лысый и Гоша — углы в разные стороны.</p>' +
+        '<p class="av-lead">Стакан как в тетрисе: десять клеток в ширину, двадцать в высоту. Семь фигур, у каждой свой цвет: Юрец, Светлана, Зинаида, Толик, Костя, Лысый и Гоша. Букв на клетках нет. Следующая фигура видна сверху, без имени.</p>' +
+        '<p class="av-lead">Слева «←» и «↓», справа «↻», «→» и «В пол». «↓» даёт одно очко за клетку. «В пол» ставит сразу и даёт два очка за клетку падения.</p>' +
+        '<p class="av-lead">Полный ряд исчезает. Один ряд — 100, два — 300, три — 500, четыре — 900. Сумма множится на номер уровня. Четыре ряда разом — Юртрис.</p>' +
+        '<p class="av-lead">Первые пять дворов только быстрее, каждый на 30%. С шестого скорость упирается в потолок, зато снизу лезет серый мусор с одной дыркой. Дырку можно закрыть, если не зевать. Уровень взят, когда счёт дотянул до цели.</p>' +
+        '<p class="av-lead">Проигрыш не пишет имя сам. Впиши своё и нажми «Записать рекорд»: в таблицу лягут имя, дата, время и очки.</p>' +
         '<button type="button" class="av-menu-btn" id="yt-back">Назад</button>';
       sheet.querySelector("#yt-back").onclick = closeSheet;
       try { localStorage.setItem(TUT_KEY, "1"); } catch (e) {}
@@ -412,7 +435,7 @@
         html += '<ol class="svoya-hall">';
         var i;
         for (i = 0; i < list.length; i++) {
-          html += "<li><span>" + (i + 1) + ". " + esc(list[i].name) + "<br>" + esc(list[i].line || "") + "</span><b>" + (list[i].score || 0) + "</b></li>";
+          html += "<li><span>" + (i + 1) + ". " + esc(list[i].name) + "<br>" + esc(list[i].at ? stamp(list[i].at) : (list[i].line || "")) + "</span><b>" + (list[i].score || 0) + "</b></li>";
         }
         html += "</ol>";
       }
@@ -458,7 +481,8 @@
         lines: lines,
         combo: combo,
         maxCombo: maxCombo,
-        quads: quads
+        quads: quads,
+        sinceGarbage: sinceGarbage
       });
     }
     function resumeSnap() {
@@ -473,6 +497,7 @@
       combo = s.combo || 0;
       maxCombo = s.maxCombo || 0;
       quads = s.quads || 0;
+      sinceGarbage = s.sinceGarbage || 0;
       levelIndex = s.levelIndex || 0;
       committed = false;
       particles = [];
@@ -488,7 +513,7 @@
     }
     function startLevel(n, keepSnap) {
       if (!keepSnap) clearSnap();
-      levelIndex = Math.max(0, Math.min(4, n - 1));
+      levelIndex = Math.max(0, Math.min(LEVELS.length - 1, n - 1));
       board = emptyBoard();
       bag = [];
       nextId = pull();
@@ -497,6 +522,7 @@
       combo = 0;
       maxCombo = 0;
       quads = 0;
+      sinceGarbage = 0;
       committed = false;
       particles = [];
       phase = "play";
@@ -506,16 +532,11 @@
       sheet.hidden = true;
       lastT = performance.now();
       dropAcc = 0;
+      if (level().startJunk) addGarbage(level().startJunk, true);
       spawn();
       paintHud();
       syncChrome();
       if (!raf) raf = requestAnimationFrame(loop);
-    }
-    function commit(won) {
-      if (committed) return;
-      committed = true;
-      if (score <= 0) return;
-      hallPush(hallNick(), score, "ур. " + level().level + " · " + (won ? "пройден" : "стакан"));
     }
     function finish(won, text) {
       if (phase === "over" || phase === "win") return;
@@ -523,7 +544,6 @@
       paused = false;
       active = null;
       clearSnap();
-      commit(won);
       if (won) {
         markClear(level().level);
         beep(392, 90, "triangle", 0.05);
@@ -531,24 +551,45 @@
         beep(659, 110, "triangle", 0.05, 160);
         if (level().level >= 3) unlock("level-3");
         if (level().level >= 5) unlock("champion-5");
+        if (level().level >= 6) unlock("night-shift");
+        if (level().level >= 10) unlock("champion-10");
       } else {
         beep(311, 140, "sawtooth", 0.04);
         beep(233, 160, "sawtooth", 0.035, 110);
       }
       if (score >= 5000) unlock("hall-of-fame");
-      var next = won && level().level < 5 ? level().level + 1 : 0;
+      var next = won && level().level < LEVELS.length ? level().level + 1 : 0;
+      var askName = score > 0;
       end.innerHTML =
         '<p class="av-dos">C:\\SHOTMAN> ' + (won ? "win" : "over") + "</p><h3>" +
         (won ? "Уровень взят" : "Стакан закрыт") + "</h3>" +
         '<p class="av-lead">' + esc(text || "") + " Счёт " + score + " из " + level().target + ". Уровень «" + esc(level().title) + "».</p>" +
-        '<p class="av-sheet"><b>рядов ' + lines + "</b><span>юртрисов " + quads + "</span></p>" +
+        '<p class="av-sheet"><b>очки: ' + score + "</b><span>" + esc(stamp(Date.now())) + "</span></p>" +
+        (askName
+          ? '<label class="yt-nick"><span>Имя в таблицу. Дата и очки запишутся сами.</span><input id="yt-nick" maxlength="16" autocomplete="off" placeholder="как тебя записать" /></label>' +
+            '<button type="button" class="av-next" id="yt-save">Записать рекорд</button>'
+          : "") +
         (!won ? '<button type="button" class="av-again" id="yt-again">Сыграть ещё раз</button>' : "") +
         (next ? '<button type="button" class="av-next" id="yt-next">Следующий уровень</button>' : "") +
-        '<button type="button" class="av-info" id="yt-end-hall">Таблица рекордов</button>' +
+        '<button type="button" class="av-info yt-help yt-help-hall" id="yt-end-hall">Таблица рекордов</button>' +
         '<button type="button" class="av-menu-btn" id="yt-menu">В меню</button>';
       end.hidden = false;
       menu.hidden = true;
       syncChrome();
+      var saved = false;
+      var saveBtn = end.querySelector("#yt-save");
+      if (saveBtn) saveBtn.onclick = function () {
+        if (saved) return;
+        var field = end.querySelector("#yt-nick");
+        var nick = field ? field.value : "";
+        if (!hallPush(nick, score)) {
+          if (field) field.focus();
+          return;
+        }
+        saved = true;
+        saveBtn.textContent = "Записано · " + stamp(Date.now());
+        saveBtn.disabled = true;
+      };
       var again = end.querySelector("#yt-again");
       if (again) again.onclick = function () { startLevel(level().level, false); };
       var nxt = end.querySelector("#yt-next");
@@ -610,6 +651,32 @@
       score += n * 2;
       bumpCoach(2);
       lock();
+    }
+    function addGarbage(n, silent) {
+      var k, hole, row, c, guard;
+      for (k = 0; k < n; k++) {
+        if (board[0].some(function (cell) { return !!cell; })) {
+          if (!silent) finish(false, "Мусор дошёл до потолка.");
+          return false;
+        }
+        hole = Math.floor(Math.random() * COLS);
+        row = [];
+        for (c = 0; c < COLS; c++) row.push(c === hole ? null : "garbage");
+        board.shift();
+        board.push(row);
+      }
+      if (active) {
+        guard = 0;
+        while (active && hits(active.id, active.rot, active.col, active.row) && guard < 8) {
+          active.row -= 1;
+          guard += 1;
+        }
+        if (active && hits(active.id, active.rot, active.col, active.row)) {
+          finish(false, "Мусор закрыл фигуру.");
+          return false;
+        }
+      }
+      return phase === "play";
     }
     function burst(row, id) {
       var def = pieceBy(id), c, k;
@@ -679,6 +746,13 @@
         finish(false, "Верхняя кромка закрыта.");
         return;
       }
+      if (!full.length && level().junk) {
+        sinceGarbage += 1;
+        if (sinceGarbage >= level().junk) {
+          sinceGarbage = 0;
+          if (!addGarbage(1, false)) return;
+        }
+      }
       spawn();
     }
     function layout() {
@@ -720,22 +794,45 @@
       ctx.fill();
       ctx.strokeStyle = "rgba(0,0,0,.35)";
       ctx.stroke();
-      ctx.fillStyle = "rgba(20,12,4,.8)";
-      ctx.font = "700 " + Math.max(8, Math.floor(size * 0.28)) + "px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(def.badge, x + size / 2, y + size / 2 + 1);
+    }
+    function drawIdle(w, h) {
+      var g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, "#1a140c");
+      g.addColorStop(1, "#0c0d10");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+      var cell = Math.floor(Math.min((w - 28) / COLS, (h - 28) / ROWS));
+      if (cell < 8) cell = 8;
+      var ox = Math.floor((w - cell * COLS) / 2);
+      var oy = Math.floor((h - cell * ROWS) / 2);
+      ctx.fillStyle = "#16140f";
+      roundRect(ox - 6, oy - 6, cell * COLS + 12, cell * ROWS + 12, 10);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(201,162,39,.45)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      var r, c;
+      for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+        ctx.fillStyle = (r + c) % 2 ? "rgba(255,255,255,.025)" : "rgba(0,0,0,.2)";
+        ctx.fillRect(ox + c * cell, oy + r * cell, cell - 1, cell - 1);
+      }
+      ctx.fillStyle = "rgba(0,0,0,.16)";
+      for (r = 0; r < h; r += 3) ctx.fillRect(0, r, w, 1);
     }
     function draw() {
       var box = layout();
       var w = box.w, h = box.h;
+      if (phase !== "play" || paused) {
+        drawIdle(w, h);
+        return;
+      }
       ctx.fillStyle = "#07080c";
       ctx.fillRect(0, 0, w, h);
-      var side = Math.min(108, Math.floor(w * 0.28));
-      var cell = Math.floor(Math.min((w - side - 28) / COLS, (h - 16) / ROWS));
+      var preview = 46;
+      var cell = Math.floor(Math.min((w - 12) / COLS, (h - preview - 10) / ROWS));
       if (cell < 8) cell = 8;
-      var ox = 12;
-      var oy = Math.max(8, Math.floor((h - cell * ROWS) / 2));
+      var ox = Math.floor((w - cell * COLS) / 2);
+      var oy = preview + Math.max(4, Math.floor((h - preview - cell * ROWS) / 2));
       ctx.fillStyle = "#12140f";
       roundRect(ox - 6, oy - 6, cell * COLS + 12, cell * ROWS + 12, 10);
       ctx.fill();
@@ -760,22 +857,19 @@
           if (br >= 0) drawBlock(ox + (active.col + c) * cell, oy + br * cell, cell, active.id, false);
         }
       }
-      var nx = ox + cell * COLS + 16;
       ctx.fillStyle = "#e7c56a";
       ctx.font = "700 11px sans-serif";
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
-      ctx.fillText("ДАЛЬШЕ", nx, oy);
-      ctx.fillText(level().level + " · " + level().speed, nx, oy + 16);
+      ctx.fillText("ДАЛЬШЕ", 10, 8);
+      ctx.fillText(level().level + " · " + level().speed, 10, 24);
       if (nextId) {
         var nm = matrix(nextId, 0);
-        var ns = Math.max(10, Math.floor(side / 5));
+        var ns = 11;
+        var nx = w - ns * 4 - 10;
         for (r = 0; r < nm.length; r++) for (c = 0; c < nm[r].length; c++) if (nm[r][c]) {
-          drawBlock(nx + c * ns, oy + 36 + r * ns, ns, nextId, false);
+          drawBlock(nx + c * ns, 6 + r * ns, ns, nextId, false);
         }
-        ctx.fillStyle = "#9a958c";
-        ctx.font = "12px sans-serif";
-        ctx.fillText(pieceBy(nextId).name, nx, oy + 36 + nm.length * ns + 8);
       }
       var i, p;
       for (i = particles.length - 1; i >= 0; i--) {
@@ -815,6 +909,20 @@
       saveSnap();
     }
     pauseBtn.addEventListener("click", function () {
+      if (phase === "menu") {
+        var snap = readJson(SNAP_KEY, null);
+        if (snap && snap.board && snap.active) resumeSnap();
+        else {
+          var pick = 1, i, done;
+          var map = clears();
+          for (i = 0; i < LEVELS.length; i++) {
+            done = !!(map[LEVELS[i].level] || map[String(LEVELS[i].level)]);
+            if (isOpen(LEVELS[i].level) && !done) { pick = LEVELS[i].level; break; }
+          }
+          startLevel(pick, false);
+        }
+        return;
+      }
       if (phase === "play") setPause(!paused);
     });
     function bindHold(btn, fn, slow) {
@@ -832,7 +940,7 @@
       btn.addEventListener("pointercancel", stop);
       btn.addEventListener("pointerleave", stop);
     }
-    var keyBtns = keys.querySelectorAll("button");
+    var keyBtns = boardRow.querySelectorAll("button");
     var ki;
     for (ki = 0; ki < keyBtns.length; ki++) {
       (function (btn) {

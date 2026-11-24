@@ -6268,7 +6268,7 @@ function ytProgress() {
   try {
     var c = JSON.parse(localStorage.getItem("yurec-yt-clears") || "{}");
     var n = 0, i;
-    for (i = 1; i <= 5; i++) if (c[i] || c[String(i)]) n += 1;
+    for (i = 1; i <= 10; i++) if (c[i] || c[String(i)]) n += 1;
     var hall = JSON.parse(localStorage.getItem("yurec-yt-scores") || "[]");
     var best = 0, j;
     if (hall && hall.length) for (j = 0; j < hall.length; j++) if ((hall[j].score || 0) > best) best = hall[j].score || 0;
@@ -6288,7 +6288,7 @@ function renderGamesHub() {
     crosswords: { id: "crosswords", href: "#/game/crosswords", cover: "game/crosswords.jpg", title: "Шотманские кроссворды", score: "разгадано: " + cwOpen + " / " + CWS.length, blurb: "Кроссворд из киоска на Шотмана. Гоша орёт золотые клетки. Не знаешь слово — ври, как Юрец." },
     av: { id: "av", href: "#/game/av", cover: "game/av.jpg", title: "Помойкобол", score: "отбито: " + avBeatenCount() + " / 6", blurb: "Юрец снизу, колобок сверху. Пилюли с помойки, лазер и просрочка. Кто взял яд — сам сдох. Двор орёт с каждого гола." },
     ark: { id: "ark", href: "#/game/ark", cover: "game/ark.jpg", title: "Алконоид", score: "разбито: " + arkBeatenCount() + " / 10", blurb: "Харя Юрца — ракетка. Десять дворов: от квартиры до Кости. Батя с дробовиком, аптека, камера. Юрец всё равно легенда." },
-    yt: { id: "yt", href: "#/game/yt", cover: "game/yt.jpg", title: "Юртрис", score: "пройдено: " + ytProgress().n + " / 5<br>рекорд: " + ytProgress().best, blurb: "Ламповый тетрис девяностых. Фигурки — герои Шотмана. Пять скоростей, каждая быстрее на 30%." },
+    yt: { id: "yt", href: "#/game/yt", cover: "game/yt.jpg", title: "Юртрис", score: "пройдено: " + ytProgress().n + " / 10<br>рекорд: " + ytProgress().best, blurb: "Ламповый тетрис девяностых. Фигурки — цвета героев Шотмана. Десять уровней: сначала скорость, потом мусор снизу." },
     svoya: { id: "svoya", href: "#/game/svoya", cover: "game/svoya.jpg", title: "Юрца игра", score: "перья: " + svoyaFeatherIds().length + " / 10<br>рекорд: " + svoyaBest(), blurb: "Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Десять перьев, выбираешь сам." }
   };
   var ids = orderedGameIds();

@@ -1075,6 +1075,71 @@ html.av-nodock .dock-inner {
   pointer-events: auto;
 }
 .av-head .av-pause.yt-off { display: none !important; }
+.yt-board {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+.yt-board .av-stage { flex: 1; min-width: 0; }
+.yt-pad {
+  width: 58px;
+  flex: 0 0 58px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.yt-pad[hidden] { display: none !important; }
+.yt-pad button {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #1a1408;
+  color: #f4e4a1;
+  box-shadow: 0 0 0 1px #e8c36a;
+  font-weight: 750;
+  font-size: 16px;
+}
+.av-head.yt-head { display: block; position: relative; }
+.av-head.yt-head .av-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  grid-column: auto;
+  max-width: 62%;
+}
+.av-head.yt-head .av-pause {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.yt-veil { background: #14110c; }
+.yt-help { margin-top: 10px; }
+.yt-help-about { background: #3d5c4a; color: #eaf3e4; }
+.yt-help-hall { background: #5c3d7a; color: #f6eefe; }
+.yt-help-prizes { background: #1d6b66; color: #e7fffb; }
+.yt-nick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 8px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.yt-nick input {
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: #1a1408;
+  color: #f4e4a1;
+  font-size: 16px;
+  box-shadow: 0 0 0 1px #e8c36a;
+}
 .yt-keys {
   flex-shrink: 0;
   display: grid;
