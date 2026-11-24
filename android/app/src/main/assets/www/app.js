@@ -9195,6 +9195,7 @@ function paint() {
     updateTotop();
     try { evaluateAchievements(); } catch (errAch) {}
     try { maybeStartTour(); } catch (errTour) {}
+    try { maybeNews(); } catch (errNews) {}
     try { maybeShout(); } catch (errShout) {}
   }, 0);
 }
@@ -9617,8 +9618,54 @@ function maybeStartTour() {
   tourTriedAuto = true;
   if (shouldAutoTour()) window.setTimeout(function () { startTour(false); }, 500);
 }
+var NEWS_KEY = "yurec-news";
+function newsRow() {
+  var hist = (APP && APP.history) || [];
+  var ver = (APP && APP.version) || "";
+  var i;
+  for (i = 0; i < hist.length; i++) if (hist[i] && hist[i].version === ver) return hist[i];
+  return hist[0] || null;
+}
+function markNews() {
+  try { localStorage.setItem(NEWS_KEY, (APP && APP.version) || ""); } catch (e) {}
+}
+function closeNews() {
+  var el = document.getElementById("news-root");
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+function showNews() {
+  if (tourOn || document.getElementById("news-root") || document.getElementById("tour-root")) return;
+  var row = newsRow();
+  if (!row) { markNews(); return; }
+  var items = row.items || [];
+  var html = '<div class="news-card" role="dialog" aria-label="Что нового">' +
+    '<p class="kicker">Что нового</p><h3>Версия ' + esc(row.version || "") + "</h3><ul class=\"news-list\">";
+  var i;
+  for (i = 0; i < items.length; i++) html += "<li>" + esc(items[i]) + "</li>";
+  html += '</ul><button type="button" class="btn wide gold" id="news-ok">Понятно</button>' +
+    '<button type="button" class="btn wide" id="news-all">Вся история</button></div>';
+  var root = document.createElement("div");
+  root.id = "news-root";
+  root.className = "news-root";
+  root.innerHTML = html;
+  document.body.appendChild(root);
+  var ok = document.getElementById("news-ok");
+  var all = document.getElementById("news-all");
+  if (ok) ok.onclick = function () { markNews(); closeNews(); };
+  if (all) all.onclick = function () { markNews(); closeNews(); go("/changelog"); };
+}
+function maybeNews() {
+  if (tourOn || document.getElementById("tour-root")) return;
+  if (shouldAutoTour()) { markNews(); return; }
+  var ver = (APP && APP.version) || "";
+  var seen = "";
+  try { seen = localStorage.getItem(NEWS_KEY) || ""; } catch (e) {}
+  if (!ver || seen === ver) return;
+  showNews();
+}
 
 function yurecBack() {
+  if (document.getElementById("news-root")) { markNews(); closeNews(); return true; }
   if (typeof window.__yurecPlayBack === "function" && window.__yurecPlayBack()) return true;
   if (document.getElementById("raven-joke")) {
     hideRaven();

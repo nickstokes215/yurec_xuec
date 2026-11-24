@@ -2319,33 +2319,110 @@ html.av-nodock [data-app-dock] {
   pointer-events: auto;
 }
 .av-head .av-pause.yt-off { display: none !important; }
-.yt-board {
-  flex: 1;
-  min-height: 0;
+.av-stage .yt-split {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: flex;
-  gap: 6px;
-  align-items: stretch;
+  gap: 8px;
+  padding: 8px;
 }
-.yt-board .av-stage { flex: 1; min-width: 0; }
-.yt-pad {
-  width: 58px;
-  flex: 0 0 58px;
+.av-stage .yt-split > canvas {
+  position: relative !important;
+  inset: auto !important;
+  flex: 1 1 auto;
+  width: auto !important;
+  height: 100% !important;
+  min-width: 0;
+}
+.yt-side {
+  width: 34%;
+  max-width: 148px;
+  min-width: 104px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.yt-side[hidden] { display: none !important; }
+.yt-next b {
+  display: block;
+  color: #e7c56a;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.yt-next span {
+  display: block;
+  margin-top: 2px;
+  color: #e7c56a;
+  font-size: 11px;
+}
+.yt-mini {
+  display: grid;
+  gap: 3px;
+  margin-top: 8px;
+  justify-content: center;
+}
+.yt-mini i {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: block;
+}
+.yt-side-keys {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-height: 0;
 }
-.yt-pad[hidden] { display: none !important; }
-.yt-pad button {
+.yt-key-row {
+  display: flex;
+  gap: 6px;
   flex: 1;
-  min-height: 44px;
+  min-height: 0;
+}
+.yt-key-row button,
+.yt-side-keys > button {
+  flex: 1;
+  min-height: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #1a1408;
   color: #f4e4a1;
   box-shadow: 0 0 0 1px #e8c36a;
   font-weight: 750;
   font-size: 16px;
 }
+.news-root {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.62);
+}
+.news-card {
+  width: min(420px, 100%);
+  max-height: min(78vh, 640px);
+  overflow: auto;
+  padding: 16px 16px 14px;
+  border-radius: 18px;
+  background: #16141a;
+  box-shadow: 0 0 0 1px rgba(232, 195, 106, 0.45);
+}
+.news-card h3 { margin: 4px 0 10px; font-size: 22px; }
+.news-list {
+  margin: 0 0 14px;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.news-list li + li { margin-top: 8px; }
+.news-card .btn { margin-top: 8px; }
 .av-head.yt-head { display: block; position: relative; }
 .av-head.yt-head .av-title {
   position: absolute;

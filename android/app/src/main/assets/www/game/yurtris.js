@@ -135,7 +135,25 @@
     wrap.className = "av-stage";
     var canvas = document.createElement("canvas");
     canvas.setAttribute("aria-label", "Юртрис");
-    wrap.appendChild(canvas);
+    var side = document.createElement("aside");
+    side.className = "yt-side";
+    side.hidden = true;
+    side.innerHTML =
+      '<div class="yt-next"><b>ДАЛЬШЕ</b><span id="yt-next-meta"></span><div id="yt-next-cells"></div></div>' +
+      '<div class="yt-side-keys">' +
+        '<div class="yt-key-row">' +
+          '<button type="button" data-yt="left">←</button>' +
+          '<button type="button" data-yt="right">→</button>' +
+        "</div>" +
+        '<button type="button" data-yt="rot">↻</button>' +
+        '<button type="button" data-yt="soft">Вниз</button>' +
+        '<button type="button" data-yt="hard">В пол</button>' +
+      "</div>";
+    var split = document.createElement("div");
+    split.className = "yt-split";
+    split.appendChild(canvas);
+    split.appendChild(side);
+    wrap.appendChild(split);
     var veil = document.createElement("div");
     veil.className = "av-pause-veil yt-veil";
     veil.hidden = true;
@@ -145,17 +163,6 @@
     coach.className = "yt-coach";
     coach.hidden = true;
     wrap.appendChild(coach);
-
-    var keysL = document.createElement("div");
-    keysL.className = "yt-pad";
-    keysL.hidden = true;
-    keysL.innerHTML = '<button type="button" data-yt="left">←</button><button type="button" data-yt="soft">↓</button>';
-    var keysR = document.createElement("div");
-    keysR.className = "yt-pad";
-    keysR.hidden = true;
-    keysR.innerHTML = '<button type="button" data-yt="rot">↻</button><button type="button" data-yt="right">→</button><button type="button" data-yt="hard">В пол</button>';
-    var boardRow = document.createElement("div");
-    boardRow.className = "yt-board";
 
     var menu = document.createElement("div");
     menu.className = "av-menu";
@@ -169,12 +176,9 @@
     wrap.appendChild(menu);
     wrap.appendChild(end);
     wrap.appendChild(sheet);
-    boardRow.appendChild(keysL);
-    boardRow.appendChild(wrap);
-    boardRow.appendChild(keysR);
     host.appendChild(head);
     host.appendChild(hud);
-    host.appendChild(boardRow);
+    host.appendChild(wrap);
 
     var ctx = canvas.getContext("2d");
     var board = emptyBoard();
@@ -277,7 +281,30 @@
       }
       active = { id: id, rot: 0, col: col, row: row };
       dropAcc = 0;
+      paintNext();
       return true;
+    }
+    function paintNext() {
+      var meta = document.getElementById("yt-next-meta");
+      var box = document.getElementById("yt-next-cells");
+      if (meta) meta.textContent = level().level + " · " + level().speed;
+      if (!box) return;
+      if (!nextId) { box.innerHTML = ""; return; }
+      var nm = matrix(nextId, 0);
+      var def = pieceBy(nextId);
+      var minR = 99, maxR = -1, minC = 99, maxC = -1, r, c;
+      for (r = 0; r < nm.length; r++) for (c = 0; c < nm[r].length; c++) if (nm[r][c]) {
+        if (r < minR) minR = r;
+        if (r > maxR) maxR = r;
+        if (c < minC) minC = c;
+        if (c > maxC) maxC = c;
+      }
+      if (maxR < 0) { box.innerHTML = ""; return; }
+      var html = '<div class="yt-mini" style="grid-template-columns:repeat(' + (maxC - minC + 1) + ',18px)">';
+      for (r = minR; r <= maxR; r++) for (c = minC; c <= maxC; c++) {
+        html += "<i" + (nm[r][c] ? ' style="background:' + def.accent + ";box-shadow:inset 0 1px 0 " + def.light + '"' : "") + "></i>";
+      }
+      box.innerHTML = html + "</div>";
     }
     function ghostRow() {
       if (!active) return 0;
@@ -311,9 +338,8 @@
     function syncChrome() {
       var live = phase === "play";
       hud.hidden = !live && phase !== "over" && phase !== "win";
-      var showPads = live && !paused;
-      keysL.hidden = !showPads;
-      keysR.hidden = !showPads;
+      var showSide = live && !paused;
+      side.hidden = !showSide;
       if (phase === "over" || phase === "win") {
         pauseBtn.hidden = true;
       } else {
@@ -756,8 +782,8 @@
       spawn();
     }
     function layout() {
-      var w = wrap.clientWidth || 320;
-      var h = wrap.clientHeight || 480;
+      var w = canvas.clientWidth || wrap.clientWidth || 320;
+      var h = canvas.clientHeight || wrap.clientHeight || 480;
       var dpr = Math.min(2, root.devicePixelRatio || 1);
       canvas.width = Math.max(2, Math.floor(w * dpr));
       canvas.height = Math.max(2, Math.floor(h * dpr));
@@ -828,11 +854,10 @@
       }
       ctx.fillStyle = "#07080c";
       ctx.fillRect(0, 0, w, h);
-      var preview = 46;
-      var cell = Math.floor(Math.min((w - 12) / COLS, (h - preview - 10) / ROWS));
+      var cell = Math.floor(Math.min((w - 8) / COLS, (h - 8) / ROWS));
       if (cell < 8) cell = 8;
       var ox = Math.floor((w - cell * COLS) / 2);
-      var oy = preview + Math.max(4, Math.floor((h - preview - cell * ROWS) / 2));
+      var oy = Math.floor((h - cell * ROWS) / 2);
       ctx.fillStyle = "#12140f";
       roundRect(ox - 6, oy - 6, cell * COLS + 12, cell * ROWS + 12, 10);
       ctx.fill();
@@ -855,20 +880,6 @@
         for (r = 0; r < mat.length; r++) for (c = 0; c < mat[r].length; c++) if (mat[r][c]) {
           br = active.row + r;
           if (br >= 0) drawBlock(ox + (active.col + c) * cell, oy + br * cell, cell, active.id, false);
-        }
-      }
-      ctx.fillStyle = "#e7c56a";
-      ctx.font = "700 11px sans-serif";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      ctx.fillText("ДАЛЬШЕ", 10, 8);
-      ctx.fillText(level().level + " · " + level().speed, 10, 24);
-      if (nextId) {
-        var nm = matrix(nextId, 0);
-        var ns = 11;
-        var nx = w - ns * 4 - 10;
-        for (r = 0; r < nm.length; r++) for (c = 0; c < nm[r].length; c++) if (nm[r][c]) {
-          drawBlock(nx + c * ns, 6 + r * ns, ns, nextId, false);
         }
       }
       var i, p;
@@ -940,7 +951,7 @@
       btn.addEventListener("pointercancel", stop);
       btn.addEventListener("pointerleave", stop);
     }
-    var keyBtns = boardRow.querySelectorAll("button");
+    var keyBtns = side.querySelectorAll("button");
     var ki;
     for (ki = 0; ki < keyBtns.length; ki++) {
       (function (btn) {
