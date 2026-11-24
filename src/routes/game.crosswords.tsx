@@ -26,7 +26,7 @@ function CrosswordsHub() {
         ))}
       </div>
       <p className="mt-5 text-center text-[12px] tabular-nums text-subtle">
-        разгадано {open} / {CROSSWORDS.length}
+        разгадано: {open} / {CROSSWORDS.length}
       </p>
       <div className="mt-3 mb-5 h-px bg-border" role="separator" />
       <ul className="board">

@@ -66,12 +66,12 @@ function GamesHub() {
         for (let i = 1; i <= 5; i++) if (clears[i] || clears[String(i)]) n += 1;
         const hall = JSON.parse(localStorage.getItem("yurec-yt-scores") || "[]") as { score?: number }[];
         const best = Array.isArray(hall) ? hall.reduce((m, row) => Math.max(m, row.score || 0), 0) : 0;
-        return `пройдено ${n} / 5 · рекорд ${best}`;
+        return `пройдено: ${n} / 5\nрекорд: ${best}`;
       } catch {
-        return "пройдено 0 / 5 · рекорд 0";
+        return "пройдено: 0 / 5\nрекорд: 0";
       }
     },
-    () => "пройдено 0 / 5 · рекорд 0",
+    () => "пройдено: 0 / 5\nрекорд: 0",
   );
   const svoyaLine = useSyncExternalStore(
     (fn) => {
@@ -94,7 +94,7 @@ function GamesHub() {
       to: "/game/quest",
       cover: QUEST_COVER,
       title: "Юрцовский квест",
-      score: `пройдено ${questOpen} / ${questTotal}`,
+      score: `пройдено: ${questOpen} / ${questTotal}`,
       blurb: QUEST_HUB_BLURB,
     },
     crosswords: {
@@ -102,11 +102,11 @@ function GamesHub() {
       to: "/game/crosswords",
       cover: CROSSWORDS_COVER,
       title: "Шотманские кроссворды",
-      score: `разгадано ${cwOpen} / ${CROSSWORDS.length}`,
+      score: `разгадано: ${cwOpen} / ${CROSSWORDS.length}`,
       blurb: CROSSWORD_HUB_BLURB,
     },
-    av: { id: "av", to: "/game/av", cover: AV_COVER, title: "Помойкобол", score: `отбито ${avOpen} / ${AV_CHAIN.length}`, blurb: AV_HUB_BLURB },
-    ark: { id: "ark", to: "/game/ark", cover: ARK_COVER, title: "Алконоид", score: `разбито ${arkOpen} / ${ARK_CHAIN.length}`, blurb: ARK_HUB_BLURB },
+    av: { id: "av", to: "/game/av", cover: AV_COVER, title: "Помойкобол", score: `отбито: ${avOpen} / ${AV_CHAIN.length}`, blurb: AV_HUB_BLURB },
+    ark: { id: "ark", to: "/game/ark", cover: ARK_COVER, title: "Алконоид", score: `разбито: ${arkOpen} / ${ARK_CHAIN.length}`, blurb: ARK_HUB_BLURB },
     yt: { id: "yt", to: "/game/yt", cover: YT_COVER, title: "Юртрис", score: ytLine, blurb: "Ламповый тетрис девяностых. Фигурки — герои Шотмана. Пять скоростей, каждая быстрее на 30%." },
     svoya: { id: "svoya", to: "/game/svoya", cover: SVOYA_COVER, title: "Юрца игра", score: svoyaLine, blurb: SVOYA_HUB_BLURB },
   };

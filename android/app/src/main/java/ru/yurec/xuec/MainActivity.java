@@ -472,7 +472,16 @@ public class MainActivity extends Activity {
         if (webView != null) {
             webView.onResume();
         }
-        if (offline != null) offline.flushBackup();
+        if (offline != null) {
+            offline.flushBackup();
+            offline.reapplyImmersive();
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && offline != null) offline.reapplyImmersive();
     }
 
     @Override

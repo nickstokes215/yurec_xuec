@@ -196,10 +196,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (!pathname.startsWith("/game")) return;
     let last = "/game";
     if (pathname === "/game/av" || pathname.startsWith("/game/av")) last = "/game/av";
+    else if (pathname === "/game/ark" || pathname.startsWith("/game/ark")) last = "/game/ark";
+    else if (pathname === "/game/yt" || pathname.startsWith("/game/yt")) last = "/game/yt";
+    else if (pathname === "/game/svoya" || pathname.startsWith("/game/svoya")) last = "/game/svoya";
     else if (pathname === "/game/crosswords" || pathname.startsWith("/game/crossword")) last = "/game/crosswords";
     else if (pathname.startsWith("/game/") && pathname !== "/game/") last = "/game/quest";
     try {
-      localStorage.setItem("yurec-game-last", last);
+      sessionStorage.setItem("yurec-game-last", last);
     } catch {
       /* ignore */
     }
@@ -502,7 +505,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                           }
                           let last = "/game";
                           try {
-                            last = localStorage.getItem("yurec-game-last") || "/game";
+                            last = sessionStorage.getItem("yurec-game-last") || "/game";
                           } catch {
                             last = "/game";
                           }
@@ -515,6 +518,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                           } else if (last === "/game/av") {
                             e.preventDefault();
                             void navigate({ to: "/game/av" });
+                          } else if (last === "/game/ark") {
+                            e.preventDefault();
+                            void navigate({ to: "/game/ark" });
+                          } else if (last === "/game/yt") {
+                            e.preventDefault();
+                            void navigate({ to: "/game/yt" });
+                          } else if (last === "/game/svoya") {
+                            e.preventDefault();
+                            void navigate({ to: "/game/svoya" });
                           }
                         }
                       }}

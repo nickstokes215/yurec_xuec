@@ -2623,6 +2623,14 @@ html[data-wide="1"] .av-diffs {
 .av-diff-love span { color: rgba(255, 255, 255, 0.82); }
 .av-diff-god { background: #3a5a8a; color: #f4e4a1; }
 .av-diff-god span { color: rgba(244, 228, 161, 0.8); }
+.av-diff-copper { background: #c46a3a; color: #fff4ea; }
+.av-diff-copper span { color: rgba(255, 244, 234, 0.8); }
+.av-diff-teal { background: #1d6b66; color: #e7fffb; }
+.av-diff-teal span { color: rgba(231, 255, 251, 0.8); }
+.av-diff-violet { background: #5c4a86; color: #f3e9ff; }
+.av-diff-violet span { color: rgba(243, 233, 255, 0.82); }
+.av-diff-shot { background: #7a2e2e; color: #ffe8c2; }
+.av-diff-shot span { color: rgba(255, 232, 194, 0.82); }
 .av-diff-lock {
   background: #2a2a30 !important;
   color: #9c9a94 !important;

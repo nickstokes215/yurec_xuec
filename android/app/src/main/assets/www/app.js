@@ -6284,11 +6284,11 @@ function renderGamesHub() {
   var cwOpen = 0;
   for (i = 0; i < CWS.length; i++) cwOpen += gEndingsId(CWS[i].id).length;
   var catalog = {
-    quest: { id: "quest", href: "#/game/quest", cover: "game/quest.jpg", title: "Юрцовский квест", score: "пройдено " + questOpen + " / " + questTotal, blurb: "Ты — Юрец. Шаверма, «Путинка» или смена к Лысому. Пять сценариев, концовки разные, логика отдыхает." },
-    crosswords: { id: "crosswords", href: "#/game/crosswords", cover: "game/crosswords.jpg", title: "Шотманские кроссворды", score: "разгадано " + cwOpen + " / " + CWS.length, blurb: "Кроссворд из киоска на Шотмана. Гоша орёт золотые клетки. Не знаешь слово — ври, как Юрец." },
-    av: { id: "av", href: "#/game/av", cover: "game/av.jpg", title: "Помойкобол", score: "отбито " + avBeatenCount() + " / 6", blurb: "Юрец снизу, колобок сверху. Пилюли с помойки, лазер и просрочка. Кто взял яд — сам сдох. Двор орёт с каждого гола." },
-    ark: { id: "ark", href: "#/game/ark", cover: "game/ark.jpg", title: "Алконоид", score: "разбито " + arkBeatenCount() + " / 10", blurb: "Харя Юрца — ракетка. Десять дворов: от квартиры до Кости. Батя с дробовиком, аптека, камера. Юрец всё равно легенда." },
-    yt: { id: "yt", href: "#/game/yt", cover: "game/yt.jpg", title: "Юртрис", score: "пройдено " + ytProgress().n + " / 5 · рекорд " + ytProgress().best, blurb: "Ламповый тетрис девяностых. Фигурки — герои Шотмана. Пять скоростей, каждая быстрее на 30%." },
+    quest: { id: "quest", href: "#/game/quest", cover: "game/quest.jpg", title: "Юрцовский квест", score: "пройдено: " + questOpen + " / " + questTotal, blurb: "Ты — Юрец. Шаверма, «Путинка» или смена к Лысому. Пять сценариев, концовки разные, логика отдыхает." },
+    crosswords: { id: "crosswords", href: "#/game/crosswords", cover: "game/crosswords.jpg", title: "Шотманские кроссворды", score: "разгадано: " + cwOpen + " / " + CWS.length, blurb: "Кроссворд из киоска на Шотмана. Гоша орёт золотые клетки. Не знаешь слово — ври, как Юрец." },
+    av: { id: "av", href: "#/game/av", cover: "game/av.jpg", title: "Помойкобол", score: "отбито: " + avBeatenCount() + " / 6", blurb: "Юрец снизу, колобок сверху. Пилюли с помойки, лазер и просрочка. Кто взял яд — сам сдох. Двор орёт с каждого гола." },
+    ark: { id: "ark", href: "#/game/ark", cover: "game/ark.jpg", title: "Алконоид", score: "разбито: " + arkBeatenCount() + " / 10", blurb: "Харя Юрца — ракетка. Десять дворов: от квартиры до Кости. Батя с дробовиком, аптека, камера. Юрец всё равно легенда." },
+    yt: { id: "yt", href: "#/game/yt", cover: "game/yt.jpg", title: "Юртрис", score: "пройдено: " + ytProgress().n + " / 5<br>рекорд: " + ytProgress().best, blurb: "Ламповый тетрис девяностых. Фигурки — герои Шотмана. Пять скоростей, каждая быстрее на 30%." },
     svoya: { id: "svoya", href: "#/game/svoya", cover: "game/svoya.jpg", title: "Юрца игра", score: "перья: " + svoyaFeatherIds().length + " / 10<br>рекорд: " + svoyaBest(), blurb: "Своя игра Шотмана. Три раунда, спрятанные коты и аукционы, финал. Десять перьев, выбираешь сам." }
   };
   var ids = orderedGameIds();
@@ -7321,7 +7321,7 @@ function renderQuestHub() {
     '<p class="kicker" style="margin-top:12px">Игра</p>' +
     '<h2 style="font-size:28px;margin-top:6px">Юрцовский квест</h2>' +
     '<div class="hub-pitch"><p>Ты — Юрец. Не читатель саги и не Костя с красной икрой — а сам император панельных джунглей!</p><p>Читать про него — одно. Быть им — совсем другое. Это твой уникальный шанс залезть в шкуру помойного короля с куполами и каждый день решать главный вопрос его жизни: шаверма, «Путинка» или снова на смену к Лысому херу.</p><p>Почувствуй себя легендой! Принимай решения, будто уже выпил литр «Финляндии».</p><p>Логика здесь отдыхает (это же Юрец).</p><p>У каждого уровня свой нелинейный сюжет и альтернативные концовки.</p></div>' +
-    '<p class="subtle" style="margin-top:20px;text-align:center">пройдено ' + open + " / " + total + "</p>" +
+    '<p class="subtle" style="margin-top:20px;text-align:center">пройдено: ' + open + " / " + total + "</p>" +
     '<div class="gdiv"></div>';
   html += '<ul class="levels">';
   for (i = 0; i < LEVELS.length; i++) {
@@ -7350,7 +7350,7 @@ function renderCrosswordsHub() {
     '<p class="kicker" style="margin-top:12px">Игра</p>' +
     '<h2 style="font-size:28px;margin-top:6px">Шотманские кроссворды</h2>' +
     '<div class="hub-pitch"><p>Ты не Юрец. Ты — тот самый дурак с карандашом, который в киоске на Шотмана купил «Метро» и решил, что кроссворд — это судьба.</p><p>Золотые клетки орёт Гоша. Лысый хер смотрит через плечо и говорит, что ты никто. Зинаида орёт из бака, что буква «Ы» — это не буква, а образ жизни.</p><p>Если не знаешь слово — ври, как Юрец. Если знаешь — всё равно ври. Двор не любит умников. Двор любит буквы.</p><p>Чит-код открывает сетку. Золотое слово — нет. Гоша смотрит. Гоша всегда смотрит.</p></div>' +
-    '<p class="subtle" style="margin-top:20px;text-align:center">разгадано ' + open + " / " + CWS.length + "</p>" +
+    '<p class="subtle" style="margin-top:20px;text-align:center">разгадано: ' + open + " / " + CWS.length + "</p>" +
     '<div class="gdiv"></div>';
   html += '<ul class="levels">';
   for (i = 0; i < CWS.length; i++) {
@@ -9045,10 +9045,14 @@ function paint() {
   var ytNow = r === "/game/yt" || r.indexOf("/game/yt") === 0;
   var svoyaNow = r === "/game/svoya" || r.indexOf("/game/svoya") === 0;
   var worldNow = !!document.getElementById("yw-overlay");
+  var playNow = !!(avNow || arkNow || ytNow);
   try {
-    document.documentElement.classList.toggle("av-nodock", avNow || arkNow || ytNow || svoyaNow || worldNow);
-    document.body.classList.toggle("av-nodock", avNow || arkNow || ytNow || svoyaNow || worldNow);
+    document.documentElement.classList.toggle("av-nodock", playNow || svoyaNow || worldNow);
+    document.body.classList.toggle("av-nodock", playNow || svoyaNow || worldNow);
   } catch (e) {}
+  try {
+    if (window.YurecNative && window.YurecNative.setImmersive) window.YurecNative.setImmersive(playNow);
+  } catch (eImm) {}
   if (!avNow) stopAv();
   if (!arkNow) stopArk();
   if (!ytNow) stopYt();
@@ -9060,7 +9064,7 @@ function paint() {
     else if (r === "/game/svoya" || r.indexOf("/game/svoya") === 0) lastGame = "/game/svoya";
     else if (r.indexOf("/game/crossword") === 0) lastGame = "/game/crosswords";
     else if (r.indexOf("/game/") === 0) lastGame = "/game/quest";
-    try { localStorage.setItem("yurec-game-last", lastGame); } catch (e) {}
+    try { sessionStorage.setItem("yurec-game-last", lastGame); } catch (e) {}
   }
   var onCharList = r === "/characters" || r === "/characters/";
   if (!onCharList) qReset();
@@ -9888,7 +9892,7 @@ function boot() {
       var gr = route();
       if (gr.indexOf("/game") !== 0) {
         var lastG = "/game";
-        try { lastG = localStorage.getItem("yurec-game-last") || "/game"; } catch (err) {}
+        try { lastG = sessionStorage.getItem("yurec-game-last") || "/game"; } catch (err) {}
         if (lastG !== "/game") {
           e.preventDefault();
           go(lastG);

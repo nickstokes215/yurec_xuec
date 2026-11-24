@@ -21,6 +21,10 @@ import android.provider.MediaStore;
 import android.util.Base64;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import java.lang.ref.WeakReference;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -55,6 +59,8 @@ public class YurecOffline {
     public static final int REQ_STORAGE = 4302;
     private static final String BACKUP_NAME = "Жизнь Юрца.json";
     private static final String CHAT_LOG_NAME = "Юрец AI.txt";
+    private final WeakReference<Activity> activityRef;
+    private static volatile boolean immersiveOn;
     private final Context ctx;
     private final WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -67,6 +73,7 @@ public class YurecOffline {
     private volatile String pendingChatText;
 
     public YurecOffline(Context ctx, WebView web) {
+        this.activityRef = new WeakReference<>(ctx instanceof Activity ? (Activity) ctx : null);
         this.ctx = ctx.getApplicationContext() != null ? ctx.getApplicationContext() : ctx;
         this.web = web;
     }
@@ -847,6 +854,43 @@ public class YurecOffline {
     @JavascriptInterface
     public void notesDev(boolean on, String url) {
         YurecNotes.setDev(ctx, on, url);
+    }
+
+    @JavascriptInterface
+    public void setImmersive(boolean on) {
+        immersiveOn = on;
+        ui.post(() -> applyImmersive(on));
+    }
+
+    public void reapplyImmersive() {
+        if (immersiveOn) applyImmersive(true);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void applyImmersive(boolean on) {
+        Activity act = activityRef.get();
+        if (act == null || act.isFinishing()) return;
+        if (Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController bars = act.getWindow().getInsetsController();
+            if (bars == null) return;
+            if (on) {
+                bars.hide(WindowInsets.Type.navigationBars());
+                bars.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            } else {
+                bars.show(WindowInsets.Type.navigationBars());
+            }
+            return;
+        }
+        View decor = act.getWindow().getDecorView();
+        if (on) {
+            decor.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        } else {
+            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        }
     }
 
     @JavascriptInterface
