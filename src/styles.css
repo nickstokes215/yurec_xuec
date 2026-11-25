@@ -1080,8 +1080,8 @@ html.av-nodock .dock-inner {
   inset: 0;
   z-index: 1;
   display: flex;
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;
+  padding: 6px;
 }
 .av-stage .yt-split > canvas {
   position: relative !important;
@@ -1092,65 +1092,66 @@ html.av-nodock .dock-inner {
   min-width: 0;
 }
 .yt-side {
-  width: 34%;
-  max-width: 148px;
-  min-width: 104px;
-  flex: 0 0 auto;
+  width: 78px;
+  flex: 0 0 78px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-height: 0;
 }
 .yt-side[hidden] { display: none !important; }
 .yt-next b {
   display: block;
   color: #e7c56a;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.08em;
 }
 .yt-next span {
   display: block;
   margin-top: 2px;
   color: #e7c56a;
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1.2;
 }
 .yt-mini {
   display: grid;
-  gap: 3px;
-  margin-top: 8px;
+  gap: 2px;
+  margin-top: 6px;
   justify-content: center;
 }
 .yt-mini i {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
   display: block;
 }
 .yt-side-keys {
-  flex: 1;
+  margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-height: 0;
+  gap: 5px;
+  flex: 0 0 auto;
 }
 .yt-key-row {
   display: flex;
-  gap: 6px;
-  flex: 1;
-  min-height: 0;
+  gap: 5px;
+  height: 40px;
+  flex: 0 0 40px;
 }
 .yt-key-row button,
 .yt-side-keys > button {
-  flex: 1;
-  min-height: 0;
+  height: 40px;
+  flex: 0 0 40px;
   border: 0;
-  border-radius: 14px;
+  border-radius: 10px;
   background: #1a1408;
   color: #f4e4a1;
   box-shadow: 0 0 0 1px #e8c36a;
   font-weight: 750;
-  font-size: 16px;
+  font-size: 13px;
+  padding: 0 2px;
 }
+.yt-key-row button { flex: 1 1 0; }
 .news-root {
   position: fixed;
   inset: 0;
