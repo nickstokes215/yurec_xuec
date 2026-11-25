@@ -6930,7 +6930,7 @@ function svoyaRoundOpen(run) {
 function renderSvoya() {
   var pack = svoyaPack();
   var run = svoyaRun();
-  var html = '<a class="back av-back" href="#/game">← Игры</a><div class="svoya-page' + (svoyaMaster() ? " is-master" : "") + '">';
+  var html = '<a class="back svoya-back" href="#/game">← Игры</a><div class="svoya-page' + (svoyaMaster() ? " is-master" : "") + '">';
   var s = svoyaUi.screen, i;
   if (!pack.questions || !pack.questions.length) {
     html += '<div class="svoya-hub"><p class="svoya-pitch">Колода грузится…</p></div></div>';

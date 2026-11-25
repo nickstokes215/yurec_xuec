@@ -819,6 +819,20 @@
       ctx.strokeStyle = "rgba(0,0,0,.35)";
       ctx.stroke();
     }
+    function placeKeys(oy, wellH) {
+      var keys = side.querySelector(".yt-side-keys");
+      var next = side.querySelector(".yt-next");
+      if (!keys) return;
+      var kh = keys.offsetHeight || 0;
+      if (!kh) return;
+      var minTop = (next ? next.offsetHeight : 0) + 6;
+      var top = oy + (wellH - kh) / 2 - 18;
+      if (top < minTop) top = minTop;
+      var maxTop = side.clientHeight - kh - 2;
+      if (maxTop < minTop) maxTop = minTop;
+      if (top > maxTop) top = maxTop;
+      keys.style.top = Math.round(top) + "px";
+    }
     function drawIdle(w, h) {
       var g = ctx.createLinearGradient(0, 0, 0, h);
       g.addColorStop(0, "#1a140c");
@@ -856,6 +870,7 @@
       if (cell < 8) cell = 8;
       var ox = Math.floor((w - cell * COLS) / 2);
       var oy = Math.floor((h - cell * ROWS) / 2);
+      placeKeys(oy, cell * ROWS);
       ctx.fillStyle = "#12140f";
       roundRect(ox - 6, oy - 6, cell * COLS + 12, cell * ROWS + 12, 10);
       ctx.fill();

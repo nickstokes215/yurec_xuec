@@ -312,7 +312,7 @@ function SvoyaPage() {
 
   return (
     <main className={cn("svoya-page", master && "is-master")}>
-      <Link to="/game" className="av-back">
+      <Link to="/game" className="svoya-back">
         <ArrowLeft className="size-3.5" />
         Игры
       </Link>
