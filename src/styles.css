@@ -1092,8 +1092,8 @@ html.av-nodock .dock-inner {
   min-width: 0;
 }
 .yt-side {
-  width: 78px;
-  flex: 0 0 78px;
+  width: 64px;
+  flex: 0 0 64px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1129,29 +1129,36 @@ html.av-nodock .dock-inner {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  flex: 0 0 auto;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
 }
-.yt-key-row {
-  display: flex;
-  gap: 5px;
-  height: 40px;
-  flex: 0 0 40px;
-}
-.yt-key-row button,
 .yt-side-keys > button {
-  height: 40px;
-  flex: 0 0 40px;
+  width: 100%;
+  flex: 1 1 52px;
+  min-height: 48px;
+  max-height: 58px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 14px;
   background: #1a1408;
   color: #f4e4a1;
   box-shadow: 0 0 0 1px #e8c36a;
-  font-weight: 750;
-  font-size: 13px;
-  padding: 0 2px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  touch-action: manipulation;
 }
-.yt-key-row button { flex: 1 1 0; }
+.yt-side-keys > button svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .news-root {
   position: fixed;
   inset: 0;

@@ -141,13 +141,11 @@
     side.innerHTML =
       '<div class="yt-next"><b>ДАЛЬШЕ</b><span id="yt-next-meta"></span><div id="yt-next-cells"></div></div>' +
       '<div class="yt-side-keys">' +
-        '<div class="yt-key-row">' +
-          '<button type="button" data-yt="left">←</button>' +
-          '<button type="button" data-yt="right">→</button>' +
-        "</div>" +
-        '<button type="button" data-yt="rot">↻</button>' +
-        '<button type="button" data-yt="soft">Вниз</button>' +
-        '<button type="button" data-yt="hard">В пол</button>' +
+        '<button type="button" data-yt="left" aria-label="Влево"><svg viewBox="0 0 24 24"><path d="M19 12H6M12 6l-6 6 6 6"/></svg></button>' +
+        '<button type="button" data-yt="right" aria-label="Вправо"><svg viewBox="0 0 24 24"><path d="M5 12h13M12 6l6 6-6 6"/></svg></button>' +
+        '<button type="button" data-yt="rot" aria-label="Поворот"><svg viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M20 4.5V10h-5.5"/></svg></button>' +
+        '<button type="button" data-yt="soft" aria-label="На клетку"><svg viewBox="0 0 24 24"><path d="M12 5v13M7 13l5 5 5-5"/></svg></button>' +
+        '<button type="button" data-yt="hard" aria-label="В пол"><svg viewBox="0 0 24 24"><path d="M7 4l5 5 5-5M7 11l5 5 5-5M6 21h12"/></svg></button>' +
       "</div>";
     var split = document.createElement("div");
     split.className = "yt-split";
@@ -317,7 +315,7 @@
       var linesC = [
         "Веди пальцем влево и вправо — фигура едет по стакану.",
         "Короткий тап по стакану или кнопка ↻ — поворот.",
-        "«Вниз» роняет на клетку. «В пол» ставит сразу.",
+        "Справа столбик стрелок. Одинарная вниз роняет на клетку, двойная ставит сразу.",
         "Собери полный ряд. До цели уровня — и двор засчитает победу."
       ];
       coach.hidden = false;
@@ -445,7 +443,7 @@
       sheet.innerHTML =
         '<p class="av-dos">C:\\SHOTMAN> help</p><h3>Как играть</h3>' +
         '<p class="av-lead">Стакан как в тетрисе: десять клеток в ширину, двадцать в высоту. Семь фигур, у каждой свой цвет: Юрец, Светлана, Зинаида, Толик, Костя, Лысый и Гоша. Букв на клетках нет. Следующая фигура видна сверху, без имени.</p>' +
-        '<p class="av-lead">Слева «←» и «↓», справа «↻», «→» и «В пол». «↓» даёт одно очко за клетку. «В пол» ставит сразу и даёт два очка за клетку падения.</p>' +
+        '<p class="av-lead">Справа один столбик, сверху вниз: влево, вправо, поворот, на клетку, сразу в пол. На кнопках нет слов, только стрелки, и каждая на своём уровне, чтоб палец не путал соседей. Одинарная стрелка вниз даёт одно очко за клетку. Двойная ставит сразу и даёт два очка за клетку падения.</p>' +
         '<p class="av-lead">Полный ряд исчезает. Один ряд — 100, два — 300, три — 500, четыре — 900. Сумма множится на номер уровня. Четыре ряда разом — Юртрис.</p>' +
         '<p class="av-lead">Первые пять дворов только быстрее, каждый на 30%. С шестого скорость упирается в потолок, зато снизу лезет серый мусор с одной дыркой. Дырку можно закрыть, если не зевать. Уровень взят, когда счёт дотянул до цели.</p>' +
         '<p class="av-lead">Проигрыш не пишет имя сам. Впиши своё и нажми «Записать рекорд»: в таблицу лягут имя, дата, время и очки.</p>' +
