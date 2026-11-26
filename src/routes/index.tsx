@@ -70,6 +70,16 @@ function Home() {
     return () => window.removeEventListener("yurec-reset-home", onReset);
   }, []);
 
+  useEffect(() => {
+    try {
+      const q = query.trim();
+      if (q) sessionStorage.setItem("yurec-find-q", q);
+      else sessionStorage.removeItem("yurec-find-q");
+    } catch {
+      /* ignore */
+    }
+  }, [query]);
+
   const list = useMemo(
     () => applyOrder(searchStories(query, kind), mode),
     [query, kind, mode],

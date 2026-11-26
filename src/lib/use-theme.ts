@@ -2,8 +2,8 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 import { noteFlag, noteRedo } from "@/lib/use-achievements";
 
-export type ThemeChoice = "light" | "dark" | "black" | "system";
-export type ThemeResolved = "light" | "dark" | "black";
+export type ThemeChoice = "light" | "dark" | "black" | "sepia" | "system";
+export type ThemeResolved = "light" | "dark" | "black" | "sepia";
 
 const KEY = "yurec-theme";
 const listeners = new Set<() => void>();
@@ -17,7 +17,7 @@ function readChoice(): ThemeChoice {
   if (cache) return cache;
   try {
     const v = localStorage.getItem(KEY);
-    if (v === "light" || v === "dark" || v === "black" || v === "system") cache = v;
+    if (v === "light" || v === "dark" || v === "black" || v === "sepia" || v === "system") cache = v;
     else cache = "dark";
   } catch {
     cache = "dark";
@@ -43,7 +43,10 @@ export function applyTheme(choice?: ThemeChoice) {
   root.style.colorScheme = resolved === "light" ? "light" : "dark";
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute("content", resolved === "light" ? "#e7dfd0" : resolved === "black" ? "#000000" : "#0b0b0c");
+    meta.setAttribute(
+      "content",
+      resolved === "light" ? "#e7dfd0" : resolved === "black" ? "#000000" : resolved === "sepia" ? "#2a1d14" : "#0b0b0c",
+    );
   }
 }
 

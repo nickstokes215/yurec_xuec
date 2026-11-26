@@ -183,6 +183,19 @@ function StoryPage() {
     setFindI(0);
     const el = scroller.current;
     const last = readLast();
+    const pending = (() => {
+      try {
+        return (sessionStorage.getItem("yurec-find-q") || "").trim();
+      } catch {
+        return "";
+      }
+    })();
+    if (pending) {
+      setFindQ(pending);
+      setFindI(0);
+      setProgress(0);
+      return;
+    }
     const restore = Boolean(last && last.slug === slug && last.percent > 3 && last.percent < 99);
     if (!restore || !el || !last) {
       setProgress(0);
@@ -255,10 +268,24 @@ function StoryPage() {
 
   useEffect(() => {
     if (!findQ.trim() || findTotal <= 0) return;
-    const el = scroller.current?.querySelector(`[data-find="${findI}"]`);
-    if (el instanceof HTMLElement) {
-      el.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
+    const box = scroller.current;
+    const el = box?.querySelector(`[data-find="${findI}"]`);
+    if (!(el instanceof HTMLElement) || !box) return;
+    const jump = () => {
+      const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+      let next = top - box.clientHeight / 2 + el.offsetHeight / 2;
+      if (next < 0) next = 0;
+      const max = box.scrollHeight - box.clientHeight;
+      if (next > max) next = max;
+      box.scrollTop = next;
+    };
+    jump();
+    const raf = window.requestAnimationFrame(jump);
+    const timer = window.setTimeout(jump, 160);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+    };
   }, [findI, findQ, findTotal, slug]);
 
   function nextFind() {

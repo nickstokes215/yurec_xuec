@@ -227,6 +227,16 @@ function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const [setQ, setSetQ] = useState("");
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("yurec-open-bug") === "1") {
+        sessionStorage.removeItem("yurec-open-bug");
+        setBugOpen(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const navigate = useNavigate();
 
   useLayoutEffect(() => {
@@ -269,12 +279,13 @@ function SettingsPage() {
           Тема оформления
         </p>
         <p className="mt-1 text-center text-[13px] leading-relaxed text-subtle">
-          Светлая — бумага. Тёмная — сумерки. Чёрная — OLED. «Как в системе» слушает телефон.
+          Светлая — бумага. Тёмная — сумерки. Чёрная — OLED. Сепия — коричневый двор. «Как в системе» слушает телефон.
         </p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <ThemeBtn id="light" label="Светлая" active={theme.choice === "light"} onClick={() => theme.set("light")} />
           <ThemeBtn id="dark" label="Тёмная" active={theme.choice === "dark"} onClick={() => theme.set("dark")} />
           <ThemeBtn id="black" label="Чёрная" active={theme.choice === "black"} onClick={() => theme.set("black")} />
+          <ThemeBtn id="sepia" label="Сепия" active={theme.choice === "sepia"} onClick={() => theme.set("sepia")} />
         </div>
         <button
           type="button"
@@ -1398,10 +1409,17 @@ function ThemeBtn({
         id === "light" && "bg-[#e7dfd0] text-[#1c1916]",
         id === "dark" && "bg-[#141416] text-[#eceae4]",
         id === "black" && "bg-black text-[#c9a227]",
+        id === "sepia" && "bg-[#3a291c] text-[#f0e2c8]",
         active && "shadow-[0_0_0_2px_var(--color-accent)]",
       )}
     >
-      {id === "light" ? <Sun className="mb-1 size-4" /> : <Moon className="mb-1 size-4" />}
+      {id === "light" ? (
+        <Sun className="mb-1 size-4" />
+      ) : id === "sepia" ? (
+        <span className="mb-1 size-4 rounded-full bg-[#c4a574] shadow-[inset_0_0_0_2px_#3a2a1c]" />
+      ) : (
+        <Moon className="mb-1 size-4" />
+      )}
       {label}
     </button>
   );

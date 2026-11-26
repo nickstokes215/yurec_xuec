@@ -19,7 +19,7 @@ import {
   Users,
   Trophy,
 } from "lucide-react";
-import { type ReactNode, useEffect, useLayoutEffect, useRef } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FireworksHost } from "@/components/fireworks";
 import { RainHost } from "@/components/rain";
 import { StarfallHost } from "@/components/starfall";
@@ -37,6 +37,99 @@ import { useTheme } from "@/lib/use-theme";
 import { noteVisit } from "@/lib/use-achievements";
 import { useBookmarksNav, useInfoNav, useZashNav, useAiNav, useAiTop, useCitatsNav, applyStoredIcon, useAppIcon, APP_ICONS, applyKeepAwake } from "@/lib/use-settings";
 
+function hasLicense() {
+  try {
+    return localStorage.getItem("yurec-license") === "1" || localStorage.getItem("yurec-dev") === "1";
+  } catch {
+    return false;
+  }
+}
+
+function useLicensed() {
+  const [on, setOn] = useState(hasLicense);
+  useEffect(() => {
+    const fn = () => setOn(hasLicense());
+    window.addEventListener("yurec-license-changed", fn);
+    window.addEventListener("storage", fn);
+    return () => {
+      window.removeEventListener("yurec-license-changed", fn);
+      window.removeEventListener("storage", fn);
+    };
+  }, []);
+  return on;
+}
+
+function LikeHost() {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const key = "yurec-like-at";
+    const week = 7 * 24 * 60 * 60 * 1000;
+    const t = window.setTimeout(() => {
+      if (document.querySelector("[data-testid=tour]") || document.getElementById("news-root")) return;
+      let at = 0;
+      try {
+        at = Number(localStorage.getItem(key) || 0);
+      } catch {
+        at = 0;
+      }
+      if (!at) {
+        try {
+          localStorage.setItem(key, String(Date.now()));
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
+      if (Date.now() - at < week) return;
+      setOpen(true);
+    }, 1400);
+    return () => window.clearTimeout(t);
+  }, []);
+  function done() {
+    try {
+      localStorage.setItem("yurec-like-at", String(Date.now()));
+    } catch {
+      /* ignore */
+    }
+    setOpen(false);
+  }
+  if (!open) return null;
+  return (
+    <div className="news-root" id="like-root" role="dialog" aria-label="Нравится ли приложение">
+      <div className="news-card">
+        <p className="kicker">Раз в неделю</p>
+        <h3>Нравится Жизнь Юрца?</h3>
+        <p className="subtle">Да — к пожертвованию. Нет — к письму о баге.</p>
+        <button
+          type="button"
+          className="btn wide gold"
+          onClick={() => {
+            done();
+            void navigate({ to: "/donate" });
+          }}
+        >
+          Да
+        </button>
+        <button
+          type="button"
+          className="btn wide"
+          onClick={() => {
+            done();
+            try {
+              sessionStorage.setItem("yurec-open-bug", "1");
+            } catch {
+              /* ignore */
+            }
+            void navigate({ to: "/settings" });
+          }}
+        >
+          Нет
+        </button>
+      </div>
+    </div>
+  );
+}
 const NAV = [
   { to: "/", label: "Сборник", icon: BookOpen },
   { to: "/citats", label: "Цитатник", icon: Quote },
@@ -108,6 +201,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { show: showZash } = useZashNav();
   const { show: showAi } = useAiNav();
   const { show: showAiTop } = useAiTop();
+  const licensed = useLicensed();
   const icon = useAppIcon();
   const iconMeta = APP_ICONS.find((x) => x.id === icon.id) || APP_ICONS[0];
   useEffect(() => {
@@ -352,6 +446,23 @@ export function AppShell({ children }: { children: ReactNode }) {
               >
                 {resolved === "light" ? <Moon className="size-5" /> : <Sun className="size-5" />}
               </button>
+              {licensed ? (
+                <span
+                  className="grid size-11 place-items-center rounded-md text-lg font-extrabold opacity-35"
+                  aria-disabled="true"
+                  title="Лицензия уже есть"
+                >
+                  ₽
+                </span>
+              ) : (
+                <Link
+                  to="/donate"
+                  aria-label="Пожертвование"
+                  className="grid size-11 place-items-center rounded-md text-lg font-extrabold"
+                >
+                  ₽
+                </Link>
+              )}
               <Link
                 to="/settings"
                 aria-label="Настройки"
@@ -563,6 +674,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <StarfallHost />
       <TourHost />
       <NewsHost />
+      <LikeHost />
       <ShoutHost />
       <RavenHost />
     </div>

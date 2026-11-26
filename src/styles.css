@@ -79,6 +79,23 @@ html[data-theme="black"] {
   --color-elevated: #161618;
   --color-border: #222226;
 }
+html[data-theme="sepia"] {
+  --color-void: #1c140e;
+  --color-bg: #2a1d14;
+  --color-surface: #3a291c;
+  --color-elevated: #4a3424;
+  --color-fg: #f0e2c8;
+  --color-muted: #cbb89a;
+  --color-subtle: #9a8468;
+  --color-border: #5c4632;
+  --color-accent: #e0b15a;
+  --color-accent-fg: #2a1d14;
+  --color-paper: #efe0c4;
+  --color-ink: #2a1d14;
+  --color-ink-muted: #6b5340;
+  --color-gold: #e0b15a;
+  --color-gold-fg: #2a1d14;
+}
 
 @media (min-width: 600px) {
   :root { --app-max: min(100%, 920px); }
@@ -237,13 +254,11 @@ html.modal-lock body {
   pointer-events: auto;
   cursor: default;
 }
-.tour-hole {
+.tour-shade { position: absolute; background: rgba(5, 5, 8, 0.62); pointer-events: none; }
+.tour-ring {
   position: absolute;
   pointer-events: none;
-  box-shadow: 0 0 0 9999px rgba(5, 5, 8, 0.62), 0 0 0 2px #c9a227, 0 0 24px rgba(201, 162, 39, 0.55);
-  background: transparent;
-  transition: top 0.28s ease, left 0.28s ease, width 0.28s ease, height 0.28s ease, border-radius 0.28s ease;
-  z-index: 1;
+  box-shadow: inset 0 0 0 2px #c9a227;
 }
 .tour-card {
   position: absolute;

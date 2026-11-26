@@ -763,7 +763,7 @@ function hasCustomGameOrder() {
 function readTheme() {
   try {
     var v = localStorage.getItem(THEME_KEY);
-    if (v === "light" || v === "dark" || v === "black" || v === "system") return v;
+    if (v === "light" || v === "dark" || v === "black" || v === "sepia" || v === "system") return v;
     if (localStorage.getItem(PAPER_KEY) === "1") return "light";
   } catch (e) {}
   return "dark";
@@ -783,7 +783,7 @@ function applyTheme(choice) {
   root.setAttribute("data-theme", resolved);
   try { root.style.colorScheme = resolved === "light" ? "light" : "dark"; } catch (e) {}
   var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", resolved === "light" ? "#e7dfd0" : resolved === "black" ? "#000000" : "#0b0b0c");
+  if (meta) meta.setAttribute("content", resolved === "light" ? "#e7dfd0" : resolved === "black" ? "#000000" : resolved === "sepia" ? "#2a1d14" : "#0b0b0c");
 }
 function setTheme(next) {
   try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
@@ -1264,6 +1264,9 @@ function shell(inner, active, mediaCat, flags) {
       '<div class="top-actions">' +
         (showAiTop() ? '<a class="iconbtn" href="#/chat" aria-label="Юрец AI">' + iconSpark() + "</a>" : "") +
         '<button type="button" class="iconbtn" id="theme-btn" aria-label="Тема оформления">' + (light ? iconMoon() : iconSun()) + "</button>" +
+        (isPaid()
+          ? '<span class="iconbtn is-off" aria-disabled="true" title="Лицензия уже есть"><span class="rub">₽</span></span>'
+          : '<a class="iconbtn" href="#/donate" aria-label="Пожертвование"><span class="rub">₽</span></a>') +
         '<a class="iconbtn" href="#/settings" data-tour="settings" aria-label="Настройки">' + iconGear() + "</a>" +
       "</div></header>";
   var nav = '<nav class="nav' + navMod + '">' +
@@ -2303,6 +2306,18 @@ function storyBodyHtml(s, q, cur) {
   return html;
 }
 
+function jumpToFind() {
+  var el = document.querySelector("mark.find-cur");
+  if (!el) el = document.querySelector('mark[data-find="' + storyFind.i + '"]');
+  var reader = document.getElementById("reader");
+  if (!el || !reader) return;
+  var top = el.getBoundingClientRect().top - reader.getBoundingClientRect().top + reader.scrollTop;
+  var next = top - reader.clientHeight / 2 + el.offsetHeight / 2;
+  if (next < 0) next = 0;
+  var max = reader.scrollHeight - reader.clientHeight;
+  if (next > max) next = max;
+  reader.scrollTop = next;
+}
 function applyStoryFind() {
   var body = $("#body");
   var s = bySlug(storyFind.slug);
@@ -2320,8 +2335,9 @@ function applyStoryFind() {
   var next = $("#findnext");
   if (next) next.style.display = String(storyFind.q || "").replace(/^\s+|\s+$/g, "") ? "" : "none";
   if (storyFind.n > 0) {
-    var el = document.querySelector('mark[data-find="' + storyFind.i + '"]');
-    if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    jumpToFind();
+    window.requestAnimationFrame(jumpToFind);
+    window.setTimeout(jumpToFind, 140);
   }
 }
 
@@ -2382,7 +2398,7 @@ function renderStory(slug) {
   if (!s) return shell('<p class="empty">Этого рассказа нет. <a href="#/">Назад</a></p>', "home");
   if (storyFind.slug !== s.slug) {
     storyFind.slug = s.slug;
-    storyFind.q = "";
+    storyFind.q = String(state.q || "").replace(/^\s+|\s+$/g, "");
     storyFind.i = 0;
     storyFind.n = 0;
   }
@@ -3904,8 +3920,11 @@ function renderChannel() {
 
 function themeBtnHtml(id, label) {
   var on = readTheme() === id;
+  var ico = id === "light" ? iconSun() : id === "sepia"
+    ? '<span class="i" style="border-radius:50%;background:#c4a574;box-shadow:inset 0 0 0 2px #3a2a1c"></span>'
+    : iconMoon();
   return '<button type="button" class="theme-btn theme-' + id + (on ? " on" : "") + '" data-theme-set="' + id + '">' +
-    (id === "light" ? iconSun() : iconMoon()) + "<span>" + label + "</span></button>";
+    ico + "<span>" + label + "</span></button>";
 }
 
 function fontCardHtml() {
@@ -4210,11 +4229,12 @@ function renderSettings() {
     "</section>" +
     '<section class="set-card" data-tour="set-theme">' +
       '<p class="set-head">' + setIco('<circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="17" r="2"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.7-.7 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.5-.7-.5-1.1a1.6 1.6 0 0 1 1.7-1.7h2c3 0 5.5-2.5 5.5-5.5C22 6 17.5 2 12 2z"/>') + "Тема оформления</p>" +
-      '<p class="subtle">Светлая — бумага. Тёмная — сумерки. Чёрная — OLED. «Как в системе» слушает телефон.</p>' +
+      '<p class="subtle">Светлая — бумага. Тёмная — сумерки. Чёрная — OLED. Сепия — коричневый двор. «Как в системе» слушает телефон.</p>' +
       '<div class="theme-grid">' +
         themeBtnHtml("light", "Светлая") +
         themeBtnHtml("dark", "Тёмная") +
         themeBtnHtml("black", "Чёрная") +
+        themeBtnHtml("sepia", "Сепия") +
       "</div>" +
       '<button type="button" class="btn wide' + (choice === "system" ? " on-sys" : " ghost") + '" id="theme-system">Задано системой</button>' +
     "</section>" +
@@ -8349,8 +8369,16 @@ function bindHome() {
           for (var i = 0; i < list.length; i++) h += card(list[i]);
           box.innerHTML = h;
           bindReadToggles();
+          var hit = box.querySelector(".card, article, a");
+          if (hit && hit.scrollIntoView) hit.scrollIntoView({ block: "nearest" });
         }
       }
+    });
+    q.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      var list = filtered();
+      if (list.length) go("/story/" + list[0].slug);
     });
   }
   var chips = document.querySelectorAll("[data-kind]");
@@ -8546,7 +8574,10 @@ function bindStory(slug) {
   bindReaderScrub(reader);
   try {
     var last = JSON.parse(localStorage.getItem(LAST_KEY) || "null");
-    if (reader && last && last.slug === s.slug && last.percent > 3 && last.percent < 99) {
+    if (reader && String(storyFind.q || "").replace(/^\s+|\s+$/g, "") && storyFind.n > 0) {
+      setTimeout(jumpToFind, 60);
+      setTimeout(jumpToFind, 260);
+    } else if (reader && last && last.slug === s.slug && last.percent > 3 && last.percent < 99) {
       setTimeout(function () {
         var max = reader.scrollHeight - reader.clientHeight;
         if (max > 0) reader.scrollTop = Math.round((last.percent / 100) * max);
@@ -9196,6 +9227,7 @@ function paint() {
     try { evaluateAchievements(); } catch (errAch) {}
     try { maybeStartTour(); } catch (errTour) {}
     try { maybeNews(); } catch (errNews) {}
+    try { maybeLike(); } catch (errLike) {}
     try { maybeShout(); } catch (errShout) {}
   }, 0);
 }
@@ -9469,7 +9501,7 @@ var TOUR_STEPS = [
   { id: "chat", path: "/chat", target: "chat-box", title: "Юрец AI", text: "Пишешь — орёт в ответ. Есть «Разговор» и «SMS-ки». Чипы подставляют готовый вопрос. Шаринг сохраняет переписку. По умолчанию чат сгорает, когда закрыл сборник: хранение включается в настройках. Кнопку чата можно убрать сверху или снизу." },
   { id: "info", path: "/about", target: "about-links", title: "Инфо", text: "Канал, донат, журнал версий, идеи, паспорт и зашквары. Название саги можно потыкать — двор это замечает, но не говорит, сколько раз. Иконку приложения и подпись ярлыка меняют в настройках." },
   { id: "set-find", path: "/settings", target: "set-search", title: "Поиск настроек", text: "Настроек много. Поле сверху прячет карточки, в которых нет твоих слов. «Ё» и «е» для него одно и то же. Несколько слов ищутся сразу все." },
-  { id: "set-look", path: "/settings", target: "set-theme", title: "Тема и шрифт", text: "Светлая, тёмная, чёрная или как в системе. Ниже — размер и стиль шрифта в читалке: стандартный, системный или один из обычных. Солнце в шапке крутит тему, не заходя сюда." },
+  { id: "set-look", path: "/settings", target: "set-theme", title: "Тема и шрифт", text: "Светлая, тёмная, чёрная, сепия или как в системе. Ниже — размер и стиль шрифта в читалке: стандартный, системный или один из обычных. Солнце в шапке крутит тему, не заходя сюда." },
   { id: "set-post", path: "/settings", target: "set-post", title: "Открытка", text: "Шрифт, свой текст или цитата дня, чья картинка, JPG или PNG, папка в галерее. Можно выключить совсем. Фон и узор — случайные каждый раз или закреплённые. PNG тяжелее, JPG надёжнее." },
   { id: "set-dock", path: "/settings", target: "set-dock", title: "Нижнее меню и быт", text: "Закладки, цитатник, зашквары и инфо можно убрать из нижнего ряда. По умолчанию цитатник и закладки спрятаны: цитатник всё равно открывается с цитаты дня, закладка ставится в рассказе. Рядом лежат звук, вибрация, «не гасить экран», полоса в тексте, виджет на стол и справка двора — файл, которым двор переезжает на другой телефон." },
   { id: "medal", path: "/settings", target: "set-tour", title: "Медаль двора", text: "Обучение само больше не вылезет. Ещё раз — эта кнопка. Раз дошёл до конца, а не смахнул, двор выдаёт зашквар «Экскурсия». Он уже твой." }
@@ -9523,7 +9555,7 @@ function tourHole(el) {
     top: Math.max(6, b.top - pad),
     left: Math.max(6, b.left - pad),
     width: Math.min(window.innerWidth - 12, b.width + pad * 2),
-    height: Math.min(280, Math.min(window.innerHeight - 12, b.height + pad * 2)),
+    height: Math.min(Math.round(window.innerHeight * 0.62), Math.max(48, b.height + pad * 2)),
     r: Math.min(18, Math.round(Math.min(b.width, b.height) / 4) + 8)
   };
 }
@@ -9544,6 +9576,30 @@ function stopTour(award) {
   if (el && el.parentNode) el.parentNode.removeChild(el);
   if (award) {
     try { noteAchFlag("tour"); } catch (e2) {}
+  }
+}
+function tourShadeHtml(hole) {
+  if (!hole) return "";
+  var t = Math.round(hole.top);
+  var l = Math.round(hole.left);
+  var w = Math.round(hole.width);
+  var h = Math.round(hole.height);
+  var r = hole.r;
+  return '<div class="tour-shade" style="top:0;left:0;right:0;height:' + t + 'px"></div>' +
+    '<div class="tour-shade" style="top:' + t + "px;left:0;width:" + Math.max(0, l) + "px;height:" + h + 'px"></div>' +
+    '<div class="tour-shade" style="top:' + t + "px;left:" + (l + w) + "px;right:0;height:" + h + 'px"></div>' +
+    '<div class="tour-shade" style="top:' + (t + h) + 'px;left:0;right:0;bottom:0"></div>' +
+    '<div class="tour-ring" style="top:' + t + "px;left:" + l + "px;width:" + w + "px;height:" + h + "px;border-radius:" + r + 'px"></div>';
+}
+function tourArmImages(el) {
+  if (!el) return;
+  var imgs = el.querySelectorAll("img");
+  var i;
+  for (i = 0; i < imgs.length; i++) {
+    if (imgs[i].complete) continue;
+    imgs[i].addEventListener("load", function () {
+      if (tourOn) drawTour();
+    }, { once: true });
   }
 }
 function drawTour() {
@@ -9587,9 +9643,7 @@ function drawTour() {
     cardStyle = "top:" + Math.min(window.innerHeight - 220, hole.top + hole.height + 12) + "px";
   }
   var html = '<button type="button" class="tour-dim" aria-label="Пропустить обучение"></button>';
-  if (hole) {
-    html += '<span class="tour-hole" style="top:' + hole.top + "px;left:" + hole.left + "px;width:" + hole.width + "px;height:" + hole.height + "px;border-radius:" + hole.r + 'px"></span>';
-  }
+  html += tourShadeHtml(hole);
   html += '<div class="' + cardClass + '" style="' + cardStyle + '">' +
     '<p class="tour-kicker">Обучение · ' + (tourIdx + 1) + " / " + TOUR_STEPS.length + "</p>" +
     '<p class="tour-title">' + esc(cur.title) + "</p>" +
@@ -9611,6 +9665,7 @@ function drawTour() {
     if (last) stopTour(true);
     else { tourIdx += 1; drawTour(); }
   };
+  tourArmImages(el);
 }
 function maybeStartTour() {
   if (tourOn) { drawTour(); return; }
@@ -9663,8 +9718,42 @@ function maybeNews() {
   if (!ver || seen === ver) return;
   showNews();
 }
+var LIKE_KEY = "yurec-like-at";
+var LIKE_WEEK = 7 * 24 * 60 * 60 * 1000;
+function markLike() {
+  try { localStorage.setItem(LIKE_KEY, String(Date.now())); } catch (e) {}
+}
+function closeLike() {
+  var el = document.getElementById("like-root");
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+function showLike() {
+  if (document.getElementById("like-root") || tourOn || document.getElementById("news-root") || document.getElementById("tour-root")) return;
+  var root = document.createElement("div");
+  root.id = "like-root";
+  root.className = "news-root";
+  root.innerHTML = '<div class="news-card" role="dialog" aria-label="Нравится ли приложение">' +
+    '<p class="kicker">Раз в неделю</p><h3>Нравится Жизнь Юрца?</h3>' +
+    '<p class="subtle" style="margin:0 0 4px">Да — к пожертвованию. Нет — к письму о баге.</p>' +
+    '<button type="button" class="btn wide gold" id="like-yes">Да</button>' +
+    '<button type="button" class="btn wide" id="like-no">Нет</button></div>';
+  document.body.appendChild(root);
+  var yes = document.getElementById("like-yes");
+  var no = document.getElementById("like-no");
+  if (yes) yes.onclick = function () { markLike(); closeLike(); go("/donate"); };
+  if (no) no.onclick = function () { markLike(); closeLike(); openBugModal(); };
+}
+function maybeLike() {
+  if (tourOn || shouldAutoTour() || document.getElementById("tour-root") || document.getElementById("news-root") || document.getElementById("like-root")) return;
+  var at = 0;
+  try { at = Number(localStorage.getItem(LIKE_KEY) || 0); } catch (e) {}
+  if (!at) { markLike(); return; }
+  if (Date.now() - at < LIKE_WEEK) return;
+  showLike();
+}
 
 function yurecBack() {
+  if (document.getElementById("like-root")) { markLike(); closeLike(); return true; }
   if (document.getElementById("news-root")) { markNews(); closeNews(); return true; }
   if (typeof window.__yurecPlayBack === "function" && window.__yurecPlayBack()) return true;
   if (document.getElementById("raven-joke")) {

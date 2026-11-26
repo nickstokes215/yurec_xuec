@@ -51,7 +51,7 @@ function Root() {
         <HeadContent />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('yurec-theme')||'dark';if(t==='system')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t==='light'?'light':'dark';var w=Math.max(document.documentElement.clientWidth||0,window.innerWidth||0);document.documentElement.setAttribute('data-wide',w>=560?'1':'0');}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('yurec-theme')||'dark';if(t==='system')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';if(t!=='light'&&t!=='dark'&&t!=='black'&&t!=='sepia')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t==='light'?'light':'dark';var w=Math.max(document.documentElement.clientWidth||0,window.innerWidth||0);document.documentElement.setAttribute('data-wide',w>=560?'1':'0');}catch(e){}})();`,
           }}
         />
       </head>

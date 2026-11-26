@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0b0b0c" />
     <meta name="color-scheme" content="dark" />
     <meta name="referrer" content="no-referrer" />
-    <meta name="yurec-version" content="1.106" />
+    <meta name="yurec-version" content="1.107" />
     <title>Жизнь Юрца</title>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -24,7 +24,7 @@
         try {
           var t = localStorage.getItem("yurec-theme") || "dark";
           if (t === "system") t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-          if (t !== "light" && t !== "dark" && t !== "black") t = "dark";
+          if (t !== "light" && t !== "dark" && t !== "black" && t !== "sepia") t = "dark";
           document.documentElement.setAttribute("data-theme", t);
           document.documentElement.style.colorScheme = t === "light" ? "light" : "dark";
           var w = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);

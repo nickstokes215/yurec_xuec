@@ -110,7 +110,7 @@ const STEPS: Step[] = [
     path: "/settings",
     target: "set-theme",
     title: "Тема и шрифт",
-    text: "Светлая, тёмная, чёрная или как в системе. Ниже — размер и стиль шрифта в читалке: стандартный, системный или один из обычных. Солнце в шапке крутит тему, не заходя сюда.",
+    text: "Светлая, тёмная, чёрная, сепия или как в системе. Ниже — размер и стиль шрифта в читалке: стандартный, системный или один из обычных. Солнце в шапке крутит тему, не заходя сюда.",
   },
   {
     id: "set-post",
@@ -154,7 +154,7 @@ function measure(id?: string): Hole | null {
     top: Math.max(6, b.top - pad),
     left: Math.max(6, b.left - pad),
     width: Math.min(window.innerWidth - 12, b.width + pad * 2),
-    height: Math.min(280, Math.min(window.innerHeight - 12, b.height + pad * 2)),
+    height: Math.min(Math.round(window.innerHeight * 0.62), Math.max(48, b.height + pad * 2)),
     r: Math.min(18, Math.round(Math.min(b.width, b.height) / 4) + 8),
   };
 }
@@ -240,11 +240,17 @@ export function TourHost() {
     ping();
     const t = window.setTimeout(ping, 80);
     const t2 = window.setTimeout(ping, 280);
+    const imgs = el ? Array.from(el.querySelectorAll("img")) : [];
+    const onImg = () => ping();
+    for (const img of imgs) {
+      if (!img.complete) img.addEventListener("load", onImg, { once: true });
+    }
     window.addEventListener("resize", ping);
     return () => {
       window.clearTimeout(t);
       window.clearTimeout(t2);
       window.removeEventListener("resize", ping);
+      for (const img of imgs) img.removeEventListener("load", onImg);
     };
   }, [on, idx, pathname, navigate]);
 
@@ -277,16 +283,16 @@ export function TourHost() {
     <div className="tour" data-testid="tour">
       <button type="button" className="tour-dim" aria-label="Пропустить обучение" onClick={() => stop(false)} />
       {hole ? (
-        <span
-          className="tour-hole"
-          style={{
-            top: hole.top,
-            left: hole.left,
-            width: hole.width,
-            height: hole.height,
-            borderRadius: hole.r,
-          }}
-        />
+        <>
+          <div className="tour-shade" style={{ top: 0, left: 0, right: 0, height: hole.top }} />
+          <div className="tour-shade" style={{ top: hole.top, left: 0, width: Math.max(0, hole.left), height: hole.height }} />
+          <div className="tour-shade" style={{ top: hole.top, left: hole.left + hole.width, right: 0, height: hole.height }} />
+          <div className="tour-shade" style={{ top: hole.top + hole.height, left: 0, right: 0, bottom: 0 }} />
+          <div
+            className="tour-ring"
+            style={{ top: hole.top, left: hole.left, width: hole.width, height: hole.height, borderRadius: hole.r }}
+          />
+        </>
       ) : null}
       <div
         className={cn("tour-card", !hole && "tour-card-mid", hole && placeUp && "tour-card-up", hole && !placeUp && "tour-card-down")}

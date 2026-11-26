@@ -49,6 +49,22 @@ html[data-theme="black"] {
   --elevated: #161618;
   --border: #222226;
 }
+html[data-theme="sepia"] {
+  --void: #1c140e;
+  --bg: #2a1d14;
+  --surface: #3a291c;
+  --elevated: #4a3424;
+  --fg: #f0e2c8;
+  --muted: #cbb89a;
+  --subtle: #9a8468;
+  --border: #5c4632;
+  --accent: #e0b15a;
+  --accent-fg: #2a1d14;
+  --paper: #efe0c4;
+  --ink: #2a1d14;
+  --ink-muted: #6b5340;
+  --gold: #e0b15a;
+}
 
 @media (min-width: 600px) {
   :root { --app-max: min(100%, 920px); }
@@ -1453,7 +1469,7 @@ html[data-wide="1"] .ends li { margin-top: 0; }
 }
 .theme-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-top: 12px;
 }
@@ -1594,6 +1610,9 @@ html[data-wide="1"] .ends li { margin-top: 0; }
 .theme-btn.theme-light { background: #e7dfd0; color: #1c1916; }
 .theme-btn.theme-dark { background: #141416; color: #eceae4; }
 .theme-btn.theme-black { background: #000; color: #c9a227; }
+.theme-btn.theme-sepia { background: #3a291c; color: #f0e2c8; }
+.iconbtn.is-off { opacity: 0.35; pointer-events: none; }
+.iconbtn .rub { font-size: 18px; font-weight: 800; line-height: 1; }
 .theme-btn.on { box-shadow: 0 0 0 2px var(--accent); }
 .set-switch {
   margin-top: 12px;
@@ -1684,13 +1703,11 @@ html.modal-lock body {
   pointer-events: auto;
   cursor: default;
 }
-.tour-hole {
+.tour-shade { position: absolute; background: rgba(5, 5, 8, 0.62); pointer-events: none; }
+.tour-ring {
   position: absolute;
   pointer-events: none;
-  box-shadow: 0 0 0 9999px rgba(5, 5, 8, 0.62), 0 0 0 2px #c9a227, 0 0 24px rgba(201, 162, 39, 0.55);
-  background: transparent;
-  transition: top 0.28s ease, left 0.28s ease, width 0.28s ease, height 0.28s ease, border-radius 0.28s ease;
-  z-index: 1;
+  box-shadow: inset 0 0 0 2px #c9a227;
 }
 .tour-card {
   position: absolute;
